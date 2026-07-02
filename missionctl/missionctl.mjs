@@ -652,7 +652,19 @@ function bundleSmoke(tenantId) {
     ['phase 7 production hardening doc', fs.existsSync(path.join(ROOT, 'docs', 'PHASE-7-PRODUCTION-HARDENING.md'))],
     ['billing export command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('billingExportCommand')],
     ['handoff hermes env gitignored', fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8').includes('handoff/*/managed/hermes/env')],
-    ['.gitignore blocks handoff runtime envs', fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8').includes('handoff/*/managed/hermes/env')]
+    ['.gitignore blocks handoff runtime envs', fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8').includes('handoff/*/managed/hermes/env')],
+    // Phase 8: Demo offer handoff package
+    ['PNW nonprofit offer doc', fs.existsSync(path.join(ROOT, 'docs', 'PNW-NONPROFIT-OFFER.md'))],
+    ['managed agents as a service doc', fs.existsSync(path.join(ROOT, 'docs', 'MANAGED-AGENTS-AS-A-SERVICE.md'))],
+    ['sales demo flow doc', fs.existsSync(path.join(ROOT, 'docs', 'SALES-DEMO-FLOW.md'))],
+    ['onboarding 14-day launch doc', fs.existsSync(path.join(ROOT, 'docs', 'ONBOARDING-14-DAY-LAUNCH.md'))],
+    ['pricing doc (draft)', fs.existsSync(path.join(ROOT, 'docs', 'PRICING.md'))],
+    ['objections doc', fs.existsSync(path.join(ROOT, 'docs', 'OBJECTIONS.md'))],
+    ['legal safety notes doc', fs.existsSync(path.join(ROOT, 'docs', 'LEGAL-SAFETY-NOTES.md'))],
+    ['v0.7 final handoff doc', fs.existsSync(path.join(ROOT, 'docs', 'V0.7-FINAL-HANDOFF.md'))],
+    ['final release candidate doc', fs.existsSync(path.join(ROOT, 'docs', 'FINAL-RELEASE-CANDIDATE.md'))],
+    ['client demo script doc', fs.existsSync(path.join(ROOT, 'docs', 'CLIENT-DEMO-SCRIPT.md'))],
+    ['implementation checklist doc', fs.existsSync(path.join(ROOT, 'docs', 'IMPLEMENTATION-CHECKLIST.md'))],
   ];
   const failed = checks.filter(([, ok, gated = true]) => !ok && gated);
   const runtimeMissing = checks.filter(([, ok, gated = true]) => !ok && gated === false);

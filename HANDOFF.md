@@ -281,3 +281,48 @@ Phase 7 added security gates, CI pipeline, audit scripts, billing export, and pr
 ### Phase 7 hotfix note (Session 4b)
 
 Commit `500c13b` tracked non-example handoff env files (`hermes/env`, `langfuse/env`, `litellm/env`, `open-webui/env`, `release-manifest.json`) with generated key-like values. Fix: `git rm --cached` untracked those files, `.gitignore` strengthened with explicit per-service rules. Keys from `500c13b` and earlier are treated as non-production and invalid. No history rewrite. See `docs/AGENT-PROVENANCE.md` Session 4b.
+
+---
+
+## Phase 8 — Final Demo Offer Handoff Package (2026-07-02)
+
+**Status: COMPLETE**
+
+Phase 8 created the complete demo and handoff document package for Mission OS. 522/522 tests pass, 81/81 bundle smoke checks pass.
+
+### What was built
+
+| Deliverable | File |
+|---|---|
+| PNW nonprofit offer | `docs/PNW-NONPROFIT-OFFER.md` |
+| Managed agents as a service | `docs/MANAGED-AGENTS-AS-A-SERVICE.md` |
+| Sales demo flow | `docs/SALES-DEMO-FLOW.md` |
+| 14-day onboarding plan | `docs/ONBOARDING-14-DAY-LAUNCH.md` |
+| Pricing (draft) | `docs/PRICING.md` |
+| Objections | `docs/OBJECTIONS.md` |
+| Legal and safety notes | `docs/LEGAL-SAFETY-NOTES.md` |
+| Final handoff reference | `docs/V0.7-FINAL-HANDOFF.md` |
+| Final release candidate | `docs/FINAL-RELEASE-CANDIDATE.md` |
+| Client demo script | `docs/CLIENT-DEMO-SCRIPT.md` |
+| Implementation checklist | `docs/IMPLEMENTATION-CHECKLIST.md` |
+| Phase 8 test suite | `packages/core/tests/phase8-final-handoff.test.js` |
+
+### State at Phase 8 close
+
+- Tests: 522/522
+- Bundle smoke: 81/81
+- Secret audit: clean
+- Generated-file audit: clean
+- verify-v06: 8/8 gates
+- Judge verdict: PASS
+
+### What remains deferred to Phase 9
+
+- Live VPS deployment (Hostinger)
+- Postgres migration and row-level tenant isolation
+- Real Hermes agent execution
+- Live LiteLLM model routing
+- Live Langfuse trace sync
+- Live Open WebUI workspace
+- Postiz scheduling
+- Remote backup storage

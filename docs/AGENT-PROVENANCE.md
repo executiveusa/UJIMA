@@ -127,3 +127,19 @@ Every work session logs:
 | Tests passed | 319/319 |
 | Beads written | 0 |
 | Decisions | Budget test state contamination (from prior missionctl validation run setting a low budget) fixed by isolating DATA_DIR in beforeEach/afterEach rather than resetting real mission-data; secret-audit.mjs uses isPlaceholder() check and skips comment/assertion lines to avoid false positives in test and template files; bundleSmoke reads .gitignore content (not execSync git ls-files) for the gitignore-rule checks to avoid ES module require() error; CI runs with no external secrets (all checks are local/dry-run) |
+
+### Session 6 — 2026-07-02 (Phase 8: Final Demo Offer Handoff Package)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-07-02-006 |
+| Date | 2026-07-02T19:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-4-6 |
+| MCPs used | github |
+| Files created | `docs/PNW-NONPROFIT-OFFER.md`, `docs/MANAGED-AGENTS-AS-A-SERVICE.md`, `docs/SALES-DEMO-FLOW.md`, `docs/ONBOARDING-14-DAY-LAUNCH.md`, `docs/PRICING.md`, `docs/OBJECTIONS.md`, `docs/LEGAL-SAFETY-NOTES.md`, `docs/V0.7-FINAL-HANDOFF.md`, `docs/FINAL-RELEASE-CANDIDATE.md`, `docs/CLIENT-DEMO-SCRIPT.md`, `docs/IMPLEMENTATION-CHECKLIST.md`, `packages/core/tests/phase8-final-handoff.test.js` |
+| Files modified | `missionctl/missionctl.mjs` (bundleSmoke 70→81 checks, +11 Phase 8 checks), `docs/AGENT-PROVENANCE.md`, `HANDOFF.md`, `openspec/changes/mission-os-v0-6-managed-hermes-bundle/tasks.md` |
+| Tests written | 203 new tests in `packages/core/tests/phase8-final-handoff.test.js` |
+| Tests passed | 522/522 |
+| Beads written | 0 |
+| Decisions | No GLM Phase 8 partial work existed locally (repo was clean at accepted remote main 49b8674); recovered by starting from accepted main and creating fresh phase/final-demo-offer-handoff branch; all docs written from scratch with no stubs, no fake guarantees, no placeholder text; Judge review embedded in FINAL-RELEASE-CANDIDATE.md (PASS verdict); bundleSmoke extended with 11 Phase 8 existence checks |
