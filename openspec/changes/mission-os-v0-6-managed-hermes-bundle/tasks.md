@@ -151,9 +151,25 @@
 - **Acceptance (Phase 7):** All file-backed and auditable gates pass. Postgres and VPS gates deferred to Phase 8.
 
 ### P3-4: Live VPS deployment test
-- [ ] Deploy to Hostinger VPS
-- [ ] DNS + TLS verification
-- [ ] Postgres migration/restore drill
-- [ ] Live custom frontend bridge test
-- [ ] Postiz live scheduling after approval
-- **Acceptance:** End-to-end deployment verified on real VPS.
+- [ ] Deploy to Hostinger VPS — deferred to Phase 9 (live VPS required)
+- [ ] DNS + TLS verification — deferred to Phase 9
+- [ ] Postgres migration/restore drill — deferred to Phase 9
+- [ ] Live custom frontend bridge test — deferred to Phase 9
+- [ ] Postiz live scheduling after approval — deferred to Phase 9
+- **Acceptance:** End-to-end deployment verified on real VPS. Deferred to Phase 9.
+
+### P3-5: Phase 8 final demo offer handoff package
+- [x] Create `docs/PNW-NONPROFIT-OFFER.md` — Built in Phase 8.
+- [x] Create `docs/MANAGED-AGENTS-AS-A-SERVICE.md` — Built in Phase 8.
+- [x] Create `docs/SALES-DEMO-FLOW.md` — Built in Phase 8.
+- [x] Create `docs/ONBOARDING-14-DAY-LAUNCH.md` — Built in Phase 8.
+- [x] Create `docs/PRICING.md` (draft) — Built in Phase 8.
+- [x] Create `docs/OBJECTIONS.md` — Built in Phase 8.
+- [x] Create `docs/LEGAL-SAFETY-NOTES.md` — Built in Phase 8.
+- [x] Create `docs/V0.7-FINAL-HANDOFF.md` — Built in Phase 8.
+- [x] Create `docs/FINAL-RELEASE-CANDIDATE.md` (with Judge verdict) — Built in Phase 8.
+- [x] Create `docs/CLIENT-DEMO-SCRIPT.md` — Built in Phase 8.
+- [x] Create `docs/IMPLEMENTATION-CHECKLIST.md` — Built in Phase 8.
+- [x] Write Phase 8 test suite: `packages/core/tests/phase8-final-handoff.test.js` (203 tests) — Built in Phase 8.
+- [x] Extend bundleSmoke 70→81 checks (+11 Phase 8 doc existence checks) — Built in Phase 8.
+- **Acceptance:** 522/522 tests pass, 81/81 bundle smoke checks pass, all docs substantive and accurate. ✅
