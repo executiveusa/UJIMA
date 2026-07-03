@@ -24,6 +24,16 @@
     "./dashboard-state": "./src/dashboard-state.js",
     "./approval-lifecycle": "./src/approval-lifecycle.js",
     "./policy": "./src/policy.js",
-    "./worker-contracts": "./src/worker-contracts.js"
+    "./worker-contracts": "./src/worker-contracts.js",
+    "./model-budgets": "./src/model-budgets.js",
+    "./model-usage-ledger": "./src/model-usage-ledger.js",
+    "./trace-links": "./src/trace-links.js",
+    "./langfuse-metadata": "./src/langfuse-metadata.js",
+    "./litellm-config": "./src/litellm-config.js",
+    "./openwebui-bootstrap": "./src/openwebui-bootstrap.js",
+    "./deployment-releases": "./src/deployment-releases.js",
+    "./deployment-health": "./src/deployment-health.js",
+    "./deployment-backup": "./src/deployment-backup.js",
+    "./agent-service": "./src/agent-service.js"
   }
 }

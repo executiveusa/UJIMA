@@ -4,10 +4,10 @@
 
 ## Current state
 
-**Version:** v0.6 (Managed Hermes Bundle) — Phase 1 Core Platform State Layer complete
-**Date:** 2026-06-29
+**Version:** v0.6 (Managed Hermes Bundle) — Phase 6 Deployment Lifecycle complete
+**Date:** 2026-07-01
 **Repo:** `https://github.com/executiveusa/ascend-social-purpose-agentic-systems-.git`
-**Branch:** `phase/core-platform-state-layer`
+**Branch:** `phase/managed-deployment-upgrade-rollback-backup`
 
 ## Goal
 
@@ -114,11 +114,60 @@ Extend Mission OS from v0.5 (deployment handoff) to v0.6 (managed agent runtime 
 - `docs/WORKER-RUNTIME-CONTRACTS.md` — Contract design, policy rules, dispatch examples
 - Total: 82 tests pass, build passes, bundle smoke 25/25 ok
 
+### Phase 4: Model Gateway, Observability, Usage Ledger ✅
+- `packages/core/src/model-budgets.js` — Per-tenant monthly budget + warning/hard-block threshold evaluation
+- `packages/core/src/model-usage-ledger.js` — Append-only usage ledger (tokens, cost, no raw prompts), monthly/per-surface summaries
+- `packages/core/src/trace-links.js` — Tenant-scoped Langfuse trace-link registry
+- `packages/core/src/langfuse-metadata.js` — Trace tag/metadata builder with sensitive-field redaction
+- `packages/core/src/litellm-config.js` — Per-tenant LiteLLM virtual-key config builder + raw-key-leak validator
+- `packages/core/src/openwebui-bootstrap.js` — Per-tenant Open WebUI bootstrap builder + signup/provider validator
+- `services/mission-api/src/operator/budgets.js` — GET /api/operator/budgets
+- `services/mission-api/src/operator/model-usage.js` — GET /api/operator/model-usage[/summary]
+- `services/mission-api/src/operator/traces.js` — GET /api/operator/traces[/:id]
+- `db/migrations/0005_v06_model_gateway_observability.sql` — `model_budgets`, `model_usage_ledger`, `trace_links`, `integration_configs` tables (Postgres parity; not wired into the JSON-backed runtime yet)
+- `missionctl/missionctl.mjs` — `model budget show|set`, `model usage summary`, `model traces list` CLI commands; bundle smoke extended with 10 Phase 4 checks (35/35 total)
+- `packages/core/tests/{model-budgets,model-usage-ledger,trace-links,langfuse-metadata,litellm-config,openwebui-bootstrap}.test.js` — 27 new unit tests
+- `services/mission-api/tests/operator-api.test.js` — 6 new operator API tests for budgets/model-usage/traces handlers
+- **Fixed a pre-existing test infrastructure gap**: `vitest.config.js` never included `services/**/tests/**/*.test.js`, so `operator-api.test.js` was silently excluded from every prior `npm test` run. Fixing this surfaced two more pre-existing bugs: broken relative import paths in the test file, and `runs.js` calling `evaluateActionPolicy` with an unrecognized `actionType` (`'INTERNAL_RUN'`), which hit the policy module's default "orange, not allowed" fallthrough and hard-blocked every run regardless of actual risk level. Both are now fixed; `runs.js` now only invokes `evaluateActionPolicy` for the explicit hard-blocked action types, matching the existing pattern in `worker-contracts.js`.
+- `docs/MODEL-GATEWAY.md`, `docs/MODEL-USAGE-LEDGER.md`, `docs/OBSERVABILITY-AND-TRACES.md`, `docs/LITELLM-LANGFUSE-OPENWEBUI.md` — new Phase 4 docs
+- `docs/OPERATOR-API.md` — updated with 5 new routes and Phase 4 known limitations
+- Total: 136 tests pass (109 previously-counted + 27 new — the prior "82 tests" count never actually included `operator-api.test.js`), build passes, bundle smoke 35/35 ok
+
+### Phase 5: Ops Dashboard UI ✅
+- `apps/site/lib/ops-tenant.js` — `getOpsTenantId()`, defaults to `process.env.OPS_TENANT_ID || 'demo-pnw'`
+- `apps/site/lib/opsApi.js` — browser-side same-origin fetch helper for `/api/ops/*`, no operator key ever reaches client JS
+- `apps/site/app/api/ops/{dashboard-state,events,artifacts,managed-agents,managed-agents/[id],budgets,model-usage-summary,traces}/route.js` — 8 server-side Route Handlers reading `@asc3nd/core/*` directly against the shared `mission-data/<tenantId>` files, bypassing both the legacy session-JWT auth and the Operator API key auth
+- `apps/site/components/MissionOsOverview.jsx` — Mission OS operator overview widgets, rendered additively below the existing `/ops` Today cockpit
+- `apps/site/app/ops/{agents,agents/[id],artifacts,events,budgets,health,deployments,openwebui}/page.jsx` — 8 new internal ops pages
+- `apps/site/components/OpsShell.jsx` — nav extended with 7 new links (Agent Room, Artifacts, Event Journal, Model Budgets, Health, Deployments, Open WebUI)
+- `apps/site/tests/{ops-routes-exist,ops-api-data,ops-no-operator-keys-in-client}.test.js` — 53 new tests (route/page existence, route-handler data correctness incl. empty states and 404s, static no-operator-key-in-client-code scan)
+- `vitest.config.js` — added `apps/**/tests/**/*.test.js` to test include globs (previously apps/site had no test coverage at all)
+- `missionctl/missionctl.mjs` — `hasOperatorKeyLiteral()` helper + bundle smoke extended with 9 Phase 5 checks (44/44 total)
+- `docs/OPS-DASHBOARD.md` — new: route map, data-source strategy (and why the legacy/Operator-API dual-auth split required a local proxy layer), security rule, live/dry-run/placeholder breakdown
+- No new UI framework introduced; no public marketing routes touched; no live Hermes/LiteLLM/Langfuse/Open WebUI calls; no release/rollback/backup commands implemented
+
+### Phase 6: Managed Deployment Lifecycle ✅
+- `packages/core/src/deployment-releases.js` — full release lifecycle (create/list/get/activate/fail/rollback/getActive)
+- `packages/core/src/deployment-health.js` — health check and smoke result recording/summarizing
+- `packages/core/src/deployment-backup.js` — backup creation with SHA-256 checksum, listing, get, restore with tenant-mismatch and path-traversal guards
+- `packages/core/tests/deployment-releases.test.js` — 24 tests
+- `packages/core/tests/deployment-health.test.js` — 22 tests
+- `packages/core/tests/deployment-backup.test.js` — 17 tests
+- `packages/core/tests/fresh-tenant.test.js` — 5 tests (ENOENT hardening)
+- `packages/core/src/dashboard-state.js` — fixed ENOENT bug (mkdirSync guard for fresh tenant)
+- `db/migrations/0006_v06_deployment_lifecycle.sql` — 4 new tables
+- `services/mission-api/src/operator/deployments.js` — GET /api/operator/deployments[/health][/:id]
+- `services/mission-api/src/operator/backups.js` — GET /api/operator/backups[/:id]
+- `services/mission-api/src/operator/index.js` — mounted deployments + backups routers
+- `apps/site/app/api/ops/deployments/route.js` — same-origin deployment state route handler
+- `apps/site/app/ops/deployments/page.jsx` — upgraded from placeholder: shows release history, smoke history, backup list, CLI instructions
+- `apps/site/tests/ops-deployments.test.js` — 19 tests
+- `missionctl/missionctl.mjs` — bundleReleaseFull, upgradeCommand, rollbackCommand, backupCommand, restoreCommand, smoke extended to 57 checks
+- `docs/DEPLOYMENT-LIFECYCLE.md`, `docs/BACKUP-RESTORE.md`, `docs/RELEASE-MANIFEST.md` — new Phase 6 docs
+
 ## Not yet done
 
-- P4: Model Gateway, Observability, Usage Ledger
-- P5: Ops Dashboard UI
-- P6: Managed Deployment, Upgrade, Rollback, Backup
+- P7: Security, CI, QA Gates, Docs
 - P7: Security, CI, QA Gates, Docs
 - P8: Demo Tenant, Offer Assets, Final Handoff
 
@@ -181,3 +230,141 @@ missionctl bundle smoke demo-pnw --dry-run         # ✅ 12/12 checks passed
 4. Start P1-3: Artifact registry table + API.
 5. Start P1-4: managed_agents table + API.
 6. Start P1-5: DashboardState API endpoint.
+
+---
+
+## Phase 7 — Security CI QA Gates (2026-07-01)
+
+**Status: COMPLETE**
+
+Phase 7 added security gates, CI pipeline, audit scripts, billing export, and production hardening documentation. All 319 tests pass, 72/72 bundle smoke checks pass.
+
+### What was built
+
+| Deliverable | File |
+|---|---|
+| Secret scanner | `scripts/secret-audit.mjs` |
+| Generated-file audit | `scripts/generated-file-audit.mjs` |
+| Test discovery audit | `scripts/test-discovery-audit.mjs` |
+| OpenSpec task audit | `scripts/openspec-task-audit.mjs` |
+| Master verifier | `scripts/verify-v06.mjs` |
+| CI pipeline | `.github/workflows/ci.yml` |
+| Phase 7 test suite | `packages/core/tests/phase7-security-gates.test.js` |
+| Operator manual | `docs/OPERATOR-MANUAL.md` |
+| Security checklist | `docs/SECURITY-CHECKLIST.md` |
+| CI/QA gates doc | `docs/CI-QA-GATES.md` |
+| Phase 7 hardening doc | `docs/PHASE-7-PRODUCTION-HARDENING.md` |
+| Billing export | `missionctl billing export <slug>` |
+
+### State of the repo at Phase 7 close
+
+- Tests: 319/319
+- Bundle smoke: 72/72
+- Secret audit: clean (0 findings)
+- Generated-file audit: clean (0 findings)
+- Test discovery audit: clean (0 orphans, 37+ covered)
+- OpenSpec task audit: 0 blocked tasks
+- CI: no external secrets required
+
+### What remains deferred to Phase 8
+
+- Live VPS deployment (Hostinger)
+- DNS + TLS provisioning (Caddy)
+- Postgres migration and row-level tenant isolation
+- Live Hermes agent execution
+- Live LiteLLM model routing
+- Live Langfuse trace sync
+- Live Open WebUI workspace
+- Postiz scheduling integration
+- Full `npm audit` remediation
+
+### Phase 7 hotfix note (Session 4b)
+
+Commit `500c13b` tracked non-example handoff env files (`hermes/env`, `langfuse/env`, `litellm/env`, `open-webui/env`, `release-manifest.json`) with generated key-like values. Fix: `git rm --cached` untracked those files, `.gitignore` strengthened with explicit per-service rules. Keys from `500c13b` and earlier are treated as non-production and invalid. No history rewrite. See `docs/AGENT-PROVENANCE.md` Session 4b.
+
+---
+
+## Phase 8 — Final Demo Offer Handoff Package (2026-07-02)
+
+**Status: COMPLETE**
+
+Phase 8 created the complete demo and handoff document package for Mission OS. 522/522 tests pass, 81/81 bundle smoke checks pass.
+
+### What was built
+
+| Deliverable | File |
+|---|---|
+| PNW nonprofit offer | `docs/PNW-NONPROFIT-OFFER.md` |
+| Managed agents as a service | `docs/MANAGED-AGENTS-AS-A-SERVICE.md` |
+| Sales demo flow | `docs/SALES-DEMO-FLOW.md` |
+| 14-day onboarding plan | `docs/ONBOARDING-14-DAY-LAUNCH.md` |
+| Pricing (draft) | `docs/PRICING.md` |
+| Objections | `docs/OBJECTIONS.md` |
+| Legal and safety notes | `docs/LEGAL-SAFETY-NOTES.md` |
+| Final handoff reference | `docs/V0.7-FINAL-HANDOFF.md` |
+| Final release candidate | `docs/FINAL-RELEASE-CANDIDATE.md` |
+| Client demo script | `docs/CLIENT-DEMO-SCRIPT.md` |
+| Implementation checklist | `docs/IMPLEMENTATION-CHECKLIST.md` |
+| Phase 8 test suite | `packages/core/tests/phase8-final-handoff.test.js` |
+
+### State at Phase 8 close
+
+- Tests: 522/522
+- Bundle smoke: 81/81
+- Secret audit: clean
+- Generated-file audit: clean
+- verify-v06: 8/8 gates
+- Judge verdict: PASS
+
+### What remains deferred to Phase 9
+
+- Live VPS deployment (Hostinger)
+- Postgres migration and row-level tenant isolation
+- Real Hermes agent execution
+- Live LiteLLM model routing
+- Live Langfuse trace sync
+- Live Open WebUI workspace
+- Postiz scheduling
+- Remote backup storage
+
+---
+
+## Phase 9A Gate 1 — ICM Client-Deployment Factory (2026-07-02)
+
+**Status: COMPLETE** — see PR #3 (merged to main).
+
+## Phase 9A Gate 2 — Hermes Agent Service API (2026-07-02)
+
+**Status: COMPLETE** — see PR #4 (merged to main, Architect-accepted). Added `docs/HERMES-AGENT-SERVICE-API.md`, `docs/HERMES-ICM-RUNTIME.md`, `docs/SOVEREIGN-AI-CLIENT-STACK.md`, dry-run `packages/core/src/agent-service.js`, `services/mission-api/src/agent/*`, `/api/agent` route mounting. Live Hermes execution remains deferred.
+
+## Phase 9 Gate 3 — Hostinger VPS Staging Specs (2026-07-03)
+
+**Status: COMPLETE**
+
+Gate 3 is specification and runbook only — no live VPS deployment occurred.
+
+### What was built
+
+| Deliverable | File |
+|---|---|
+| Staging topology and domain model | `docs/HOSTINGER-PHASE-9-STAGING.md` |
+| VPS bootstrap runbook (19 steps, live commands gated) | `docs/VPS-BOOTSTRAP-RUNBOOK.md` |
+| Credential generation and rotation | `docs/PRODUCTION-ENV-GENERATION.md` |
+| Caddy domain map (public/protected/internal routes) | `docs/CADDY-DOMAIN-MAP.md` |
+| Postgres migration runbook (honest current-state) | `docs/POSTGRES-MIGRATION-RUNBOOK.md` |
+| Go-live gate checklist (Gates A–N) | `docs/PHASE-9-GO-LIVE-GATES.md` |
+| Gate 3 test suite | `packages/core/tests/phase9-vps-staging-docs.test.js` |
+
+### Honesty notes from this gate
+
+- `docs/POSTGRES-MIGRATION-RUNBOOK.md` states plainly that `STORAGE_MODE=postgres` does not yet switch the application's read/write path off the file-backed `JsonTenantStore`, and that Postgres Row-Level Security policies do not yet exist. Both are documented as open gaps, not implemented features.
+- All live commands in `docs/VPS-BOOTSTRAP-RUNBOOK.md` and `docs/CADDY-DOMAIN-MAP.md` are marked `LIVE COMMAND — DO NOT RUN UNTIL HUMAN APPROVES`.
+- No VPS was provisioned, no DNS changed, no Vercel configuration changed, no real secrets generated or committed, no live external service called.
+
+### What remains deferred to Phase 9B
+
+- Live VPS provisioning and `docker compose up -d` execution
+- DNS + TLS issuance
+- Postgres runtime wiring and Row-Level Security implementation
+- Live Hermes, LiteLLM, Langfuse, and Open WebUI execution
+- Backup/restore drill against a real, live environment

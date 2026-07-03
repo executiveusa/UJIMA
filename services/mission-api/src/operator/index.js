@@ -6,6 +6,11 @@ import { listArtifacts, getArtifact } from './artifacts.js';
 import { listManagedAgents, getManagedAgent, provisionAgent, pauseAgent, resumeAgent, getAgentHealth } from './managed-agents.js';
 import { createRun, listRuns, getRun } from './runs.js';
 import { approveApproval, rejectApproval } from './approvals.js';
+import { getBudget } from './budgets.js';
+import { listModelUsage, getModelUsageSummary } from './model-usage.js';
+import { listTraces, getTrace } from './traces.js';
+import deploymentsRouter from './deployments.js';
+import backupsRouter from './backups.js';
 
 const router = Router();
 
@@ -31,5 +36,16 @@ router.get('/runs/:id', auth, requirePermission('runs.read'), getRun);
 
 router.post('/approvals/:id/approve', auth, requirePermission('approvals.review'), approveApproval);
 router.post('/approvals/:id/reject', auth, requirePermission('approvals.review'), rejectApproval);
+
+router.get('/budgets', auth, requirePermission('budgets.read'), getBudget);
+
+router.get('/model-usage', auth, requirePermission('budgets.read'), listModelUsage);
+router.get('/model-usage/summary', auth, requirePermission('budgets.read'), getModelUsageSummary);
+
+router.get('/traces', auth, requirePermission('events.read'), listTraces);
+router.get('/traces/:id', auth, requirePermission('events.read'), getTrace);
+
+router.use('/deployments', deploymentsRouter);
+router.use('/backups', backupsRouter);
 
 export default router;

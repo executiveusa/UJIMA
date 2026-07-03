@@ -4,12 +4,25 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { cleanTenantSlug, createPublicKey, createSecretKey, defaultTenantProfile, tenantFrontendConfig } from '../packages/core/src/tenant.js';
-import { ensureIcmWorkspace, runIcmStage } from '../packages/core/src/icm.js';
+import { ensureIcmWorkspace, runIcmStage, listIcmTree, validateIcmWorkspace } from '../packages/core/src/icm.js';
 import { emitEvent } from '../packages/core/src/events.js';
 import { registerArtifact } from '../packages/core/src/artifacts.js';
 import { provisionManagedAgent, updateAgentHealth } from '../packages/core/src/managed-agents.js';
 import { generateDashboardState } from '../packages/core/src/dashboard-state.js';
 import { createOperatorKey, validateOperatorKey } from '../packages/core/src/auth.js';
+import { getModelBudget, setModelBudget, evaluateBudgetStatus } from '../packages/core/src/model-budgets.js';
+import { summarizeMonthlyUsage, summarizeUsageBySurface } from '../packages/core/src/model-usage-ledger.js';
+import { getArtifacts } from '../packages/core/src/artifacts.js';
+import { getTraceLinks } from '../packages/core/src/trace-links.js';
+import {
+  createDeploymentRelease,
+  listDeploymentReleases,
+  activateDeploymentRelease,
+  rollbackDeploymentRelease,
+  getActiveDeploymentRelease
+} from '../packages/core/src/deployment-releases.js';
+import { recordSmokeResult, summarizeHealth } from '../packages/core/src/deployment-health.js';
+import { createBackup as coreCreateBackup, listBackups, restoreBackup as coreRestoreBackup } from '../packages/core/src/deployment-backup.js';
 
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -30,8 +43,13 @@ async function main() {
   if (group === 'frontend' && cmd === 'scaffold') return frontendScaffold(value || getFlag('--slug') || 'asc3nd');
   if (group === 'hostinger' && cmd === 'handoff') return hostingerHandoff(value || getFlag('--slug') || 'asc3nd');
   if (group === 'smoke') return smoke(cmd || value || getFlag('--slug') || 'asc3nd');
-  if (group === 'backup') return backup(cmd || value || getFlag('--slug') || 'asc3nd');
-  if (group === 'restore') return restore(cmd || value || getFlag('--file'));
+  if (group === 'backup') return backupCommand(cmd || value || getFlag('--slug') || 'asc3nd');
+  if (group === 'restore') return restoreCommand(cmd || value || getFlag('--file') || getFlag('--backup'));
+  if (group === 'upgrade') return upgradeCommand(cmd || value || getFlag('--slug') || 'demo-pnw');
+  if (group === 'rollback') return rollbackCommand(cmd || value || getFlag('--slug') || 'demo-pnw');
+  if (group === 'icm' && cmd === 'init') return icmInit(value || getFlag('--slug') || 'asc3nd');
+  if (group === 'icm' && cmd === 'tree') return icmTree(value || getFlag('--slug') || 'asc3nd');
+  if (group === 'icm' && cmd === 'validate') return icmValidate(value || getFlag('--slug') || 'asc3nd');
   if (group === 'icm' && cmd === 'run') return icmRun(value || getFlag('--slug') || 'asc3nd', args[3] || getFlag('--stage'));
   // v0.6 managed bundle commands
   if (group === 'bundle') return bundleCommand(cmd, value || getFlag('--slug') || 'demo-pnw');
@@ -41,11 +59,37 @@ async function main() {
   if (group === 'langfuse') return langfuseCommand(cmd, value || getFlag('--slug') || 'demo-pnw');
   if (group === 'openwebui') return openwebuiCommand(cmd, value || getFlag('--slug') || 'demo-pnw');
   if (group === 'operator-key') return operatorKeyCommand(cmd, value || getFlag('--slug') || 'demo-pnw');
+  // v0.6 Phase 4: model gateway, observability, usage ledger
+  if (group === 'model') return modelCommand(cmd, value, args[3] || getFlag('--slug') || 'demo-pnw');
+  // v0.7 billing export
+  if (group === 'billing' && cmd === 'export') return billingExportCommand(value || getFlag('--slug') || 'demo-pnw');
   throw new Error(`Unknown command: ${args.join(' ')}`);
 }
 
 function help() {
-  console.log(`Mission OS control plane v0.6\n\nCommands:\n\n  -- v0.5 (existing) --\n  missionctl doctor\n  missionctl tenant create <slug> --org "Org Name" --region "Seattle" --domain "https://client.org"\n  missionctl tenant keys <slug>\n  missionctl frontend scaffold <slug>\n  missionctl hostinger handoff <slug> --domain "client.org" --api-domain "api.client.org" --email "admin@client.org" --vps-ip "1.2.3.4"\n  missionctl smoke <slug>\n  missionctl backup <slug>\n  missionctl restore <backup-json>\n  missionctl icm run <slug> <stage>\n\n  -- v0.6 managed bundle --\n  missionctl bundle up <slug> [--dry-run]\n  missionctl bundle status <slug>\n  missionctl bundle smoke <slug> [--dry-run]\n  missionctl bundle release <slug>\n  missionctl bundle down <slug>\n\n  missionctl pack generate <slug>\n  missionctl pack validate <slug>\n  missionctl pack publish <slug>\n\n  missionctl hermes provision <slug>\n  missionctl hermes health <slug>\n\n  missionctl litellm sync <slug>\n  missionctl langfuse sync <slug>\n  missionctl openwebui sync <slug>\n`);
+  console.log(`Mission OS control plane v0.6\n\nCommands:\n\n  -- v0.5 (existing) --\n  missionctl doctor\n  missionctl tenant create <slug> --org "Org Name" --region "Seattle" --domain "https://client.org"\n  missionctl tenant keys <slug>\n  missionctl frontend scaffold <slug>\n  missionctl hostinger handoff <slug> --domain "client.org" --api-domain "api.client.org" --email "admin@client.org" --vps-ip "1.2.3.4"\n  missionctl smoke <slug>\n  missionctl backup <slug>\n  missionctl restore <backup-id> [--slug <tenant>]\n  missionctl upgrade <slug> --release <release-id>\n  missionctl rollback <slug> --to <release-id>\n  missionctl icm init <slug> [--org "Org Name"]\n  missionctl icm tree <slug>\n  missionctl icm validate <slug>\n  missionctl icm run <slug> <stage>\n\n  -- v0.6 managed bundle --\n  missionctl bundle up <slug> [--dry-run]\n  missionctl bundle status <slug>\n  missionctl bundle smoke <slug> [--dry-run]\n  missionctl bundle release <slug>\n  missionctl bundle down <slug>\n\n  missionctl pack generate <slug>\n  missionctl pack validate <slug>\n  missionctl pack publish <slug>\n\n  missionctl hermes provision <slug>\n  missionctl hermes health <slug>\n\n  missionctl litellm sync <slug>\n  missionctl langfuse sync <slug>\n  missionctl openwebui sync <slug>\n\n  -- v0.6 model gateway / observability (Phase 4) --\n  missionctl model budget show <slug>\n  missionctl model budget set <slug> --amount 100 [--warning-pct 0.8] [--hard-block-pct 1.0]\n  missionctl model usage summary <slug> [--month 2026-06]\n  missionctl model traces list <slug> [--surface comms]\n\n  -- v0.7 billing / export --\n  missionctl billing export <slug> [--month 2026-06] [--format json|csv]\n`);
+}
+
+function icmInit(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const orgName = getFlag('--org') || titleCase(tenantId);
+  const root = ensureIcmWorkspace({ base: ICM_ROOT, tenantId, orgName });
+  appendLog({ event: 'icm.init', tenantId, root });
+  console.log(JSON.stringify({ ok: true, tenantId, root, stages: 8 }, null, 2));
+}
+
+function icmTree(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const tree = listIcmTree({ base: ICM_ROOT, tenantId });
+  console.log(JSON.stringify({ ok: true, tenantId, tree, count: tree.length }, null, 2));
+}
+
+function icmValidate(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const result = validateIcmWorkspace({ base: ICM_ROOT, tenantId });
+  console.table(result.stages.map((s) => ({ stage: s.stage, exists: s.exists ? 'ok' : 'missing', 'CONTEXT.md': s.hasContext ? 'ok' : 'missing' })));
+  console.log(JSON.stringify({ ok: result.ok, tenantId, errors: result.errors }, null, 2));
+  if (!result.ok) process.exit(1);
 }
 
 function icmRun(slugInput, stage) {
@@ -437,7 +481,7 @@ function bundleCommand(cmd, slugInput) {
   if (cmd === 'up') return bundleUp(tenantId);
   if (cmd === 'status') return bundleStatus(tenantId);
   if (cmd === 'smoke') return bundleSmoke(tenantId);
-  if (cmd === 'release') return bundleRelease(tenantId);
+  if (cmd === 'release') return bundleReleaseFull(tenantId);
   if (cmd === 'down') return bundleDown(tenantId);
   throw new Error('Unknown bundle command: ' + cmd + '. Use: up, status, smoke, release, down');
 }
@@ -531,6 +575,27 @@ function bundleStatus(tenantId) {
   console.log(JSON.stringify({ ok: true, tenantId, bundleExists: exists, manifest }, null, 2));
 }
 
+function hasOperatorKeyLiteral(siteRoot) {
+  const forbidden = [/ok_[a-zA-Z0-9-]+_[0-9a-f]{16,}/, /OPERATOR_KEY/, /operator-key/i, /validateOperatorKey/];
+  const dirs = ['app', 'components', 'lib'].map((d) => path.join(siteRoot, d)).filter((d) => fs.existsSync(d));
+  function scan(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === 'node_modules' || entry.name === '.next' || entry.name === 'api') continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (scan(full)) return true;
+      } else if (/\.(jsx?|tsx?)$/.test(entry.name)) {
+        const content = fs.readFileSync(full, 'utf8');
+        if (content.startsWith("'use client'") || content.startsWith('"use client"') || full.endsWith(path.join('lib', 'opsApi.js'))) {
+          if (forbidden.some((p) => p.test(content))) return true;
+        }
+      }
+    }
+    return false;
+  }
+  return dirs.some((d) => scan(d));
+}
+
 function bundleSmoke(tenantId) {
   const outDir = path.join(BUNDLES, tenantId, 'managed');
   if (!fs.existsSync(outDir)) throw new Error('No bundle found for ' + tenantId + '. Run: missionctl bundle up ' + tenantId + ' --dry-run');
@@ -538,13 +603,16 @@ function bundleSmoke(tenantId) {
     ['managed compose', fs.existsSync(path.join(outDir, 'docker-compose.managed.yml'))],
     ['Caddy managed', fs.existsSync(path.join(outDir, 'Caddyfile.managed'))],
     ['managed env', fs.existsSync(path.join(outDir, '.env.managed'))],
-    ['Hermes env', fs.existsSync(path.join(outDir, 'hermes', 'env'))],
+    // Runtime-only artifacts: generated by `bundle up` at deploy time and intentionally
+    // kept out of git (Phase 6 hotfix). Marked gated:false so their expected absence in
+    // dry-run / pre-deploy smoke does not fail the gate. Status is still reported.
+    ['Hermes env', fs.existsSync(path.join(outDir, 'hermes', 'env')), false],
     ['Hermes SOUL', fs.existsSync(path.join(outDir, 'hermes', 'SOUL.md'))],
     ['LiteLLM config', fs.existsSync(path.join(outDir, 'litellm', 'config.yaml'))],
-    ['Open WebUI env', fs.existsSync(path.join(outDir, 'open-webui', 'env'))],
-    ['Langfuse env', fs.existsSync(path.join(outDir, 'langfuse', 'env'))],
+    ['Open WebUI env', fs.existsSync(path.join(outDir, 'open-webui', 'env')), false],
+    ['Langfuse env', fs.existsSync(path.join(outDir, 'langfuse', 'env')), false],
     ['smoke-test script', fs.existsSync(path.join(outDir, 'smoke-test.managed.sh'))],
-    ['release manifest', fs.existsSync(path.join(outDir, 'release-manifest.json'))],
+    ['release manifest', fs.existsSync(path.join(outDir, 'release-manifest.json')), false],
     ['agent pack manifest', fs.existsSync(path.join(DATA_DIR, tenantId, 'tenant-agent-pack', 'manifest.yaml'))],
     ['Hermes not public', fs.readFileSync(path.join(outDir, 'docker-compose.managed.yml'), 'utf8').includes('127.0.0.1:8765')],
     ['event journal', fs.existsSync(path.join(DATA_DIR, tenantId, 'events.jsonl'))],
@@ -560,18 +628,107 @@ function bundleSmoke(tenantId) {
     ['runs API helper', fs.existsSync(path.join(ROOT, 'services', 'mission-api', 'src', 'operator', 'runs.js'))],
     ['approvals API helper', fs.existsSync(path.join(ROOT, 'services', 'mission-api', 'src', 'operator', 'approvals.js'))],
     ['worker contracts', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'worker-contracts.js'))],
-    ['server route registration', fs.readFileSync(path.join(ROOT, 'services', 'mission-api', 'server.js'), 'utf8').includes('operatorRouter')]
+    ['server route registration', fs.readFileSync(path.join(ROOT, 'services', 'mission-api', 'server.js'), 'utf8').includes('operatorRouter')],
+    // Phase 4: Model Gateway, Observability, Usage Ledger
+    ['model-budgets module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'model-budgets.js'))],
+    ['model-usage-ledger module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'model-usage-ledger.js'))],
+    ['trace-links module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'trace-links.js'))],
+    ['langfuse-metadata module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'langfuse-metadata.js'))],
+    ['litellm-config module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'litellm-config.js'))],
+    ['openwebui-bootstrap module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'openwebui-bootstrap.js'))],
+    ['budgets API helper', fs.existsSync(path.join(ROOT, 'services', 'mission-api', 'src', 'operator', 'budgets.js'))],
+    ['model-usage API helper', fs.existsSync(path.join(ROOT, 'services', 'mission-api', 'src', 'operator', 'model-usage.js'))],
+    ['traces API helper', fs.existsSync(path.join(ROOT, 'services', 'mission-api', 'src', 'operator', 'traces.js'))],
+    ['db migration 0005', fs.existsSync(path.join(ROOT, 'db', 'migrations', '0005_v06_model_gateway_observability.sql'))],
+    // Phase 5: Ops Dashboard UI
+    ['ops route: /ops/agents', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'agents', 'page.jsx'))],
+    ['ops route: /ops/agents/[id]', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'agents', '[id]', 'page.jsx'))],
+    ['ops route: /ops/artifacts', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'artifacts', 'page.jsx'))],
+    ['ops route: /ops/events', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'events', 'page.jsx'))],
+    ['ops route: /ops/budgets', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'budgets', 'page.jsx'))],
+    ['ops route: /ops/health', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'health', 'page.jsx'))],
+    ['ops route: /ops/deployments', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'deployments', 'page.jsx'))],
+    ['ops route: /ops/openwebui', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'openwebui', 'page.jsx'))],
+    ['no operator key literal in ops client code', !hasOperatorKeyLiteral(path.join(ROOT, 'apps', 'site'))],
+    // Phase 6: Deployment Lifecycle, Backup/Restore
+    ['deployment-releases module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'deployment-releases.js'))],
+    ['deployment-health module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'deployment-health.js'))],
+    ['deployment-backup module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'deployment-backup.js'))],
+    ['db migration 0006', fs.existsSync(path.join(ROOT, 'db', 'migrations', '0006_v06_deployment_lifecycle.sql'))],
+    ['deployments operator API', fs.existsSync(path.join(ROOT, 'services', 'mission-api', 'src', 'operator', 'deployments.js'))],
+    ['backups operator API', fs.existsSync(path.join(ROOT, 'services', 'mission-api', 'src', 'operator', 'backups.js'))],
+    ['bundle status command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('bundleStatus')],
+    ['upgrade command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('upgradeCommand')],
+    ['rollback command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('rollbackCommand')],
+    ['backup command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('backupCommand')],
+    ['restore command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('restoreCommand')],
+    ['fresh-tenant dashboard mkdirSync guard', fs.readFileSync(path.join(ROOT, 'packages', 'core', 'src', 'dashboard-state.js'), 'utf8').includes('mkdirSync')],
+    ['ops deployments page updated', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'deployments', 'page.jsx'))],
+    // Phase 7: Security, CI, QA Gates
+    ['secret-audit script', fs.existsSync(path.join(ROOT, 'scripts', 'secret-audit.mjs'))],
+    ['generated-file-audit script', fs.existsSync(path.join(ROOT, 'scripts', 'generated-file-audit.mjs'))],
+    ['test-discovery-audit script', fs.existsSync(path.join(ROOT, 'scripts', 'test-discovery-audit.mjs'))],
+    ['openspec-task-audit script', fs.existsSync(path.join(ROOT, 'scripts', 'openspec-task-audit.mjs'))],
+    ['verify-v06 script', fs.existsSync(path.join(ROOT, 'scripts', 'verify-v06.mjs'))],
+    ['CI workflow', fs.existsSync(path.join(ROOT, '.github', 'workflows', 'ci.yml'))],
+    ['operator manual', fs.existsSync(path.join(ROOT, 'docs', 'OPERATOR-MANUAL.md'))],
+    ['security checklist', fs.existsSync(path.join(ROOT, 'docs', 'SECURITY-CHECKLIST.md'))],
+    ['CI QA gates doc', fs.existsSync(path.join(ROOT, 'docs', 'CI-QA-GATES.md'))],
+    ['phase 7 production hardening doc', fs.existsSync(path.join(ROOT, 'docs', 'PHASE-7-PRODUCTION-HARDENING.md'))],
+    ['billing export command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('billingExportCommand')],
+    ['handoff hermes env gitignored', fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8').includes('handoff/*/managed/hermes/env')],
+    ['.gitignore blocks handoff runtime envs', fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8').includes('handoff/*/managed/hermes/env')],
+    // Phase 9A: ICM factory, missionctl ICM commands, /api/icm/tree route
+    ['ICM factory workspace', fs.existsSync(path.join(ROOT, 'icm', 'workspaces', 'mission-os-client-factory', 'CONTEXT.md'))],
+    ['ICM factory stages (10)', (() => { const base = path.join(ROOT, 'icm', 'workspaces', 'mission-os-client-factory', 'stages'); return ['00_intake','01_tenant_profile','02_knowledge_ingestion','03_policy_and_approvals','04_agent_pack','05_asset_generation','06_ops_dashboard_setup','07_vps_deployment_plan','08_training_and_handoff','09_go_live_readiness'].every((s) => fs.existsSync(path.join(base, s, 'CONTEXT.md'))); })()],
+    ['ICM factory decision doc', fs.existsSync(path.join(ROOT, 'docs', 'ICM-FACTORY-DECISION.md'))],
+    ['missionctl icm init command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('icmInit')],
+    ['missionctl icm tree command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('icmTree')],
+    ['missionctl icm validate command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('icmValidate')],
+    ['/api/icm/tree route', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'api', 'icm', 'tree', 'route.js'))],
+    ['ops/icm deferred-state language', fs.readFileSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'icm', 'page.jsx'), 'utf8').includes('not initialized yet')],
+    // Phase 8: Demo offer handoff package
+    ['PNW nonprofit offer doc', fs.existsSync(path.join(ROOT, 'docs', 'PNW-NONPROFIT-OFFER.md'))],
+    ['managed agents as a service doc', fs.existsSync(path.join(ROOT, 'docs', 'MANAGED-AGENTS-AS-A-SERVICE.md'))],
+    ['sales demo flow doc', fs.existsSync(path.join(ROOT, 'docs', 'SALES-DEMO-FLOW.md'))],
+    ['onboarding 14-day launch doc', fs.existsSync(path.join(ROOT, 'docs', 'ONBOARDING-14-DAY-LAUNCH.md'))],
+    ['pricing doc (draft)', fs.existsSync(path.join(ROOT, 'docs', 'PRICING.md'))],
+    ['objections doc', fs.existsSync(path.join(ROOT, 'docs', 'OBJECTIONS.md'))],
+    ['legal safety notes doc', fs.existsSync(path.join(ROOT, 'docs', 'LEGAL-SAFETY-NOTES.md'))],
+    ['v0.7 final handoff doc', fs.existsSync(path.join(ROOT, 'docs', 'V0.7-FINAL-HANDOFF.md'))],
+    ['final release candidate doc', fs.existsSync(path.join(ROOT, 'docs', 'FINAL-RELEASE-CANDIDATE.md'))],
+    ['client demo script doc', fs.existsSync(path.join(ROOT, 'docs', 'CLIENT-DEMO-SCRIPT.md'))],
+    ['implementation checklist doc', fs.existsSync(path.join(ROOT, 'docs', 'IMPLEMENTATION-CHECKLIST.md'))],
+    // Phase 9A Gate 2: Hermes Agent Service API
+    ['Hermes agent service API doc', fs.existsSync(path.join(ROOT, 'docs', 'HERMES-AGENT-SERVICE-API.md'))],
+    ['Hermes ICM runtime doc', fs.existsSync(path.join(ROOT, 'docs', 'HERMES-ICM-RUNTIME.md'))],
+    ['Sovereign AI client stack doc', fs.existsSync(path.join(ROOT, 'docs', 'SOVEREIGN-AI-CLIENT-STACK.md'))],
+    ['agent-service core module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'agent-service.js'))],
+    ['/api/agent route mounted', fs.readFileSync(path.join(ROOT, 'services', 'mission-api', 'server.js'), 'utf8').includes('/api/agent')],
+    ['agent service index exists', fs.existsSync(path.join(ROOT, 'services', 'mission-api', 'src', 'agent', 'index.js'))],
+    ['agent service tests exist', fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'agent-service.test.js'))],
+    // Phase 9 Gate 3: Hostinger VPS staging specs
+    ['Hostinger Phase 9 staging doc', fs.existsSync(path.join(ROOT, 'docs', 'HOSTINGER-PHASE-9-STAGING.md'))],
+    ['VPS bootstrap runbook doc', fs.existsSync(path.join(ROOT, 'docs', 'VPS-BOOTSTRAP-RUNBOOK.md'))],
+    ['production env generation doc', fs.existsSync(path.join(ROOT, 'docs', 'PRODUCTION-ENV-GENERATION.md'))],
+    ['Caddy domain map doc', fs.existsSync(path.join(ROOT, 'docs', 'CADDY-DOMAIN-MAP.md'))],
+    ['Postgres migration runbook doc', fs.existsSync(path.join(ROOT, 'docs', 'POSTGRES-MIGRATION-RUNBOOK.md'))],
+    ['Phase 9 go-live gates doc', fs.existsSync(path.join(ROOT, 'docs', 'PHASE-9-GO-LIVE-GATES.md'))],
+    ['no live deployment claim in staging docs', !fs.readFileSync(path.join(ROOT, 'docs', 'HOSTINGER-PHASE-9-STAGING.md'), 'utf8').includes('live deployment is complete')],
   ];
-  const failed = checks.filter(([, ok]) => !ok);
+  const failed = checks.filter(([, ok, gated = true]) => !ok && gated);
+  const runtimeMissing = checks.filter(([, ok, gated = true]) => !ok && gated === false);
   console.table(checks.map(([name, ok]) => ({ check: name, status: ok ? 'ok' : 'missing' })));
   
+  const smokeStatus = failed.length === 0 ? 'passed' : 'failed';
   const eventType = failed.length === 0 ? 'SMOKE.PASSED' : 'SMOKE.FAILED';
-  emitEvent({ tenantId, type: eventType, actor: 'system', payload: { passed: checks.length - failed.length, failed: failed.length } });
+  emitEvent({ tenantId, type: eventType, actor: 'system', payload: { passed: checks.length - failed.length - runtimeMissing.length, failed: failed.length, runtimeMissing: runtimeMissing.length } });
+  recordSmokeResult({ tenantId, status: smokeStatus, checks: checks.map(([name, ok]) => ({ name, status: ok ? 'ok' : 'missing' })) });
   generateDashboardState(tenantId);
-  appendLog({ event: 'bundle.smoke', tenantId, passed: checks.length - failed.length, failed: failed.length });
+  appendLog({ event: 'bundle.smoke', tenantId, passed: checks.length - failed.length - runtimeMissing.length, failed: failed.length, runtimeMissing: runtimeMissing.length });
   
   if (failed.length) { console.log(JSON.stringify({ ok: false, tenantId, failed: failed.length, failedChecks: failed.map(([n]) => n) }, null, 2)); process.exit(1); }
-  console.log(JSON.stringify({ ok: true, tenantId, passed: checks.length, failed: 0 }, null, 2));
+  console.log(JSON.stringify({ ok: true, tenantId, passed: checks.length - runtimeMissing.length, failed: 0, runtimeMissing: runtimeMissing.map(([n]) => n) }, null, 2));
 }
 
 function bundleRelease(tenantId) {
@@ -586,6 +743,79 @@ function bundleRelease(tenantId) {
 
 function bundleDown(tenantId) {
   console.log(JSON.stringify({ ok: true, tenantId, message: 'Stub — run: docker compose -f docker-compose.managed.yml down' }, null, 2));
+}
+
+// ===================== v0.6 PHASE 6: Deployment Lifecycle =====================
+
+function bundleReleaseFull(tenantId) {
+  const outDir = path.join(BUNDLES, tenantId, 'managed');
+  if (!fs.existsSync(outDir)) throw new Error('No bundle found for ' + tenantId + '. Run: missionctl bundle up ' + tenantId + ' --dry-run');
+  const manifest = readJson(path.join(outDir, 'release-manifest.json'), {});
+  const version = manifest.version || '0.6.0';
+
+  const release = createDeploymentRelease({
+    tenantId,
+    version,
+    bundlePath: outDir,
+    manifestPath: path.join(outDir, 'release-manifest.json'),
+    createdBy: 'cli',
+    notes: 'Generated by missionctl bundle release'
+  });
+
+  manifest.released_at = new Date().toISOString();
+  manifest.status = 'released';
+  manifest.release_id = release.id;
+  writeJson(path.join(outDir, 'release-manifest.json'), manifest);
+
+  registerArtifact({
+    tenantId,
+    kind: 'release-manifest',
+    title: 'Release Manifest v' + version + ' for ' + tenantId,
+    storagePath: path.join(outDir, 'release-manifest.json')
+  });
+  generateDashboardState(tenantId);
+  appendLog({ event: 'bundle.release', tenantId, releaseId: release.id, version });
+  console.log(JSON.stringify({ ok: true, tenantId, releaseId: release.id, version, status: 'draft', note: 'Run: missionctl upgrade ' + tenantId + ' --release ' + release.id + ' to activate.' }, null, 2));
+}
+
+function upgradeCommand(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const releaseId = getFlag('--release');
+  if (!releaseId) throw new Error('--release <release-id> is required. Get a release id from: missionctl bundle release ' + tenantId);
+  const activated = activateDeploymentRelease({ tenantId, releaseId, actor: 'cli' });
+  generateDashboardState(tenantId);
+  appendLog({ event: 'upgrade', tenantId, releaseId, version: activated.version });
+  console.log(JSON.stringify({ ok: true, tenantId, releaseId, version: activated.version, status: 'active', activatedAt: activated.activated_at }, null, 2));
+}
+
+function rollbackCommand(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const targetId = getFlag('--to');
+  if (!targetId) throw new Error('--to <release-id> is required');
+  const releases = listDeploymentReleases({ tenantId });
+  const active = getActiveDeploymentRelease({ tenantId });
+  if (!active) throw new Error('No active release to roll back from for ' + tenantId);
+  const result = rollbackDeploymentRelease({ tenantId, releaseId: active.id, targetReleaseId: targetId, actor: 'cli' });
+  generateDashboardState(tenantId);
+  appendLog({ event: 'rollback', tenantId, from: active.id, to: targetId });
+  console.log(JSON.stringify({ ok: true, tenantId, rolledBack: result.current.id, restored: result.restored.id, restoredVersion: result.restored.version }, null, 2));
+}
+
+function backupCommand(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const notes = getFlag('--notes') || '';
+  const manifest = coreCreateBackup({ tenantId, notes, createdBy: 'cli' });
+  appendLog({ event: 'backup.created', tenantId, backupId: manifest.backup_id });
+  console.log(JSON.stringify({ ok: true, tenantId, backupId: manifest.backup_id, fileCount: manifest.file_count, checksum: manifest.checksum_sha256 }, null, 2));
+}
+
+function restoreCommand(slugOrBackupId) {
+  const tenantId = cleanTenantSlug(getFlag('--slug') || 'demo-pnw');
+  const backupId = getFlag('--backup') || slugOrBackupId;
+  if (!backupId) throw new Error('backup id is required. Use: missionctl restore --slug <tenant> --backup <backup-id>');
+  const result = coreRestoreBackup({ tenantId, backupId, createdBy: 'cli' });
+  appendLog({ event: 'restore.completed', tenantId, backupId });
+  console.log(JSON.stringify({ ok: true, tenantId, backupId, restoredFrom: result.restoredFrom }, null, 2));
 }
 
 function packGenerate(tenantId) {
@@ -769,6 +999,77 @@ function operatorKeyCommand(cmd, tenantId) {
   } else {
     throw new Error(`Unknown operator-key command: ${cmd}`);
   }
+}
+
+function modelCommand(cmd, sub, tenantId) {
+  if (cmd === 'budget' && sub === 'show') {
+    const budget = getModelBudget(tenantId);
+    const monthly = summarizeMonthlyUsage({ tenantId });
+    const status = evaluateBudgetStatus({ tenantId, monthToDateSpendUsd: monthly.totalCostUsd || 0 });
+    console.log(JSON.stringify({ ok: true, tenantId, budget, monthToDateSpendUsd: monthly.totalCostUsd || 0, status }, null, 2));
+  } else if (cmd === 'budget' && sub === 'set') {
+    const monthlyBudgetUsd = Number(getFlag('--amount'));
+    const warningThresholdPct = getFlag('--warning-pct') ? Number(getFlag('--warning-pct')) : undefined;
+    const hardBlockThresholdPct = getFlag('--hard-block-pct') ? Number(getFlag('--hard-block-pct')) : undefined;
+    const budget = setModelBudget({ tenantId, monthlyBudgetUsd, warningThresholdPct, hardBlockThresholdPct, actor: 'cli' });
+    console.log(JSON.stringify({ ok: true, tenantId, budget }, null, 2));
+  } else if (cmd === 'usage' && sub === 'summary') {
+    const month = getFlag('--month');
+    const monthly = summarizeMonthlyUsage({ tenantId, month: month || undefined });
+    const bySurface = summarizeUsageBySurface({ tenantId, month: month || undefined });
+    console.log(JSON.stringify({ ok: true, tenantId, monthly, bySurface: bySurface.surfaces }, null, 2));
+  } else if (cmd === 'traces' && sub === 'list') {
+    const surface = getFlag('--surface');
+    const traces = getTraceLinks({ tenantId, surface: surface || undefined });
+    console.log(JSON.stringify({ ok: true, tenantId, traces }, null, 2));
+  } else {
+    throw new Error(`Unknown model command: ${cmd} ${sub || ''}`.trim());
+  }
+}
+
+function billingExportCommand(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const month = getFlag('--month');
+  const format = getFlag('--format') || 'json';
+
+  const monthly = summarizeMonthlyUsage({ tenantId, month: month || undefined });
+  const bySurface = summarizeUsageBySurface({ tenantId, month: month || undefined });
+  const artifacts = getArtifacts({ tenantId });
+
+  const exportData = {
+    tenant_id: tenantId,
+    export_period: month || new Date().toISOString().substring(0, 7),
+    generated_at: new Date().toISOString(),
+    model_usage: {
+      total_cost_usd: monthly.totalCostUsd || 0,
+      total_tokens: monthly.totalTokens || 0,
+      total_calls: monthly.totalCalls || 0,
+      by_surface: bySurface.surfaces || [],
+    },
+    artifact_counts: {
+      total: artifacts.length,
+      by_kind: artifacts.reduce((acc, a) => { acc[a.kind] = (acc[a.kind] || 0) + 1; return acc; }, {}),
+    },
+  };
+
+  if (format === 'csv') {
+    const lines = [
+      'tenant_id,period,total_cost_usd,total_tokens,total_calls,artifact_count',
+      [
+        exportData.tenant_id,
+        exportData.export_period,
+        exportData.model_usage.total_cost_usd,
+        exportData.model_usage.total_tokens,
+        exportData.model_usage.total_calls,
+        exportData.artifact_counts.total,
+      ].join(','),
+    ];
+    console.log(lines.join('\n'));
+  } else {
+    console.log(JSON.stringify({ ok: true, ...exportData }, null, 2));
+  }
+
+  appendLog({ event: 'billing.export', tenantId, month: exportData.export_period, format });
 }
 
 function copyHermesTemplates(tenantId, outDir) {

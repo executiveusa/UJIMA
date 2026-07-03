@@ -55,6 +55,38 @@ Every work session logs:
 | Tests passed | 61/61 (all tests pass) |
 | Decisions | D6 (Core platform state layer implemented, file-backed fallbacks + database migrations ready) |
 
+### Session 3 — 2026-06-30 (Phase 5: Ops Dashboard UI)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-06-30-003 |
+| Date | 2026-06-30T18:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-4-6 |
+| MCPs used | github |
+| Files created | `apps/site/lib/ops-tenant.js`, `apps/site/lib/opsApi.js`, `apps/site/app/api/ops/{dashboard-state,events,artifacts,managed-agents,managed-agents/[id],budgets,model-usage-summary,traces}/route.js`, `apps/site/components/MissionOsOverview.jsx`, `apps/site/app/ops/{agents,agents/[id],artifacts,events,budgets,health,deployments,openwebui}/page.jsx`, `apps/site/tests/{ops-routes-exist,ops-api-data,ops-no-operator-keys-in-client}.test.js`, `docs/OPS-DASHBOARD.md` |
+| Files modified | `apps/site/app/ops/page.jsx`, `apps/site/components/OpsShell.jsx`, `vitest.config.js`, `missionctl/missionctl.mjs`, `HANDOFF.md`, `openspec/changes/mission-os-v0-6-managed-hermes-bundle/tasks.md` |
+| Tests written | 53 new tests across 3 files |
+| Tests passed | 189/189 (full suite) |
+| Beads written | 0 |
+| Decisions | Bypass both legacy session-JWT auth and Operator API key auth via a same-origin server-side `/api/ops/*` proxy layer reading `@asc3nd/core/*` directly, since the two existing auth schemes do not interoperate and exposing an operator key to client JS is explicitly forbidden; extend `/ops` additively rather than replace the pre-existing Today cockpit |
+
+### Session 4 — 2026-07-01 (Phase 6: Managed Deployment Lifecycle)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-07-01-004 |
+| Date | 2026-07-01T03:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-4-6 |
+| MCPs used | github |
+| Files created | `packages/core/src/deployment-releases.js`, `packages/core/src/deployment-health.js`, `packages/core/src/deployment-backup.js`, `packages/core/tests/deployment-releases.test.js`, `packages/core/tests/deployment-health.test.js`, `packages/core/tests/deployment-backup.test.js`, `packages/core/tests/fresh-tenant.test.js`, `db/migrations/0006_v06_deployment_lifecycle.sql`, `services/mission-api/src/operator/deployments.js`, `services/mission-api/src/operator/backups.js`, `apps/site/app/api/ops/deployments/route.js`, `apps/site/tests/ops-deployments.test.js`, `docs/DEPLOYMENT-LIFECYCLE.md`, `docs/BACKUP-RESTORE.md`, `docs/RELEASE-MANIFEST.md` |
+| Files modified | `packages/core/src/dashboard-state.js` (ENOENT fix), `packages/core/package.json` (+3 exports), `services/mission-api/src/operator/index.js` (+deployments/backups routers), `apps/site/app/ops/deployments/page.jsx` (placeholder → real data), `missionctl/missionctl.mjs` (+5 commands, smoke extended 44→57 checks), `HANDOFF.md`, `docs/AGENT-PROVENANCE.md`, `openspec/changes/mission-os-v0-6-managed-hermes-bundle/tasks.md` |
+| Tests written | 81 new tests across 5 files |
+| Tests passed | 270/270 |
+| Beads written | 0 |
+| Decisions | Fixed pre-existing dashboard-state ENOENT via mkdirSync guard in core module (not test workaround); used @asc3nd/core package imports in operator routes (consistent with Phase 3/4 pattern); backup/restore is local/file-backed with tenant-mismatch and path-traversal hard blocks; /ops/deployments upgraded from static placeholder to live data showing releases, smoke history, backups |
+
 ## Rules
 
 1. Every session must be logged here before ending.
@@ -62,3 +94,68 @@ Every work session logs:
 3. If Atomic is not installed, this file is the authoritative provenance record.
 4. Provenance is never deleted — append only.
 5. Agent identity is the tool/builder, not a persona name.
+
+### Session 4b — 2026-07-01 (Phase 6 Hotfix: Remove tracked handoff env files)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-07-01-004b |
+| Date | 2026-07-01T06:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-4-6 |
+| MCPs used | github |
+| Files created | none |
+| Files modified | `.gitignore` (strengthened handoff env rules), `handoff/demo-pnw/managed/Caddyfile.managed` (reverted to `demo-pnw.org` placeholder), `HANDOFF.md` (hotfix note) |
+| Files removed from tracking | `handoff/demo-pnw/managed/hermes/env`, `handoff/demo-pnw/managed/langfuse/env`, `handoff/demo-pnw/managed/litellm/env`, `handoff/demo-pnw/managed/open-webui/env`, `handoff/demo-pnw/managed/release-manifest.json` |
+| Tests written | 0 |
+| Tests passed | 270/270 |
+| Beads written | 0 |
+| Decisions | Architect ruling: no history rewrite; treat keys from commit 500c13b and earlier as non-production/invalid; `git rm --cached` untracked files, strengthened `.gitignore` with explicit per-service rules; files remain on local disk (gitignored) but not in HEAD |
+
+### Session 5 — 2026-07-01 (Phase 7: Security CI QA Gates Docs)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-07-01-005 |
+| Date | 2026-07-01T18:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-4-6 |
+| MCPs used | github |
+| Files created | `scripts/secret-audit.mjs`, `scripts/generated-file-audit.mjs`, `scripts/test-discovery-audit.mjs`, `scripts/openspec-task-audit.mjs`, `scripts/verify-v06.mjs`, `.github/workflows/ci.yml`, `packages/core/tests/phase7-security-gates.test.js`, `docs/SECURITY-CHECKLIST.md`, `docs/CI-QA-GATES.md`, `docs/PHASE-7-PRODUCTION-HARDENING.md`, `docs/OPERATOR-MANUAL.md` |
+| Files modified | `missionctl/missionctl.mjs` (+billingExportCommand, bundleSmoke 57→72 checks, +billing route, +help text), `package.json` (+5 npm scripts), `services/mission-api/tests/operator-api.test.js` (budget test isolation fix), `openspec/changes/mission-os-v0-6-managed-hermes-bundle/tasks.md` (P3-2 and P3-3 marked complete), `HANDOFF.md`, `docs/AGENT-PROVENANCE.md` |
+| Tests written | 49 new tests in `packages/core/tests/phase7-security-gates.test.js` |
+| Tests passed | 319/319 |
+| Beads written | 0 |
+| Decisions | Budget test state contamination (from prior missionctl validation run setting a low budget) fixed by isolating DATA_DIR in beforeEach/afterEach rather than resetting real mission-data; secret-audit.mjs uses isPlaceholder() check and skips comment/assertion lines to avoid false positives in test and template files; bundleSmoke reads .gitignore content (not execSync git ls-files) for the gitignore-rule checks to avoid ES module require() error; CI runs with no external secrets (all checks are local/dry-run) |
+
+### Session 6 — 2026-07-02 (Phase 8: Final Demo Offer Handoff Package)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-07-02-006 |
+| Date | 2026-07-02T19:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-4-6 |
+| MCPs used | github |
+| Files created | `docs/PNW-NONPROFIT-OFFER.md`, `docs/MANAGED-AGENTS-AS-A-SERVICE.md`, `docs/SALES-DEMO-FLOW.md`, `docs/ONBOARDING-14-DAY-LAUNCH.md`, `docs/PRICING.md`, `docs/OBJECTIONS.md`, `docs/LEGAL-SAFETY-NOTES.md`, `docs/V0.7-FINAL-HANDOFF.md`, `docs/FINAL-RELEASE-CANDIDATE.md`, `docs/CLIENT-DEMO-SCRIPT.md`, `docs/IMPLEMENTATION-CHECKLIST.md`, `packages/core/tests/phase8-final-handoff.test.js` |
+| Files modified | `missionctl/missionctl.mjs` (bundleSmoke 70→81 checks, +11 Phase 8 checks), `docs/AGENT-PROVENANCE.md`, `HANDOFF.md`, `openspec/changes/mission-os-v0-6-managed-hermes-bundle/tasks.md` |
+| Tests written | 203 new tests in `packages/core/tests/phase8-final-handoff.test.js` |
+| Tests passed | 522/522 |
+| Beads written | 0 |
+| Decisions | No GLM Phase 8 partial work existed locally (repo was clean at accepted remote main 49b8674); recovered by starting from accepted main and creating fresh phase/final-demo-offer-handoff branch; all docs written from scratch with no stubs, no fake guarantees, no placeholder text; Judge review embedded in FINAL-RELEASE-CANDIDATE.md (PASS verdict); bundleSmoke extended with 11 Phase 8 existence checks |
+
+### Session 7 — 2026-07-03 (Phase 9 Gate 3: Hostinger VPS Staging Specs)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-07-03-007 |
+| Date | 2026-07-03T00:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-5 |
+| MCPs used | github |
+| Files created | `docs/HOSTINGER-PHASE-9-STAGING.md`, `docs/VPS-BOOTSTRAP-RUNBOOK.md`, `docs/PRODUCTION-ENV-GENERATION.md`, `docs/CADDY-DOMAIN-MAP.md`, `docs/POSTGRES-MIGRATION-RUNBOOK.md`, `docs/PHASE-9-GO-LIVE-GATES.md`, `packages/core/tests/phase9-vps-staging-docs.test.js` |
+| Files modified | `HOSTINGER-VPS-HANDOFF.md`, `docs/V0.7-FINAL-HANDOFF.md`, `docs/FINAL-RELEASE-CANDIDATE.md`, `docs/PRODUCTION-GAPS.md`, `docs/SOVEREIGN-AI-CLIENT-STACK.md`, `docs/SECURITY-CHECKLIST.md`, `docs/AGENT-PROVENANCE.md`, `openspec/changes/mission-os-v0-6-managed-hermes-bundle/tasks.md`, `missionctl/missionctl.mjs` (bundleSmoke extended with Phase 9 Gate 3 doc-existence checks), `HANDOFF.md` |
+| Tests written | See `packages/core/tests/phase9-vps-staging-docs.test.js` |
+| Tests passed | See final Gate 3 report in the pull request description |
+| Beads written | 0 |
+| Decisions | Gate 3 is specification/runbook only — no VPS provisioned, no DNS changed, no Vercel changed, no real secrets generated or committed, no live external calls; `docs/POSTGRES-MIGRATION-RUNBOOK.md` states plainly that `STORAGE_MODE=postgres` does not yet switch the application's read/write path off `JsonTenantStore`, and that Postgres RLS policies do not yet exist — both are honest gaps, not implemented features; all live VPS commands in `docs/VPS-BOOTSTRAP-RUNBOOK.md` are marked `LIVE COMMAND — DO NOT RUN UNTIL HUMAN APPROVES`; branch used matches the harness-designated session branch (`claude/gate-2-architect-review-xloule`) rather than the `phase9/hostinger-vps-staging-specs` name suggested in the task text, per the "never push to a different branch without explicit permission" rule |
