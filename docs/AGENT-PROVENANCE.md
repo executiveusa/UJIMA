@@ -143,3 +143,19 @@ Every work session logs:
 | Tests passed | 522/522 |
 | Beads written | 0 |
 | Decisions | No GLM Phase 8 partial work existed locally (repo was clean at accepted remote main 49b8674); recovered by starting from accepted main and creating fresh phase/final-demo-offer-handoff branch; all docs written from scratch with no stubs, no fake guarantees, no placeholder text; Judge review embedded in FINAL-RELEASE-CANDIDATE.md (PASS verdict); bundleSmoke extended with 11 Phase 8 existence checks |
+
+### Session 7 — 2026-07-03 (Phase 9 Gate 3: Hostinger VPS Staging Specs)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-07-03-007 |
+| Date | 2026-07-03T00:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-5 |
+| MCPs used | github |
+| Files created | `docs/HOSTINGER-PHASE-9-STAGING.md`, `docs/VPS-BOOTSTRAP-RUNBOOK.md`, `docs/PRODUCTION-ENV-GENERATION.md`, `docs/CADDY-DOMAIN-MAP.md`, `docs/POSTGRES-MIGRATION-RUNBOOK.md`, `docs/PHASE-9-GO-LIVE-GATES.md`, `packages/core/tests/phase9-vps-staging-docs.test.js` |
+| Files modified | `HOSTINGER-VPS-HANDOFF.md`, `docs/V0.7-FINAL-HANDOFF.md`, `docs/FINAL-RELEASE-CANDIDATE.md`, `docs/PRODUCTION-GAPS.md`, `docs/SOVEREIGN-AI-CLIENT-STACK.md`, `docs/SECURITY-CHECKLIST.md`, `docs/AGENT-PROVENANCE.md`, `openspec/changes/mission-os-v0-6-managed-hermes-bundle/tasks.md`, `missionctl/missionctl.mjs` (bundleSmoke extended with Phase 9 Gate 3 doc-existence checks), `HANDOFF.md` |
+| Tests written | See `packages/core/tests/phase9-vps-staging-docs.test.js` |
+| Tests passed | See final Gate 3 report in the pull request description |
+| Beads written | 0 |
+| Decisions | Gate 3 is specification/runbook only — no VPS provisioned, no DNS changed, no Vercel changed, no real secrets generated or committed, no live external calls; `docs/POSTGRES-MIGRATION-RUNBOOK.md` states plainly that `STORAGE_MODE=postgres` does not yet switch the application's read/write path off `JsonTenantStore`, and that Postgres RLS policies do not yet exist — both are honest gaps, not implemented features; all live VPS commands in `docs/VPS-BOOTSTRAP-RUNBOOK.md` are marked `LIVE COMMAND — DO NOT RUN UNTIL HUMAN APPROVES`; branch used matches the harness-designated session branch (`claude/gate-2-architect-review-xloule`) rather than the `phase9/hostinger-vps-staging-specs` name suggested in the task text, per the "never push to a different branch without explicit permission" rule |

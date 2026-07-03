@@ -326,3 +326,45 @@ Phase 8 created the complete demo and handoff document package for Mission OS. 5
 - Live Open WebUI workspace
 - Postiz scheduling
 - Remote backup storage
+
+---
+
+## Phase 9A Gate 1 — ICM Client-Deployment Factory (2026-07-02)
+
+**Status: COMPLETE** — see PR #3 (merged to main).
+
+## Phase 9A Gate 2 — Hermes Agent Service API (2026-07-02)
+
+**Status: COMPLETE** — see PR #4 (merged to main, Architect-accepted). Added `docs/HERMES-AGENT-SERVICE-API.md`, `docs/HERMES-ICM-RUNTIME.md`, `docs/SOVEREIGN-AI-CLIENT-STACK.md`, dry-run `packages/core/src/agent-service.js`, `services/mission-api/src/agent/*`, `/api/agent` route mounting. Live Hermes execution remains deferred.
+
+## Phase 9 Gate 3 — Hostinger VPS Staging Specs (2026-07-03)
+
+**Status: COMPLETE**
+
+Gate 3 is specification and runbook only — no live VPS deployment occurred.
+
+### What was built
+
+| Deliverable | File |
+|---|---|
+| Staging topology and domain model | `docs/HOSTINGER-PHASE-9-STAGING.md` |
+| VPS bootstrap runbook (19 steps, live commands gated) | `docs/VPS-BOOTSTRAP-RUNBOOK.md` |
+| Credential generation and rotation | `docs/PRODUCTION-ENV-GENERATION.md` |
+| Caddy domain map (public/protected/internal routes) | `docs/CADDY-DOMAIN-MAP.md` |
+| Postgres migration runbook (honest current-state) | `docs/POSTGRES-MIGRATION-RUNBOOK.md` |
+| Go-live gate checklist (Gates A–N) | `docs/PHASE-9-GO-LIVE-GATES.md` |
+| Gate 3 test suite | `packages/core/tests/phase9-vps-staging-docs.test.js` |
+
+### Honesty notes from this gate
+
+- `docs/POSTGRES-MIGRATION-RUNBOOK.md` states plainly that `STORAGE_MODE=postgres` does not yet switch the application's read/write path off the file-backed `JsonTenantStore`, and that Postgres Row-Level Security policies do not yet exist. Both are documented as open gaps, not implemented features.
+- All live commands in `docs/VPS-BOOTSTRAP-RUNBOOK.md` and `docs/CADDY-DOMAIN-MAP.md` are marked `LIVE COMMAND — DO NOT RUN UNTIL HUMAN APPROVES`.
+- No VPS was provisioned, no DNS changed, no Vercel configuration changed, no real secrets generated or committed, no live external service called.
+
+### What remains deferred to Phase 9B
+
+- Live VPS provisioning and `docker compose up -d` execution
+- DNS + TLS issuance
+- Postgres runtime wiring and Row-Level Security implementation
+- Live Hermes, LiteLLM, Langfuse, and Open WebUI execution
+- Backup/restore drill against a real, live environment

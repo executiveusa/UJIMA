@@ -1,5 +1,7 @@
 # Hostinger VPS Handoff — Mission OS v0.5
 
+**Phase 9 staging note:** This document covers the v0.5 single-tenant handoff flow. For the v0.6 managed bundle (Hermes, LiteLLM, Langfuse, Open WebUI) staging plan, read `docs/HOSTINGER-PHASE-9-STAGING.md`, `docs/VPS-BOOTSTRAP-RUNBOOK.md`, `docs/PRODUCTION-ENV-GENERATION.md`, `docs/CADDY-DOMAIN-MAP.md`, `docs/POSTGRES-MIGRATION-RUNBOOK.md`, and `docs/PHASE-9-GO-LIVE-GATES.md` first. Gate 3 is specification/runbook only — no live VPS deployment has occurred under Gate 3.
+
 Tenant: **asc3nd**  
 Organization: **Asc3nd Collective**  
 Public site: **https://asc3nd.org**  
