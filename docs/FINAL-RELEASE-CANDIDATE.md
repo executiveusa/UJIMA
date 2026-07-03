@@ -18,7 +18,7 @@
 | Phase 5 | Ops dashboard UI | Complete | Pass | — |
 | Phase 6 | Managed deployment lifecycle | Complete | 270/270 at merge | — |
 | Phase 6 hotfix | Remove tracked handoff env files | Complete | Pass | Keys from 500c13b treated as invalid |
-| Phase 7 | Security gates, CI, QA audits, docs | Complete | 319/319 | — |
+| Phase 7 | Security gates, CI, QA audits, docs | Complete | 319/319 at Phase 7 merge | — |
 | Phase 7 verify/fix | GLM fix: Windows path bug, smoke check updates | Complete | Pass | 623e949 |
 | Phase 8 | Demo package, offer docs, sales materials, final handoff | Complete | Pass | This release |
 
@@ -28,7 +28,7 @@
 
 | Gate | Result |
 |---|---|
-| `npm test` | Pass — 319/319 |
+| `npm test` | Pass — 522/522 |
 | `npm run build` | Pass |
 | `node missionctl/missionctl.mjs doctor` | Pass |
 | `node scripts/secret-audit.mjs` | Pass — 0 findings |
@@ -36,7 +36,7 @@
 | `node scripts/test-discovery-audit.mjs` | Pass — 0 orphans |
 | `node scripts/openspec-task-audit.mjs` | Pass — 0 blocked tasks |
 | `node scripts/verify-v06.mjs` | Pass — 8/8 gates |
-| `bundle smoke demo-pnw --dry-run` | Pass — 70/70 checks |
+| `bundle smoke demo-pnw --dry-run` | Pass — 81/81 checks |
 | `git ls-files` — no handoff runtime env files | Clean |
 
 ---
@@ -71,7 +71,7 @@
 | Model budgets (`/ops/budgets`) | Yes | — |
 | Deployment lifecycle (`/ops/deployments`) | Yes | — |
 | `missionctl doctor` | Yes | — |
-| `missionctl bundle smoke --dry-run` | Yes | Shows 70/70 |
+| `missionctl bundle smoke --dry-run` | Yes | Shows 81/81 |
 | `missionctl billing export` | Yes | Shows clean JSON |
 | `scripts/verify-v06.mjs` | Yes | Shows 8/8 gates |
 | Secret audit | Yes | Shows 0 findings |
@@ -123,7 +123,7 @@
 The Phase 8 build is complete and correct for its stated scope: a demo-ready, security-gated, fully-documented control plane.
 
 What ships:
-- All 319 tests pass
+- All 522 tests pass
 - All security gates clean
 - Complete ops dashboard functional in dry-run
 - Full deployment lifecycle tested in dry-run
