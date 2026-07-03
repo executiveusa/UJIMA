@@ -4,7 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { cleanTenantSlug, createPublicKey, createSecretKey, defaultTenantProfile, tenantFrontendConfig } from '../packages/core/src/tenant.js';
-import { ensureIcmWorkspace, runIcmStage } from '../packages/core/src/icm.js';
+import { ensureIcmWorkspace, runIcmStage, listIcmTree, validateIcmWorkspace } from '../packages/core/src/icm.js';
 import { emitEvent } from '../packages/core/src/events.js';
 import { registerArtifact } from '../packages/core/src/artifacts.js';
 import { provisionManagedAgent, updateAgentHealth } from '../packages/core/src/managed-agents.js';
@@ -47,6 +47,9 @@ async function main() {
   if (group === 'restore') return restoreCommand(cmd || value || getFlag('--file') || getFlag('--backup'));
   if (group === 'upgrade') return upgradeCommand(cmd || value || getFlag('--slug') || 'demo-pnw');
   if (group === 'rollback') return rollbackCommand(cmd || value || getFlag('--slug') || 'demo-pnw');
+  if (group === 'icm' && cmd === 'init') return icmInit(value || getFlag('--slug') || 'asc3nd');
+  if (group === 'icm' && cmd === 'tree') return icmTree(value || getFlag('--slug') || 'asc3nd');
+  if (group === 'icm' && cmd === 'validate') return icmValidate(value || getFlag('--slug') || 'asc3nd');
   if (group === 'icm' && cmd === 'run') return icmRun(value || getFlag('--slug') || 'asc3nd', args[3] || getFlag('--stage'));
   // v0.6 managed bundle commands
   if (group === 'bundle') return bundleCommand(cmd, value || getFlag('--slug') || 'demo-pnw');
@@ -64,7 +67,29 @@ async function main() {
 }
 
 function help() {
-  console.log(`Mission OS control plane v0.6\n\nCommands:\n\n  -- v0.5 (existing) --\n  missionctl doctor\n  missionctl tenant create <slug> --org "Org Name" --region "Seattle" --domain "https://client.org"\n  missionctl tenant keys <slug>\n  missionctl frontend scaffold <slug>\n  missionctl hostinger handoff <slug> --domain "client.org" --api-domain "api.client.org" --email "admin@client.org" --vps-ip "1.2.3.4"\n  missionctl smoke <slug>\n  missionctl backup <slug>\n  missionctl restore <backup-id> [--slug <tenant>]\n  missionctl upgrade <slug> --release <release-id>\n  missionctl rollback <slug> --to <release-id>\n  missionctl icm run <slug> <stage>\n\n  -- v0.6 managed bundle --\n  missionctl bundle up <slug> [--dry-run]\n  missionctl bundle status <slug>\n  missionctl bundle smoke <slug> [--dry-run]\n  missionctl bundle release <slug>\n  missionctl bundle down <slug>\n\n  missionctl pack generate <slug>\n  missionctl pack validate <slug>\n  missionctl pack publish <slug>\n\n  missionctl hermes provision <slug>\n  missionctl hermes health <slug>\n\n  missionctl litellm sync <slug>\n  missionctl langfuse sync <slug>\n  missionctl openwebui sync <slug>\n\n  -- v0.6 model gateway / observability (Phase 4) --\n  missionctl model budget show <slug>\n  missionctl model budget set <slug> --amount 100 [--warning-pct 0.8] [--hard-block-pct 1.0]\n  missionctl model usage summary <slug> [--month 2026-06]\n  missionctl model traces list <slug> [--surface comms]\n\n  -- v0.7 billing / export --\n  missionctl billing export <slug> [--month 2026-06] [--format json|csv]\n`);
+  console.log(`Mission OS control plane v0.6\n\nCommands:\n\n  -- v0.5 (existing) --\n  missionctl doctor\n  missionctl tenant create <slug> --org "Org Name" --region "Seattle" --domain "https://client.org"\n  missionctl tenant keys <slug>\n  missionctl frontend scaffold <slug>\n  missionctl hostinger handoff <slug> --domain "client.org" --api-domain "api.client.org" --email "admin@client.org" --vps-ip "1.2.3.4"\n  missionctl smoke <slug>\n  missionctl backup <slug>\n  missionctl restore <backup-id> [--slug <tenant>]\n  missionctl upgrade <slug> --release <release-id>\n  missionctl rollback <slug> --to <release-id>\n  missionctl icm init <slug> [--org "Org Name"]\n  missionctl icm tree <slug>\n  missionctl icm validate <slug>\n  missionctl icm run <slug> <stage>\n\n  -- v0.6 managed bundle --\n  missionctl bundle up <slug> [--dry-run]\n  missionctl bundle status <slug>\n  missionctl bundle smoke <slug> [--dry-run]\n  missionctl bundle release <slug>\n  missionctl bundle down <slug>\n\n  missionctl pack generate <slug>\n  missionctl pack validate <slug>\n  missionctl pack publish <slug>\n\n  missionctl hermes provision <slug>\n  missionctl hermes health <slug>\n\n  missionctl litellm sync <slug>\n  missionctl langfuse sync <slug>\n  missionctl openwebui sync <slug>\n\n  -- v0.6 model gateway / observability (Phase 4) --\n  missionctl model budget show <slug>\n  missionctl model budget set <slug> --amount 100 [--warning-pct 0.8] [--hard-block-pct 1.0]\n  missionctl model usage summary <slug> [--month 2026-06]\n  missionctl model traces list <slug> [--surface comms]\n\n  -- v0.7 billing / export --\n  missionctl billing export <slug> [--month 2026-06] [--format json|csv]\n`);
+}
+
+function icmInit(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const orgName = getFlag('--org') || titleCase(tenantId);
+  const root = ensureIcmWorkspace({ base: ICM_ROOT, tenantId, orgName });
+  appendLog({ event: 'icm.init', tenantId, root });
+  console.log(JSON.stringify({ ok: true, tenantId, root, stages: 8 }, null, 2));
+}
+
+function icmTree(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const tree = listIcmTree({ base: ICM_ROOT, tenantId });
+  console.log(JSON.stringify({ ok: true, tenantId, tree, count: tree.length }, null, 2));
+}
+
+function icmValidate(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const result = validateIcmWorkspace({ base: ICM_ROOT, tenantId });
+  console.table(result.stages.map((s) => ({ stage: s.stage, exists: s.exists ? 'ok' : 'missing', 'CONTEXT.md': s.hasContext ? 'ok' : 'missing' })));
+  console.log(JSON.stringify({ ok: result.ok, tenantId, errors: result.errors }, null, 2));
+  if (!result.ok) process.exit(1);
 }
 
 function icmRun(slugInput, stage) {
@@ -653,6 +678,15 @@ function bundleSmoke(tenantId) {
     ['billing export command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('billingExportCommand')],
     ['handoff hermes env gitignored', fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8').includes('handoff/*/managed/hermes/env')],
     ['.gitignore blocks handoff runtime envs', fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8').includes('handoff/*/managed/hermes/env')],
+    // Phase 9A: ICM factory, missionctl ICM commands, /api/icm/tree route
+    ['ICM factory workspace', fs.existsSync(path.join(ROOT, 'icm', 'workspaces', 'mission-os-client-factory', 'CONTEXT.md'))],
+    ['ICM factory stages (10)', (() => { const base = path.join(ROOT, 'icm', 'workspaces', 'mission-os-client-factory', 'stages'); return ['00_intake','01_tenant_profile','02_knowledge_ingestion','03_policy_and_approvals','04_agent_pack','05_asset_generation','06_ops_dashboard_setup','07_vps_deployment_plan','08_training_and_handoff','09_go_live_readiness'].every((s) => fs.existsSync(path.join(base, s, 'CONTEXT.md'))); })()],
+    ['ICM factory decision doc', fs.existsSync(path.join(ROOT, 'docs', 'ICM-FACTORY-DECISION.md'))],
+    ['missionctl icm init command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('icmInit')],
+    ['missionctl icm tree command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('icmTree')],
+    ['missionctl icm validate command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('icmValidate')],
+    ['/api/icm/tree route', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'api', 'icm', 'tree', 'route.js'))],
+    ['ops/icm deferred-state language', fs.readFileSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'icm', 'page.jsx'), 'utf8').includes('not initialized yet')],
     // Phase 8: Demo offer handoff package
     ['PNW nonprofit offer doc', fs.existsSync(path.join(ROOT, 'docs', 'PNW-NONPROFIT-OFFER.md'))],
     ['managed agents as a service doc', fs.existsSync(path.join(ROOT, 'docs', 'MANAGED-AGENTS-AS-A-SERVICE.md'))],

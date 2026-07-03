@@ -14,6 +14,19 @@ export const stageDefinitions = [
   ['08_workspace_learning', 'Convert repeated human edits into source-level improvements.']
 ];
 
+export const factoryStageDefinitions = [
+  ['00_intake', 'Collect client discovery information before building anything.'],
+  ['01_tenant_profile', 'Generate tenant slug, create tenant record, populate _config files.'],
+  ['02_knowledge_ingestion', 'Upload and distill client documents into stable ICM reference config.'],
+  ['03_policy_and_approvals', 'Define named approvers and org-specific red/orange action policy.'],
+  ['04_agent_pack', 'Generate and validate the tenant agent pack with missionctl.'],
+  ['05_asset_generation', 'Generate managed bundle, provision Hermes, pass bundle smoke.'],
+  ['06_ops_dashboard_setup', 'Create operator key, verify /ops dashboard reads tenant state.'],
+  ['07_vps_deployment_plan', 'Write VPS deployment plan, DNS plan, and secret inventory.'],
+  ['08_training_and_handoff', 'Create client training guide and operator handoff checklist.'],
+  ['09_go_live_readiness', 'Final gate: full validation sequence, both sign-offs required.']
+];
+
 export function tenantRoot(base, tenantId) {
   assertTenantBoundary(tenantId);
   return path.join(base, 'tenants', tenantId);
@@ -185,4 +198,34 @@ export function runIcmStage({ base = 'icm', tenantId = 'asc3nd', stage, result =
   }
 
   return { stage, tenantId, outDir, artifacts, context };
+}
+
+export function validateIcmWorkspace({ base = 'icm', tenantId = 'asc3nd' } = {}) {
+  assertTenantBoundary(tenantId);
+  const root = tenantRoot(base, tenantId);
+  const errors = [];
+
+  if (!fs.existsSync(root)) {
+    return { ok: false, tenantId, errors: [`workspace missing: ${root}`], stages: [] };
+  }
+
+  const requiredRootFiles = ['AGENT.md', 'CONTEXT.md'];
+  for (const f of requiredRootFiles) {
+    if (!fs.existsSync(path.join(root, f))) errors.push(`missing root file: ${f}`);
+  }
+
+  if (!fs.existsSync(path.join(root, '_config'))) errors.push('missing _config/ directory');
+
+  const stageResults = [];
+  for (const [stage] of stageDefinitions) {
+    const stageDir = path.join(root, 'stages', stage);
+    const contextFile = path.join(stageDir, 'CONTEXT.md');
+    const exists = fs.existsSync(stageDir);
+    const hasContext = fs.existsSync(contextFile);
+    if (!exists) errors.push(`missing stage directory: stages/${stage}`);
+    else if (!hasContext) errors.push(`missing CONTEXT.md: stages/${stage}/CONTEXT.md`);
+    stageResults.push({ stage, exists, hasContext });
+  }
+
+  return { ok: errors.length === 0, tenantId, errors, stages: stageResults };
 }
