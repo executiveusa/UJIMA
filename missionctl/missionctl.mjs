@@ -715,6 +715,10 @@ function bundleSmoke(tenantId) {
     ['Postgres migration runbook doc', fs.existsSync(path.join(ROOT, 'docs', 'POSTGRES-MIGRATION-RUNBOOK.md'))],
     ['Phase 9 go-live gates doc', fs.existsSync(path.join(ROOT, 'docs', 'PHASE-9-GO-LIVE-GATES.md'))],
     ['no live deployment claim in staging docs', !fs.readFileSync(path.join(ROOT, 'docs', 'HOSTINGER-PHASE-9-STAGING.md'), 'utf8').includes('live deployment is complete')],
+    // Phase 9 Gate 4A: Ops Cockpit UX Audit
+    ['ops cockpit build triage doc', fs.existsSync(path.join(ROOT, 'docs', 'OPS-COCKPIT-BUILD-TRIAGE.md'))],
+    ['ops cockpit usability audit doc', fs.existsSync(path.join(ROOT, 'docs', 'OPS-COCKPIT-USABILITY-AUDIT.md'))],
+    ['ops cockpit design polish spec doc', fs.existsSync(path.join(ROOT, 'docs', 'OPS-COCKPIT-DESIGN-POLISH-SPEC.md'))],
   ];
   const failed = checks.filter(([, ok, gated = true]) => !ok && gated);
   const runtimeMissing = checks.filter(([, ok, gated = true]) => !ok && gated === false);
