@@ -33,6 +33,7 @@
     "./openwebui-bootstrap": "./src/openwebui-bootstrap.js",
     "./deployment-releases": "./src/deployment-releases.js",
     "./deployment-health": "./src/deployment-health.js",
-    "./deployment-backup": "./src/deployment-backup.js"
+    "./deployment-backup": "./src/deployment-backup.js",
+    "./agent-service": "./src/agent-service.js"
   }
 }
