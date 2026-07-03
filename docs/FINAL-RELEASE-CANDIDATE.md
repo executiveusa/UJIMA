@@ -21,6 +21,9 @@
 | Phase 7 | Security gates, CI, QA audits, docs | Complete | 319/319 at Phase 7 merge | — |
 | Phase 7 verify/fix | GLM fix: Windows path bug, smoke check updates | Complete | Pass | 623e949 |
 | Phase 8 | Demo package, offer docs, sales materials, final handoff | Complete | Pass | This release |
+| Phase 9A Gate 1 | ICM client-deployment factory | Complete | Pass | — |
+| Phase 9A Gate 2 | Hermes agent service API (dry-run) | Complete | Pass | — |
+| Phase 9 Gate 3 | Hostinger VPS staging specs (docs/runbooks only, no live deployment) | Complete | Pass | See `docs/HOSTINGER-PHASE-9-STAGING.md` and `docs/PHASE-9-GO-LIVE-GATES.md` |
 
 ---
 

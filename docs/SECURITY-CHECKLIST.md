@@ -77,6 +77,10 @@ npm audit --audit-level=high
 
 Run before every release. Known accepted risks must be documented in `docs/PRODUCTION-GAPS.md`.
 
+## Phase 9 staging credential rules
+
+For Hostinger VPS staging deployments, all secret generation, storage, and rotation rules are documented in `docs/PRODUCTION-ENV-GENERATION.md`. Credentials are generated fresh on the VPS at deploy time — never copied from this repository or a local dev `.env`. `docs/POSTGRES-MIGRATION-RUNBOOK.md` documents that Postgres Row-Level Security (RLS) is not yet implemented; tenant isolation for any live Postgres deployment is not production-ready until RLS policies exist and are tested.
+
 ## History note (Phase 6 hotfix)
 
 Commits `500c13b` and earlier in the handoff env files contain raw demo-only keys that have been revoked and are no longer in HEAD. Do not reference, use, or rotate keys from those historical commits — they are treated as non-production and invalid. See `docs/AGENT-PROVENANCE.md` Session 4 hotfix note.

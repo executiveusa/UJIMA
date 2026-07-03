@@ -151,12 +151,24 @@
 - **Acceptance (Phase 7):** All file-backed and auditable gates pass. Postgres and VPS gates deferred to Phase 8.
 
 ### P3-4: Live VPS deployment test
-- [ ] Deploy to Hostinger VPS — deferred to Phase 9 (live VPS required)
-- [ ] DNS + TLS verification — deferred to Phase 9
-- [ ] Postgres migration/restore drill — deferred to Phase 9
-- [ ] Live custom frontend bridge test — deferred to Phase 9
-- [ ] Postiz live scheduling after approval — deferred to Phase 9
-- **Acceptance:** End-to-end deployment verified on real VPS. Deferred to Phase 9.
+- [x] Hostinger VPS staging specification and runbook — `docs/HOSTINGER-PHASE-9-STAGING.md`, `docs/VPS-BOOTSTRAP-RUNBOOK.md`, `docs/PRODUCTION-ENV-GENERATION.md`, `docs/CADDY-DOMAIN-MAP.md`, `docs/POSTGRES-MIGRATION-RUNBOOK.md`, `docs/PHASE-9-GO-LIVE-GATES.md`. Built in Phase 9 Gate 3. Documentation/runbook only — no live deployment.
+- [ ] Deploy to Hostinger VPS — deferred to Phase 9B (live VPS, human-provided IP/SSH/domain/approval required)
+- [ ] DNS + TLS verification — deferred to Phase 9B (plan documented in `docs/CADDY-DOMAIN-MAP.md`)
+- [ ] Postgres migration/restore drill — deferred to Phase 9B (honest gap analysis in `docs/POSTGRES-MIGRATION-RUNBOOK.md`: `STORAGE_MODE=postgres` does not yet switch the read/write path; RLS policies do not yet exist)
+- [ ] Live custom frontend bridge test — deferred to Phase 9B
+- [ ] Postiz live scheduling after approval — deferred to Phase 9B
+- **Acceptance:** End-to-end deployment verified on real VPS. Staging plan complete (Gate 3); live execution deferred to Phase 9B.
+
+### P3-6: Phase 9 Gate 3 — Hostinger VPS staging specs
+- [x] Create `docs/HOSTINGER-PHASE-9-STAGING.md` — topology, service list, domain model. Built in Gate 3.
+- [x] Create `docs/VPS-BOOTSTRAP-RUNBOOK.md` — 19-step operator flow, live commands gated behind human approval. Built in Gate 3.
+- [x] Create `docs/PRODUCTION-ENV-GENERATION.md` — secret inventory, generation commands, rotation checklist. Built in Gate 3.
+- [x] Create `docs/CADDY-DOMAIN-MAP.md` — public/protected/internal routes, TLS behavior, config validation. Built in Gate 3.
+- [x] Create `docs/POSTGRES-MIGRATION-RUNBOOK.md` — honest current-state (file-backed), target state, migration order, RLS gap. Built in Gate 3.
+- [x] Create `docs/PHASE-9-GO-LIVE-GATES.md` — Gates A–N with owner/commands/evidence/failure action/rollback. Built in Gate 3.
+- [x] Write Gate 3 test suite: `packages/core/tests/phase9-vps-staging-docs.test.js`. Built in Gate 3.
+- [x] Extend bundleSmoke with Phase 9 Gate 3 doc-existence checks. Built in Gate 3.
+- **Acceptance:** All six docs exist, are substantive, mark live commands as requiring human approval, contain no real secrets, and honestly state Postgres/RLS limitations. Documentation/runbook only — no live VPS deployment. ✅
 
 ### P3-5: Phase 8 final demo offer handoff package
 - [x] Create `docs/PNW-NONPROFIT-OFFER.md` — Built in Phase 8.

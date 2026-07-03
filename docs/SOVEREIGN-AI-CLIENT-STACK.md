@@ -149,8 +149,12 @@ Mission OS is the software. The client is the operator.
 
 ## Deferred items (Phase 9B and beyond)
 
-- Live VPS deployment documentation complete
+- Live VPS deployment execution (staging plan is complete as of Gate 3 — see `docs/HOSTINGER-PHASE-9-STAGING.md`; execution is deferred until a human provides VPS IP, SSH method, staging domain, and approval)
 - Client handoff checklist completed
-- DNS and TLS provisioning documented
+- DNS and TLS provisioning — domain model and Caddy routing documented in `docs/CADDY-DOMAIN-MAP.md`; actual DNS records remain a human, out-of-repo action
 - Optional remote monitoring option (client-controlled, opt-in)
 - Multi-client managed hosting playbook (separate from single-tenant default)
+
+## Gate 3 staging documentation
+
+Gate 3 (Phase 9) produced the full staging specification for this client-owned stack: `docs/HOSTINGER-PHASE-9-STAGING.md` (topology and domain model), `docs/VPS-BOOTSTRAP-RUNBOOK.md` (operator steps), `docs/PRODUCTION-ENV-GENERATION.md` (credential generation and rotation), `docs/CADDY-DOMAIN-MAP.md` (routing and protected-service boundaries), `docs/POSTGRES-MIGRATION-RUNBOOK.md` (file-backed → Postgres migration honesty), and `docs/PHASE-9-GO-LIVE-GATES.md` (the gate checklist required before any live command runs). None of this changes the sovereignty model above — the client still owns the VPS, database, credentials, and agent runtime once deployed.

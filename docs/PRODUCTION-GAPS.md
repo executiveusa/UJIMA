@@ -13,6 +13,10 @@ This file is intentionally blunt. Do not sell the system as autonomous productio
 - Postiz: payload builder exists; real scheduler adapter needs implementation.
 - Voice: webhook logging exists; real Twilio/Vapi/Retell call workflow needs implementation.
 
+## Phase 9 Gate 3 staging status
+
+Gate 3 produced the Hostinger VPS staging specification and runbook set (`docs/HOSTINGER-PHASE-9-STAGING.md`, `docs/VPS-BOOTSTRAP-RUNBOOK.md`, `docs/PRODUCTION-ENV-GENERATION.md`, `docs/CADDY-DOMAIN-MAP.md`, `docs/POSTGRES-MIGRATION-RUNBOOK.md`, `docs/PHASE-9-GO-LIVE-GATES.md`) and the go-live gate checklist (Gates A–N). This is planning only. No VPS has been provisioned, no DNS has been changed, no live Docker containers have been started, and Postgres runtime mode remains unwired — see `docs/POSTGRES-MIGRATION-RUNBOOK.md` for the honest current-state breakdown.
+
 ## Non-negotiable production bar
 
 1. `npm run verify` passes.

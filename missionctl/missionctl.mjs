@@ -707,6 +707,14 @@ function bundleSmoke(tenantId) {
     ['/api/agent route mounted', fs.readFileSync(path.join(ROOT, 'services', 'mission-api', 'server.js'), 'utf8').includes('/api/agent')],
     ['agent service index exists', fs.existsSync(path.join(ROOT, 'services', 'mission-api', 'src', 'agent', 'index.js'))],
     ['agent service tests exist', fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'agent-service.test.js'))],
+    // Phase 9 Gate 3: Hostinger VPS staging specs
+    ['Hostinger Phase 9 staging doc', fs.existsSync(path.join(ROOT, 'docs', 'HOSTINGER-PHASE-9-STAGING.md'))],
+    ['VPS bootstrap runbook doc', fs.existsSync(path.join(ROOT, 'docs', 'VPS-BOOTSTRAP-RUNBOOK.md'))],
+    ['production env generation doc', fs.existsSync(path.join(ROOT, 'docs', 'PRODUCTION-ENV-GENERATION.md'))],
+    ['Caddy domain map doc', fs.existsSync(path.join(ROOT, 'docs', 'CADDY-DOMAIN-MAP.md'))],
+    ['Postgres migration runbook doc', fs.existsSync(path.join(ROOT, 'docs', 'POSTGRES-MIGRATION-RUNBOOK.md'))],
+    ['Phase 9 go-live gates doc', fs.existsSync(path.join(ROOT, 'docs', 'PHASE-9-GO-LIVE-GATES.md'))],
+    ['no live deployment claim in staging docs', !fs.readFileSync(path.join(ROOT, 'docs', 'HOSTINGER-PHASE-9-STAGING.md'), 'utf8').includes('live deployment is complete')],
   ];
   const failed = checks.filter(([, ok, gated = true]) => !ok && gated);
   const runtimeMissing = checks.filter(([, ok, gated = true]) => !ok && gated === false);
