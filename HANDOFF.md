@@ -368,3 +368,35 @@ Gate 3 is specification and runbook only — no live VPS deployment occurred.
 - Postgres runtime wiring and Row-Level Security implementation
 - Live Hermes, LiteLLM, Langfuse, and Open WebUI execution
 - Backup/restore drill against a real, live environment
+
+---
+
+## Phase 9 Gate 4A — Ops Cockpit UX Audit + Build Triage (2026-07-03)
+
+**Status: COMPLETE**
+
+Gate 4A is audit/spec only — no `apps/site` UI code was redesigned. It also root-caused and fixed the Gate 3 carry-forward `npm run build` failure, since Gate 4 touches `/ops` UI and required a working build to run the audit.
+
+### What was built
+
+| Deliverable | File |
+|---|---|
+| Build failure root cause + fix | `docs/OPS-COCKPIT-BUILD-TRIAGE.md` |
+| Route-by-route usability audit (11 routes) | `docs/OPS-COCKPIT-USABILITY-AUDIT.md` |
+| Design polish spec (proposal only) | `docs/OPS-COCKPIT-DESIGN-POLISH-SPEC.md` |
+| Gate 4A test suite | `packages/core/tests/phase9-ops-cockpit-ux-audit.test.js` |
+
+### Build fix
+
+Root cause: the sandbox's ambient `NODE_ENV=development` combined with Next.js 16.2.9's static-export worker path produced a React dev/prod dispatcher mismatch. Fixed by changing `apps/site/package.json`'s `build` script to `cross-env NODE_ENV=production next build`. Verified stable across 4 consecutive clean rebuilds. See `docs/OPS-COCKPIT-BUILD-TRIAGE.md` for full proof.
+
+### Key audit findings (Blocker severity)
+
+- `StatusBadge`'s `variant` prop is silently ignored — every release/smoke/backup status on `/ops/deployments` renders as an identical green "Internal only" badge regardless of actual state.
+- On mobile (≤980px), the full 19-item sidebar nav renders above all page content on every `/ops/*` route.
+
+Full findings, severity ratings, and recommended fixes for all 11 audited routes are in `docs/OPS-COCKPIT-USABILITY-AUDIT.md`. The implementation plan is in `docs/OPS-COCKPIT-DESIGN-POLISH-SPEC.md` and requires separate Architect approval (Gate 4B) before any UI code changes.
+
+### What remains deferred to Gate 4B
+
+- All UI implementation described in `docs/OPS-COCKPIT-DESIGN-POLISH-SPEC.md` — this gate is specification only.
