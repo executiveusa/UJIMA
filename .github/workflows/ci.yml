@@ -51,6 +51,7 @@ jobs:
           node missionctl/missionctl.mjs tenant create demo-pnw --org "Demo PNW Nonprofit" || true
           node missionctl/missionctl.mjs pack generate demo-pnw || true
           node missionctl/missionctl.mjs bundle up demo-pnw --dry-run || true
+          node missionctl/missionctl.mjs hermes provision demo-pnw || true
           node missionctl/missionctl.mjs bundle smoke demo-pnw --dry-run
 
       - name: AdamsReview gate
