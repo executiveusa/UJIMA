@@ -699,6 +699,14 @@ function bundleSmoke(tenantId) {
     ['final release candidate doc', fs.existsSync(path.join(ROOT, 'docs', 'FINAL-RELEASE-CANDIDATE.md'))],
     ['client demo script doc', fs.existsSync(path.join(ROOT, 'docs', 'CLIENT-DEMO-SCRIPT.md'))],
     ['implementation checklist doc', fs.existsSync(path.join(ROOT, 'docs', 'IMPLEMENTATION-CHECKLIST.md'))],
+    // Phase 9A Gate 2: Hermes Agent Service API
+    ['Hermes agent service API doc', fs.existsSync(path.join(ROOT, 'docs', 'HERMES-AGENT-SERVICE-API.md'))],
+    ['Hermes ICM runtime doc', fs.existsSync(path.join(ROOT, 'docs', 'HERMES-ICM-RUNTIME.md'))],
+    ['Sovereign AI client stack doc', fs.existsSync(path.join(ROOT, 'docs', 'SOVEREIGN-AI-CLIENT-STACK.md'))],
+    ['agent-service core module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'agent-service.js'))],
+    ['/api/agent route mounted', fs.readFileSync(path.join(ROOT, 'services', 'mission-api', 'server.js'), 'utf8').includes('/api/agent')],
+    ['agent service index exists', fs.existsSync(path.join(ROOT, 'services', 'mission-api', 'src', 'agent', 'index.js'))],
+    ['agent service tests exist', fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'agent-service.test.js'))],
   ];
   const failed = checks.filter(([, ok, gated = true]) => !ok && gated);
   const runtimeMissing = checks.filter(([, ok, gated = true]) => !ok && gated === false);
