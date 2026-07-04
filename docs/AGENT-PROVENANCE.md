@@ -207,3 +207,19 @@ Every work session logs:
 | Tests passed | All |
 | Beads written | 0 |
 | Decisions | Gate 5A is docs/offer/spec only — no live deployment, no VPS changes, no Vercel changes, no DNS changes, no real secrets generated or committed; all pricing marked DRAFT — requires human approval before quoting; all legal docs marked: not legal advice, not a final contract, attorney review required; no fake live claims, no guaranteed outcomes, no SaaS subscription language; ownership model (client owns VPS, code, database, keys, Hermes, ICM, domain) stated consistently across all 9 new docs; hard blocks (GRANT_SUBMISSION, LEGAL_FINANCIAL_FILING, OUTBOUND_MESSAGE, PUBLIC_PUBLISHING) referenced in client-facing docs as non-negotiable structural constraints |
+
+### Session 11 — 2026-07-04 (Phase 9 Gate 5B: Client Proposal and Sales Asset Package)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-07-04-011 |
+| Date | 2026-07-04T00:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-4-6 |
+| MCPs used | github |
+| Files created | `docs/CLIENT-PROPOSAL-PACKAGE.md`, `docs/CLIENT-PROPOSAL-TEMPLATE.md`, `docs/PROPOSAL-BUILDER-RUNBOOK.md`, `docs/DISCOVERY-INTAKE-FORM.md`, `docs/CLIENT-READINESS-SCORING-RUBRIC.md`, `docs/ONE-PAGE-PITCH-TEMPLATE.md`, `docs/FOLLOW-UP-EMAIL-TEMPLATES.md`, `docs/MISSION-OS-DEMO-PATH.md`, `packages/core/tests/phase9-client-proposal-sales-assets.test.js` |
+| Files modified | `docs/OBJECTIONS.md` (added Sovereign AI objections section), `docs/SALES-DEMO-FLOW.md` (added Gate 5B cross-link section), `missionctl/missionctl.mjs` (bundleSmoke +9 Gate 5B checks), `HANDOFF.md`, `docs/AGENT-PROVENANCE.md` |
+| Tests written | 60+ tests in `packages/core/tests/phase9-client-proposal-sales-assets.test.js` |
+| Tests passed | All |
+| Beads written | 0 |
+| Decisions | Gate 5B is docs/templates/spec only — no live deployment, no VPS changes, no Vercel changes, no auth changes, no external service calls; no PDFs, decks, or branded graphics created; all placeholders use standard style (`[CLIENT_NAME]`, `[DRAFT_PRICE_RANGE_REQUIRES_APPROVAL]`, etc.); no fake client names, no fake testimonials, no guaranteed outcomes, no legal/compliance promises; all proposals require Architect approval before client delivery; demo path requires demo tenant data only — do not show real client data without permission; test suite validates all safety claims as positive assertions |

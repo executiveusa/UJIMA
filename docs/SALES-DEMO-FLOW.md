@@ -169,3 +169,20 @@ node missionctl/missionctl.mjs bundle up demo-pnw --dry-run
 ```
 
 Generated files in `handoff/demo-pnw/managed/` are gitignored and will not be committed.
+
+---
+
+## Gate 5B — Sovereign AI Sales Asset Package
+
+The following documents support the full client proposal and sales workflow. Use these alongside this demo flow for real prospect engagements.
+
+| Document | Use |
+|---|---|
+| `docs/MISSION-OS-DEMO-PATH.md` | Detailed route-by-route demo walkthrough for a 45-minute client sales call. Includes setup checklist, segment scripts, objection handling, and what not to claim. Use this for live prospect demos. |
+| `docs/DISCOVERY-INTAKE-FORM.md` | Complete during or immediately after discovery call. 15 sections covering org basics, programs, staff/operator readiness, tools, documents, grant workflows, compliance flags, AI comfort, budget, and red flags. Required before writing a proposal. |
+| `docs/CLIENT-READINESS-SCORING-RUBRIC.md` | Score prospects on 8 dimensions (1–5 each): mission fit, operator readiness, document readiness, workflow clarity, data sensitivity, budget readiness, timeline readiness, technical ownership readiness. Green (4.0+), yellow, or red recommendation. Required before Architect approval. |
+| `docs/ONE-PAGE-PITCH-TEMPLATE.md` | One-page client-facing pitch. Fill from discovery notes. Requires Architect approval before delivery. No final pricing — placeholder only. |
+| `docs/CLIENT-PROPOSAL-TEMPLATE.md` | Full proposal skeleton. All placeholders — no fake client names, no final pricing, no guaranteed outcomes. Requires Architect approval before delivery. |
+| `docs/PROPOSAL-BUILDER-RUNBOOK.md` | 10-step operator workflow: inputs, fit check, risk/compliance check, tier selection, drafting rules, internal review, Architect approval, client delivery, follow-up schedule. |
+| `docs/FOLLOW-UP-EMAIL-TEMPLATES.md` | 8 email templates for the full prospect lifecycle: post-discovery (fit / needs info / not a fit), proposal delivery, 3-day follow-up, 10-day follow-up, demo invite, go-live readiness reminder. |
+| `docs/CLIENT-PROPOSAL-PACKAGE.md` | Master index for the proposal package: asset list, approval checklist, 8-step workflow summary. |
