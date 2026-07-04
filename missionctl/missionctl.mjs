@@ -740,6 +740,16 @@ function bundleSmoke(tenantId) {
     ['follow-up email templates doc', fs.existsSync(path.join(ROOT, 'docs', 'FOLLOW-UP-EMAIL-TEMPLATES.md'))],
     ['mission OS demo path doc', fs.existsSync(path.join(ROOT, 'docs', 'MISSION-OS-DEMO-PATH.md'))],
     ['Gate 5B client proposal sales assets test suite exists', fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'phase9-client-proposal-sales-assets.test.js'))],
+    // Phase 9 Gate 6A: Live Staging Preparation Pack
+    ['live staging preparation pack master index doc', fs.existsSync(path.join(ROOT, 'docs', 'LIVE-STAGING-PREPARATION-PACK.md'))],
+    ['VPS domain intake form doc', fs.existsSync(path.join(ROOT, 'docs', 'VPS-DOMAIN-INTAKE-FORM.md'))],
+    ['live staging preflight checklist doc', fs.existsSync(path.join(ROOT, 'docs', 'LIVE-STAGING-PREFLIGHT-CHECKLIST.md'))],
+    ['deployment day runbook doc', fs.existsSync(path.join(ROOT, 'docs', 'DEPLOYMENT-DAY-RUNBOOK.md'))],
+    ['staging rollback runbook doc', fs.existsSync(path.join(ROOT, 'docs', 'STAGING-ROLLBACK-RUNBOOK.md'))],
+    ['first live client safety checklist doc', fs.existsSync(path.join(ROOT, 'docs', 'FIRST-LIVE-CLIENT-SAFETY-CHECKLIST.md'))],
+    ['environment readiness validator spec doc', fs.existsSync(path.join(ROOT, 'docs', 'ENVIRONMENT-READINESS-VALIDATOR-SPEC.md'))],
+    ['phase9 live staging readiness script exists', fs.existsSync(path.join(ROOT, 'scripts', 'phase9-live-staging-readiness.mjs'))],
+    ['Gate 6A live staging preparation test suite exists', fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'phase9-live-staging-preparation.test.js'))],
   ];
   const failed = checks.filter(([, ok, gated = true]) => !ok && gated);
   const runtimeMissing = checks.filter(([, ok, gated = true]) => !ok && gated === false);

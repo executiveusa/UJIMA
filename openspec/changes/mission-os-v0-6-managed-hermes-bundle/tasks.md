@@ -200,6 +200,20 @@
 - [x] Extend bundleSmoke with 9 Gate 5B doc-existence checks. Built in Gate 5B.
 - **Acceptance:** All docs exist, all tests pass, no fake client names, no fake testimonials, no final pricing, no guaranteed outcomes, no compliance promises, no live deployment claims, all proposals require Architect approval. ✅
 
+### P3-9: Phase 9 Gate 6A — Live Staging Preparation Pack
+- [x] Create `docs/LIVE-STAGING-PREPARATION-PACK.md` — master index for Gate 6A. Built in Gate 6A.
+- [x] Create `docs/VPS-DOMAIN-INTAKE-FORM.md` — 9-section intake form (no secrets). Built in Gate 6A.
+- [x] Create `docs/LIVE-STAGING-PREFLIGHT-CHECKLIST.md` — 15 gates (14 HARD, 1 SOFT). Built in Gate 6A.
+- [x] Create `docs/DEPLOYMENT-DAY-RUNBOOK.md` — 15-step deployment runbook, all live commands gated. Built in Gate 6A.
+- [x] Create `docs/STAGING-ROLLBACK-RUNBOOK.md` — rollback triggers, paths, restore verification, post-rollback report. Built in Gate 6A.
+- [x] Create `docs/FIRST-LIVE-CLIENT-SAFETY-CHECKLIST.md` — hard blocks for first live client deployment. Built in Gate 6A.
+- [x] Create `docs/ENVIRONMENT-READINESS-VALIDATOR-SPEC.md` — Phase L + Phase R validator spec. Built in Gate 6A.
+- [x] Create `scripts/phase9-live-staging-readiness.mjs` — local-only readiness script (L1–L9, no network/SSH/DNS/Docker). Built in Gate 6A.
+- [x] Write Gate 6A test suite: `packages/core/tests/phase9-live-staging-preparation.test.js` (80+ tests). Built in Gate 6A.
+- [x] Extend bundleSmoke with 9 Gate 6A doc-existence checks. Built in Gate 6A.
+- [x] Update `HANDOFF.md`, `docs/AGENT-PROVENANCE.md`, `openspec/.../tasks.md` with Gate 6A section. Built in Gate 6A.
+- **Acceptance:** All docs exist, all tests pass, no live deployment performed, all live commands gated, no real secrets committed, rollback runbook complete, first live client safety hard blocks enforced.
+
 ### P3-5: Phase 8 final demo offer handoff package
 - [x] Create `docs/PNW-NONPROFIT-OFFER.md` — Built in Phase 8.
 - [x] Create `docs/MANAGED-AGENTS-AS-A-SERVICE.md` — Built in Phase 8.
