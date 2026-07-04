@@ -104,12 +104,18 @@ label { display:grid; gap:7px; color:var(--muted); font-size:13px; font-weight:7
 .code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:#14110b; color:#f5ead8; border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:16px; overflow:auto; line-height:1.55; }
 .notice { border:1px solid rgba(243,165,30,.33); background:rgba(243,165,30,.12); color:#6c4308; padding:14px 16px; border-radius:18px; margin-bottom:14px; }
 ul { color:var(--muted); line-height:1.6; }
+/* Mobile nav summary is hidden on desktop — details/nav always visible */
+.mobile-nav-summary { display:none; }
 @media (max-width: 980px) {
   .hero-grid, .grid.cols-3, .grid.cols-4, .split, .ops-layout { grid-template-columns:1fr; }
-  .sidebar { position:relative; height:auto; }
+  .sidebar { position:relative; height:auto; order:2; }
+  .ops-main { order:1; }
   .nav-links { display:none; }
   .today-hero { align-items:flex-start; flex-direction:column; }
   .device-card { min-height:auto; }
+  /* Mobile: show collapsible nav toggle */
+  .mobile-nav-summary { display:list-item; padding:10px 0; font-weight:700; cursor:pointer; user-select:none; list-style:revert; }
+  .mobile-nav-details[open] .side-nav { margin-top:8px; }
 }
 .badge.red { color:#7d1d1d; background:rgba(156,47,47,.11); border-color:rgba(156,47,47,.25); }
 .badge.orange { color:#814111; background:rgba(193,111,69,.13); border-color:rgba(193,111,69,.28); }

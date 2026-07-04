@@ -33,13 +33,16 @@ export function OpsShell({ children, title, subtitle }) {
           <span className="badge mint">Plain staff mode</span>
           <p>Tools stay under the hood. Work is organized by outcomes.</p>
         </div>
-        <nav className="side-nav" aria-label="Operations navigation">
-          {links.map(([label, href, help]) => (
-            <a key={href} className={`side-link ${pathname === href ? 'active' : ''}`} href={href}>
-              <strong>{label}</strong><small>{help}</small>
-            </a>
-          ))}
-        </nav>
+        <details className="mobile-nav-details" open>
+          <summary className="mobile-nav-summary">Navigation menu</summary>
+          <nav className="side-nav" aria-label="Operations navigation">
+            {links.map(([label, href, help]) => (
+              <a key={href} className={`side-link ${pathname === href ? 'active' : ''}`} href={href}>
+                <strong>{label}</strong><small>{help}</small>
+              </a>
+            ))}
+          </nav>
+        </details>
       </aside>
       <main className="ops-main">
         <div className="ops-top">
