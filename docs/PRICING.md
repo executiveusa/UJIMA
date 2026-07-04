@@ -2,7 +2,8 @@
 
 **Audience:** Prospective clients, staff, operators  
 **Purpose:** Draft pricing tiers for the managed agentic operating system service  
-**Status: DRAFT — These are planning-phase figures. Final pricing requires a sales conversation and is not guaranteed by this document.**
+**Status: DRAFT — These are planning-phase figures. Final pricing requires a sales conversation and is not guaranteed by this document.**  
+**Gate 5A:** Full offer package at `docs/SOVEREIGN-AI-OFFER-PACKAGE.md`. Setup fee detail at `docs/ONE-TIME-SETUP-FEE-OFFER.md`.
 
 ---
 

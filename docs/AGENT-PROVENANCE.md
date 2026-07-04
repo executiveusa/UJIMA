@@ -175,3 +175,35 @@ Every work session logs:
 | Tests passed | See final Gate 4A report in the pull request description |
 | Beads written | 0 |
 | Decisions | Gate 3's carry-forward `npm run build` failure was root-caused (not just triaged): the sandbox's ambient `NODE_ENV=development` combined with Next.js 16.2.9's static-export worker path produces a React dev/prod dispatcher mismatch (`Cannot read properties of null (reading 'useContext')`); proven via 2/2 pass with `NODE_ENV=production` explicit vs. 2/2 fail with ambient env, and reproduced identically under both Turbopack and `--webpack`, ruling out a Turbopack-specific bug or app-code defect; fixed by changing `apps/site/package.json`'s `build` script to `cross-env NODE_ENV=production next build` (added `cross-env` as a devDependency for Windows/PowerShell/cmd.exe compatibility rather than a bare shell-only env-var prefix), verified stable across 4 total clean-`.next` rebuilds; this was a small, safe, narrowly-scoped fix within the audit gate's own permission to fix build blockers required to run the audit. UX audit used a live Chromium (Playwright, pre-installed) browser preview against `npm run dev:web` in addition to source reading; found two Blocker-severity issues: (1) `StatusBadge`'s `variant` prop is silently ignored, so every status on `/ops/deployments` renders as an identical green "Internal only" badge regardless of actual release/smoke/backup state — confirmed by source read, not just screenshot; (2) on mobile (≤980px), the full 19-item sidebar nav renders above all page content on every `/ops/*` route, confirmed via a live 390×844 screenshot showing ~1200px of nav before any page content appears. Also found the client-side `useEffect`-driven data fetches (opsApi calls) stalled indefinitely in this specific sandboxed `next dev` preview session (Turbopack HMR WebSocket handshake failures were visible in console), while the same API endpoints returned correctly via direct `curl` and via a manual `fetch()` call from the browser's own page context — documented honestly as a probable sandbox/proxy artifact, not asserted as a production bug, but used to motivate a real, code-level "no timeout/retry on stalled loads" finding (Finding X2) independent of its root cause. Design polish spec is proposal-only per Gate 4A scope — no `apps/site` UI code was changed to implement the spec's recommendations (only the unrelated build-script fix and audit/spec docs were added). |
+
+### Session 9 — 2026-07-04 (Phase 9 Gate 4B: Ops Cockpit Design Polish)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-07-04-009 |
+| Date | 2026-07-04T00:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-4-6 |
+| MCPs used | github |
+| Files created | `packages/core/tests/phase9-ops-cockpit-design-polish.test.js`, multiple `apps/site/app/ops/*` page and component files (responsive sidebar, sticky header, card grids, approval queue, event feed, artifact browser, agent status, budget progress, health check, agents detail) |
+| Files modified | `apps/site/app/ops/layout.tsx`, CSS modules, `missionctl/missionctl.mjs` (bundleSmoke extended), `docs/AGENT-PROVENANCE.md`, `HANDOFF.md` |
+| Tests written | Phase 9 Gate 4B design polish test suite |
+| Tests passed | All |
+| Beads written | 0 |
+| Decisions | Implemented all 11 design polish fixes from `docs/OPS-COCKPIT-DESIGN-POLISH-SPEC.md`. No live VPS changes, no Vercel config changes, no real secrets. PR #10 merged to main by Architect (merge commit af4d12a7). |
+
+### Session 10 — 2026-07-04 (Phase 9 Gate 5A: Sovereign AI Offer Package)
+
+| Field | Value |
+|---|---|
+| Session ID | 2026-07-04-010 |
+| Date | 2026-07-04T00:00:00Z |
+| Agent/Builder | Claude Code |
+| Model | claude-sonnet-4-6 |
+| MCPs used | github |
+| Files created | `docs/SOVEREIGN-AI-OFFER-PACKAGE.md`, `docs/SOVEREIGN-AI-OFFER.md`, `docs/ONE-TIME-SETUP-FEE-OFFER.md`, `docs/MAINTENANCE-PACKAGE.md`, `docs/MANAGED-AGENT-SUPPORT-PACKAGE.md`, `docs/CLIENT-OWNED-STACK-AGREEMENT-NOTES.md`, `docs/SOVEREIGN-AI-FAQ.md`, `docs/SOVEREIGN-AI-SALES-CALL-SCRIPT.md`, `docs/IMPLEMENTATION-SOW-OUTLINE.md`, `packages/core/tests/phase9-sovereign-ai-offer-package.test.js` |
+| Files modified | `docs/OFFER.md`, `docs/PRICING.md`, `docs/MANAGED-AGENTS-AS-A-SERVICE.md`, `docs/SOVEREIGN-AI-CLIENT-STACK.md`, `docs/PNW-NONPROFIT-OFFER.md`, `docs/ONBOARDING-14-DAY-LAUNCH.md`, `docs/LEGAL-SAFETY-NOTES.md`, `missionctl/missionctl.mjs` (bundleSmoke +10 Gate 5A checks), `HANDOFF.md`, `docs/AGENT-PROVENANCE.md`, `openspec/changes/mission-os-v0-6-managed-hermes-bundle/tasks.md` |
+| Tests written | 31+ tests in `packages/core/tests/phase9-sovereign-ai-offer-package.test.js` |
+| Tests passed | All |
+| Beads written | 0 |
+| Decisions | Gate 5A is docs/offer/spec only — no live deployment, no VPS changes, no Vercel changes, no DNS changes, no real secrets generated or committed; all pricing marked DRAFT — requires human approval before quoting; all legal docs marked: not legal advice, not a final contract, attorney review required; no fake live claims, no guaranteed outcomes, no SaaS subscription language; ownership model (client owns VPS, code, database, keys, Hermes, ICM, domain) stated consistently across all 9 new docs; hard blocks (GRANT_SUBMISSION, LEGAL_FINANCIAL_FILING, OUTBOUND_MESSAGE, PUBLIC_PUBLISHING) referenced in client-facing docs as non-negotiable structural constraints |

@@ -170,6 +170,21 @@
 - [x] Extend bundleSmoke with Phase 9 Gate 3 doc-existence checks. Built in Gate 3.
 - **Acceptance:** All six docs exist, are substantive, mark live commands as requiring human approval, contain no real secrets, and honestly state Postgres/RLS limitations. Documentation/runbook only — no live VPS deployment. ✅
 
+### P3-7: Phase 9 Gate 5A — Sovereign AI Offer Package
+- [x] Create `docs/SOVEREIGN-AI-OFFER-PACKAGE.md` — master index for the offer package. Built in Gate 5A.
+- [x] Create `docs/SOVEREIGN-AI-OFFER.md` — client-facing plain-English offer sheet. Built in Gate 5A.
+- [x] Create `docs/ONE-TIME-SETUP-FEE-OFFER.md` — one-time setup fee structure and payment plan. Built in Gate 5A.
+- [x] Create `docs/MAINTENANCE-PACKAGE.md` — optional maintenance package definition. Built in Gate 5A.
+- [x] Create `docs/MANAGED-AGENT-SUPPORT-PACKAGE.md` — optional managed-agent support package definition. Built in Gate 5A.
+- [x] Create `docs/CLIENT-OWNED-STACK-AGREEMENT-NOTES.md` — ownership model notes for attorney review. Built in Gate 5A.
+- [x] Create `docs/SOVEREIGN-AI-FAQ.md` — 15 FAQ entries. Built in Gate 5A.
+- [x] Create `docs/SOVEREIGN-AI-SALES-CALL-SCRIPT.md` — discovery call script with objections and close. Built in Gate 5A.
+- [x] Create `docs/IMPLEMENTATION-SOW-OUTLINE.md` — SOW outline (not a contract). Built in Gate 5A.
+- [x] Write Gate 5A test suite: `packages/core/tests/phase9-sovereign-ai-offer-package.test.js` (31+ tests). Built in Gate 5A.
+- [x] Extend bundleSmoke with 10 Gate 5A doc-existence checks. Built in Gate 5A.
+- [x] Light cross-reference updates to 7 existing docs. Built in Gate 5A.
+- **Acceptance:** All docs exist, all tests pass, no fake live claims, no guaranteed outcomes, all pricing marked DRAFT, all legal docs marked not-legal-advice/not-a-contract. ✅
+
 ### P3-5: Phase 8 final demo offer handoff package
 - [x] Create `docs/PNW-NONPROFIT-OFFER.md` — Built in Phase 8.
 - [x] Create `docs/MANAGED-AGENTS-AS-A-SERVICE.md` — Built in Phase 8.

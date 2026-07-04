@@ -1,5 +1,9 @@
 # Sovereign AI Client Stack — Mission OS v0.6
 
+> **Gate 5A:** This doc describes the technical ownership model. Client-facing summary at `docs/SOVEREIGN-AI-OFFER.md`. Attorney-review notes at `docs/CLIENT-OWNED-STACK-AGREEMENT-NOTES.md`. Full offer package at `docs/SOVEREIGN-AI-OFFER-PACKAGE.md`.
+
+
+
 ## What "sovereign" means
 
 A sovereign AI deployment means the client owns and controls:
