@@ -496,3 +496,42 @@ Bundle smoke: extended with 9 Gate 5B doc-existence checks (141/141 total).
 - Formal SOW and contract drafting by attorney
 - Final pricing approval by Architect before any client use
 - PDF or deck versions if approved by Architect in a future gate
+
+---
+
+## Phase 9 Gate 6A — Live Staging Preparation Pack (2026-07-04)
+
+**Status: COMPLETE** — branch `phase9/live-staging-preparation-pack`, PR open for Architect review.
+
+Created the full live staging preparation pack for Mission OS. No live deployment performed — Gate 6A is preparation only.
+
+**New documents:**
+- `docs/LIVE-STAGING-PREPARATION-PACK.md` — master index: Gate 6A purpose, scope boundaries, required inputs, operator workflow (10 steps), file map, go/no-go summary
+- `docs/VPS-DOMAIN-INTAKE-FORM.md` — 9-section intake form (organization, domain, VPS, SSH, model provider, operator, backup, compliance, confirmation) — placeholders only, explicit rules against pasting secrets
+- `docs/LIVE-STAGING-PREFLIGHT-CHECKLIST.md` — 15 gates (14 HARD, 1 SOFT) with owner, evidence, pass condition, fail action — covers repo state, CI, secret audit, VPS/DNS/SSH, backup, operator/approver, compliance, pricing, rollback, human approval
+- `docs/DEPLOYMENT-DAY-RUNBOOK.md` — 15-step ordered deployment runbook; all live commands marked "LIVE COMMAND — DO NOT RUN UNTIL ARCHITECT APPROVES GATE 6B"
+- `docs/STAGING-ROLLBACK-RUNBOOK.md` — rollback triggers, Docker/Postgres/file-backed/Caddy/DNS/full-disable paths, restore verification, post-rollback report, re-attempt requirements; states "Rollback must be tested in staging before production use"
+- `docs/FIRST-LIVE-CLIENT-SAFETY-CHECKLIST.md` — hard blocks: no outbound messaging, no grant submission, no legal/financial filing, no public publishing, no sensitive data ingestion, no cross-tenant access, no unapproved integrations, dry-run demo required, staff approval workflow tested, operator pause capability confirmed, backup/restore drill, client credential ownership, Asc3nd access boundaries, Hermes dry-run mode until Gate N
+- `docs/ENVIRONMENT-READINESS-VALIDATOR-SPEC.md` — Phase L (local, 9 checks) and Phase R (VPS-side, 11 checks, not yet implemented): env names, placeholder rejection, weak JWT, default passwords, API key log scanning, file permissions, Caddyfile placeholder check, Docker Compose validation, backup/tenant/ICM path writable
+- `scripts/phase9-live-staging-readiness.mjs` — local-only readiness script (L1–L9), no network/SSH/DNS/Docker calls, JSON output, exits nonzero on failure
+
+Test suite: `packages/core/tests/phase9-live-staging-preparation.test.js` (80+ tests).
+Bundle smoke: extended with 9 Gate 6A doc-existence checks.
+
+**Constraints honored:**
+- No live deployment, no SSH, no DNS changes, no Docker run, no VPS access
+- No real secrets generated or committed
+- No .env files committed or generated
+- No Vercel changes, no auth changes, no external service calls
+- All live commands marked: "LIVE COMMAND — DO NOT RUN UNTIL ARCHITECT APPROVES GATE 6B"
+- No fake live claims, no assumed Architect approval
+
+### What remains deferred to Gate 6B
+
+- Actual VPS provisioning and SSH connection
+- DNS record creation
+- Secret generation on VPS
+- Docker container startup
+- TLS verification against live staging domain
+- Smoke test against live staging URL
+- Phase R validator implementation (VPS-side checks)

@@ -223,3 +223,15 @@ Every work session logs:
 | Tests passed | All |
 | Beads written | 0 |
 | Decisions | Gate 5B is docs/templates/spec only — no live deployment, no VPS changes, no Vercel changes, no auth changes, no external service calls; no PDFs, decks, or branded graphics created; all placeholders use standard style (`[CLIENT_NAME]`, `[DRAFT_PRICE_RANGE_REQUIRES_APPROVAL]`, etc.); no fake client names, no fake testimonials, no guaranteed outcomes, no legal/compliance promises; all proposals require Architect approval before client delivery; demo path requires demo tenant data only — do not show real client data without permission; test suite validates all safety claims as positive assertions |
+
+## Session 12 — Gate 6A (2026-07-04)
+
+| Field | Value |
+|-------|-------|
+| Gate | 6A — Live Staging Preparation Pack |
+| Branch | `phase9/live-staging-preparation-pack` |
+| Files created | `docs/LIVE-STAGING-PREPARATION-PACK.md`, `docs/VPS-DOMAIN-INTAKE-FORM.md`, `docs/LIVE-STAGING-PREFLIGHT-CHECKLIST.md`, `docs/DEPLOYMENT-DAY-RUNBOOK.md`, `docs/STAGING-ROLLBACK-RUNBOOK.md`, `docs/FIRST-LIVE-CLIENT-SAFETY-CHECKLIST.md`, `docs/ENVIRONMENT-READINESS-VALIDATOR-SPEC.md`, `scripts/phase9-live-staging-readiness.mjs`, `packages/core/tests/phase9-live-staging-preparation.test.js` |
+| Files updated | `HANDOFF.md`, `docs/AGENT-PROVENANCE.md`, `openspec/changes/mission-os-v0-6-managed-hermes-bundle/tasks.md`, `missionctl/missionctl.mjs` |
+| Tests passed | All |
+| Beads written | 0 |
+| Decisions | Gate 6A is preparation only — no live deployment, no SSH, no DNS changes, no Docker run, no VPS access, no real secrets, no .env files; all live commands in deployment runbook marked "LIVE COMMAND — DO NOT RUN UNTIL ARCHITECT APPROVES GATE 6B"; local readiness script is local-only (no network/SSH/DNS/Docker); rollback runbook states "Rollback must be tested in staging before production use"; first live client safety checklist hard-blocks grant submission, legal/financial filing, outbound messaging, public publishing, cross-tenant access, and unrestricted execution on day one; intake form explicitly forbids pasting private keys, passwords, API keys, or tokens |
