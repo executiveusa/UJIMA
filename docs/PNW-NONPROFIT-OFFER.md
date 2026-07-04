@@ -2,7 +2,8 @@
 
 **Audience:** Northwest nonprofits, youth programs, sports organizations, social-purpose companies  
 **Purpose:** Define what Mission OS delivers, to whom, and what is included vs. deferred  
-**What is not here:** Guarantees of outcomes, live integrations, grant approvals, legal filings
+**What is not here:** Guarantees of outcomes, live integrations, grant approvals, legal filings  
+**Gate 5A:** Full sovereign AI offer package at `docs/SOVEREIGN-AI-OFFER-PACKAGE.md`. Client-facing one-pager at `docs/SOVEREIGN-AI-OFFER.md`.
 
 ---
 

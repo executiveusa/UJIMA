@@ -3,7 +3,8 @@
 **Audience:** Operator and client staff  
 **Purpose:** Structured plan for onboarding a new organization onto Mission OS  
 **Prerequisite:** Phase 9 live VPS deployment must be complete before Day 1 of this plan  
-**What is not here:** Guarantees of outcomes; timelines are targets, not contractual commitments
+**What is not here:** Guarantees of outcomes; timelines are targets, not contractual commitments  
+**Gate 5A:** SOW outline at `docs/IMPLEMENTATION-SOW-OUTLINE.md`. Offer package at `docs/SOVEREIGN-AI-OFFER-PACKAGE.md`.
 
 ---
 

@@ -1,5 +1,9 @@
 # Productized Offer
 
+> **Gate 5A note:** This is the original early-stage offer skeleton. The full sovereign AI offer package is at `docs/SOVEREIGN-AI-OFFER-PACKAGE.md`. For client-facing use, see `docs/SOVEREIGN-AI-OFFER.md`. Pricing is DRAFT — requires human approval before quoting.
+
+
+
 ## Name
 
 Seattle Social Purpose OS

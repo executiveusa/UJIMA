@@ -2,7 +2,8 @@
 
 **Audience:** Technical operators, implementation staff, Architect  
 **Purpose:** Define what "managed agents" means in Mission OS, what the service boundary is, and what is live vs. deferred  
-**What is not here:** Claims of autonomous agent execution, live model routing, or live external integrations
+**What is not here:** Claims of autonomous agent execution, live model routing, or live external integrations  
+**Gate 5A:** Client-facing managed-agent support definition at `docs/MANAGED-AGENT-SUPPORT-PACKAGE.md`. Offer package index at `docs/SOVEREIGN-AI-OFFER-PACKAGE.md`.
 
 ---
 

@@ -400,3 +400,59 @@ Full findings, severity ratings, and recommended fixes for all 11 audited routes
 ### What remains deferred to Gate 4B
 
 - All UI implementation described in `docs/OPS-COCKPIT-DESIGN-POLISH-SPEC.md` — this gate is specification only.
+
+---
+
+## Phase 9 Gate 4B — Ops Cockpit Design Polish (2026-07-04)
+
+**Status: COMPLETE** — PR #10 merged to main. Merge commit: `af4d12a7fdd90702bb25621ee8cb3a268eb2e7a8`.
+
+Implemented all 11 design polish fixes from `docs/OPS-COCKPIT-DESIGN-POLISH-SPEC.md`:
+- Responsive sidebar (collapses to hamburger on ≤980px)
+- Sticky header with breadcrumb
+- Dashboard state card grid (4-column, responsive)
+- Approval queue badge and row state colors
+- Event feed timeline design
+- Artifact browser grid with type badges
+- Agent status indicator chips
+- Budget progress bar + per-surface table
+- Health check status chips
+- Agents detail panel with tabbed layout
+- Deployments/OpenWebUI placeholder pages with honest deferred-state messaging
+
+No fake live claims. No live VPS changes. No Vercel config changes. All changes are UI only (Next.js app directory, CSS).
+
+---
+
+## Phase 9 Gate 5A — Sovereign AI Offer Package (2026-07-04)
+
+**Status: COMPLETE** — branch `phase9/sovereign-ai-offer-package`, PR open for Architect review.
+
+Created the full sovereign AI offer package for Asc3nd Mission OS™:
+- `docs/SOVEREIGN-AI-OFFER-PACKAGE.md` — master index
+- `docs/SOVEREIGN-AI-OFFER.md` — client-facing plain-English offer sheet
+- `docs/ONE-TIME-SETUP-FEE-OFFER.md` — one-time setup fee structure and payment plan
+- `docs/MAINTENANCE-PACKAGE.md` — optional maintenance package definition
+- `docs/MANAGED-AGENT-SUPPORT-PACKAGE.md` — optional managed-agent support package definition
+- `docs/CLIENT-OWNED-STACK-AGREEMENT-NOTES.md` — ownership notes for attorney review
+- `docs/SOVEREIGN-AI-FAQ.md` — 15 FAQ entries covering ownership, agents, data, pricing
+- `docs/SOVEREIGN-AI-SALES-CALL-SCRIPT.md` — discovery call script with objections and close
+- `docs/IMPLEMENTATION-SOW-OUTLINE.md` — SOW outline (not a contract; attorney review required)
+
+Light cross-reference updates to: `docs/OFFER.md`, `docs/PRICING.md`, `docs/MANAGED-AGENTS-AS-A-SERVICE.md`, `docs/SOVEREIGN-AI-CLIENT-STACK.md`, `docs/PNW-NONPROFIT-OFFER.md`, `docs/ONBOARDING-14-DAY-LAUNCH.md`, `docs/LEGAL-SAFETY-NOTES.md`.
+
+Test suite: `packages/core/tests/phase9-sovereign-ai-offer-package.test.js` (31+ tests).
+Bundle smoke: extended with 10 Gate 5A doc-existence checks (132/132 total).
+
+**Constraints honored:**
+- No live deployment, no VPS changes, no Vercel changes, no DNS changes
+- No real secrets generated or committed
+- All pricing marked DRAFT — requires human approval before quoting
+- All legal docs marked: not legal advice, not a final contract, attorney review required
+- No fake live claims, no guaranteed outcomes, no SaaS subscription language
+
+### What remains deferred to Phase 9B
+
+- Live VPS deployment and DNS configuration
+- Formal SOW and contract drafting by attorney
+- Final pricing approval by Architect before client use

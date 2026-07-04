@@ -719,6 +719,17 @@ function bundleSmoke(tenantId) {
     ['ops cockpit build triage doc', fs.existsSync(path.join(ROOT, 'docs', 'OPS-COCKPIT-BUILD-TRIAGE.md'))],
     ['ops cockpit usability audit doc', fs.existsSync(path.join(ROOT, 'docs', 'OPS-COCKPIT-USABILITY-AUDIT.md'))],
     ['ops cockpit design polish spec doc', fs.existsSync(path.join(ROOT, 'docs', 'OPS-COCKPIT-DESIGN-POLISH-SPEC.md'))],
+    // Phase 9 Gate 5A: Sovereign AI Offer Package
+    ['sovereign AI offer package index doc', fs.existsSync(path.join(ROOT, 'docs', 'SOVEREIGN-AI-OFFER-PACKAGE.md'))],
+    ['sovereign AI offer client-facing doc', fs.existsSync(path.join(ROOT, 'docs', 'SOVEREIGN-AI-OFFER.md'))],
+    ['one-time setup fee offer doc', fs.existsSync(path.join(ROOT, 'docs', 'ONE-TIME-SETUP-FEE-OFFER.md'))],
+    ['maintenance package doc', fs.existsSync(path.join(ROOT, 'docs', 'MAINTENANCE-PACKAGE.md'))],
+    ['managed agent support package doc', fs.existsSync(path.join(ROOT, 'docs', 'MANAGED-AGENT-SUPPORT-PACKAGE.md'))],
+    ['client owned stack agreement notes doc', fs.existsSync(path.join(ROOT, 'docs', 'CLIENT-OWNED-STACK-AGREEMENT-NOTES.md'))],
+    ['sovereign AI FAQ doc', fs.existsSync(path.join(ROOT, 'docs', 'SOVEREIGN-AI-FAQ.md'))],
+    ['sovereign AI sales call script doc', fs.existsSync(path.join(ROOT, 'docs', 'SOVEREIGN-AI-SALES-CALL-SCRIPT.md'))],
+    ['implementation SOW outline doc', fs.existsSync(path.join(ROOT, 'docs', 'IMPLEMENTATION-SOW-OUTLINE.md'))],
+    ['Gate 5A offer package test suite exists', fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'phase9-sovereign-ai-offer-package.test.js'))],
   ];
   const failed = checks.filter(([, ok, gated = true]) => !ok && gated);
   const runtimeMissing = checks.filter(([, ok, gated = true]) => !ok && gated === false);

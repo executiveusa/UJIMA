@@ -2,7 +2,8 @@
 
 **Audience:** Staff, operators, Architect, clients  
 **Purpose:** State clearly what Mission OS will and will not do automatically, and what human actions are always required  
-**What is not here:** Legal advice, compliance guarantees, or representations about specific regulatory requirements
+**What is not here:** Legal advice, compliance guarantees, or representations about specific regulatory requirements  
+**Gate 5A:** Attorney review notes at `docs/CLIENT-OWNED-STACK-AGREEMENT-NOTES.md`. SOW outline at `docs/IMPLEMENTATION-SOW-OUTLINE.md`.
 
 ---
 
