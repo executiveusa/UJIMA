@@ -456,3 +456,43 @@ Bundle smoke: extended with 10 Gate 5A doc-existence checks (132/132 total).
 - Live VPS deployment and DNS configuration
 - Formal SOW and contract drafting by attorney
 - Final pricing approval by Architect before client use
+
+---
+
+## Phase 9 Gate 5B — Client Proposal and Sales Asset Package (2026-07-04)
+
+**Status: COMPLETE** — branch `claude/gate-2-architect-review-xloule`, PR open for Architect review.
+
+Created the full reusable client proposal and sales asset package for Asc3nd Mission OS™:
+- `docs/CLIENT-PROPOSAL-PACKAGE.md` — master index: asset list, 8-step workflow, approval checklist
+- `docs/CLIENT-PROPOSAL-TEMPLATE.md` — full proposal skeleton with all `[PLACEHOLDER]` fields
+- `docs/PROPOSAL-BUILDER-RUNBOOK.md` — 10-step operator workflow from discovery notes to client delivery
+- `docs/DISCOVERY-INTAKE-FORM.md` — 15-section intake form with compliance flags and scoring
+- `docs/CLIENT-READINESS-SCORING-RUBRIC.md` — 8-dimension scoring rubric (green/yellow/red)
+- `docs/ONE-PAGE-PITCH-TEMPLATE.md` — one-page client-facing pitch with placeholder pricing
+- `docs/FOLLOW-UP-EMAIL-TEMPLATES.md` — 8 email templates for the full prospect lifecycle
+- `docs/MISSION-OS-DEMO-PATH.md` — 45-minute demo walkthrough script with safety rules
+
+Updated existing docs:
+- `docs/OBJECTIONS.md` — added "Sovereign AI / Client-Owned Stack Objections" section (9 new objections)
+- `docs/SALES-DEMO-FLOW.md` — added Gate 5B cross-link section (8 assets referenced)
+
+Test suite: `packages/core/tests/phase9-client-proposal-sales-assets.test.js` (60+ tests).
+Bundle smoke: extended with 9 Gate 5B doc-existence checks (141/141 total).
+
+**Constraints honored:**
+- No live deployment, no VPS changes, no Vercel changes, no DNS changes, no auth changes
+- No real secrets generated or committed
+- All pricing marked `[DRAFT_PRICE_RANGE_REQUIRES_APPROVAL]`
+- No fake client names, no fake testimonials, no guaranteed outcomes
+- No legal/compliance promises
+- No live deployment claims
+- No PDFs, decks, or branded graphics created
+- All proposals require Architect approval before client delivery
+
+### What remains deferred
+
+- Live VPS deployment and DNS configuration
+- Formal SOW and contract drafting by attorney
+- Final pricing approval by Architect before any client use
+- PDF or deck versions if approved by Architect in a future gate

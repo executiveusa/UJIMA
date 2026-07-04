@@ -730,6 +730,16 @@ function bundleSmoke(tenantId) {
     ['sovereign AI sales call script doc', fs.existsSync(path.join(ROOT, 'docs', 'SOVEREIGN-AI-SALES-CALL-SCRIPT.md'))],
     ['implementation SOW outline doc', fs.existsSync(path.join(ROOT, 'docs', 'IMPLEMENTATION-SOW-OUTLINE.md'))],
     ['Gate 5A offer package test suite exists', fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'phase9-sovereign-ai-offer-package.test.js'))],
+    // Phase 9 Gate 5B: Client Proposal and Sales Asset Package
+    ['client proposal package master index doc', fs.existsSync(path.join(ROOT, 'docs', 'CLIENT-PROPOSAL-PACKAGE.md'))],
+    ['client proposal template doc', fs.existsSync(path.join(ROOT, 'docs', 'CLIENT-PROPOSAL-TEMPLATE.md'))],
+    ['proposal builder runbook doc', fs.existsSync(path.join(ROOT, 'docs', 'PROPOSAL-BUILDER-RUNBOOK.md'))],
+    ['discovery intake form doc', fs.existsSync(path.join(ROOT, 'docs', 'DISCOVERY-INTAKE-FORM.md'))],
+    ['client readiness scoring rubric doc', fs.existsSync(path.join(ROOT, 'docs', 'CLIENT-READINESS-SCORING-RUBRIC.md'))],
+    ['one-page pitch template doc', fs.existsSync(path.join(ROOT, 'docs', 'ONE-PAGE-PITCH-TEMPLATE.md'))],
+    ['follow-up email templates doc', fs.existsSync(path.join(ROOT, 'docs', 'FOLLOW-UP-EMAIL-TEMPLATES.md'))],
+    ['mission OS demo path doc', fs.existsSync(path.join(ROOT, 'docs', 'MISSION-OS-DEMO-PATH.md'))],
+    ['Gate 5B client proposal sales assets test suite exists', fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'phase9-client-proposal-sales-assets.test.js'))],
   ];
   const failed = checks.filter(([, ok, gated = true]) => !ok && gated);
   const runtimeMissing = checks.filter(([, ok, gated = true]) => !ok && gated === false);

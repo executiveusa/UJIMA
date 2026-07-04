@@ -185,6 +185,21 @@
 - [x] Light cross-reference updates to 7 existing docs. Built in Gate 5A.
 - **Acceptance:** All docs exist, all tests pass, no fake live claims, no guaranteed outcomes, all pricing marked DRAFT, all legal docs marked not-legal-advice/not-a-contract. ✅
 
+### P3-8: Phase 9 Gate 5B — Client Proposal and Sales Asset Package
+- [x] Create `docs/CLIENT-PROPOSAL-PACKAGE.md` — master index for the proposal package. Built in Gate 5B.
+- [x] Create `docs/CLIENT-PROPOSAL-TEMPLATE.md` — full proposal skeleton with all placeholders. Built in Gate 5B.
+- [x] Create `docs/PROPOSAL-BUILDER-RUNBOOK.md` — 10-step operator workflow (discovery to delivery). Built in Gate 5B.
+- [x] Create `docs/DISCOVERY-INTAKE-FORM.md` — 15-section intake form with compliance flags and scoring. Built in Gate 5B.
+- [x] Create `docs/CLIENT-READINESS-SCORING-RUBRIC.md` — 8-dimension scoring rubric (green/yellow/red). Built in Gate 5B.
+- [x] Create `docs/ONE-PAGE-PITCH-TEMPLATE.md` — one-page client-facing pitch with placeholder pricing. Built in Gate 5B.
+- [x] Create `docs/FOLLOW-UP-EMAIL-TEMPLATES.md` — 8 email templates for the full prospect lifecycle. Built in Gate 5B.
+- [x] Create `docs/MISSION-OS-DEMO-PATH.md` — 45-minute demo walkthrough with safety rules. Built in Gate 5B.
+- [x] Update `docs/OBJECTIONS.md` — add Sovereign AI / Client-Owned Stack Objections section (9 new objections). Built in Gate 5B.
+- [x] Update `docs/SALES-DEMO-FLOW.md` — add Gate 5B cross-link section. Built in Gate 5B.
+- [x] Write Gate 5B test suite: `packages/core/tests/phase9-client-proposal-sales-assets.test.js` (60+ tests). Built in Gate 5B.
+- [x] Extend bundleSmoke with 9 Gate 5B doc-existence checks. Built in Gate 5B.
+- **Acceptance:** All docs exist, all tests pass, no fake client names, no fake testimonials, no final pricing, no guaranteed outcomes, no compliance promises, no live deployment claims, all proposals require Architect approval. ✅
+
 ### P3-5: Phase 8 final demo offer handoff package
 - [x] Create `docs/PNW-NONPROFIT-OFFER.md` — Built in Phase 8.
 - [x] Create `docs/MANAGED-AGENTS-AS-A-SERVICE.md` — Built in Phase 8.
