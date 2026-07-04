@@ -13,7 +13,7 @@ function statusBadgeVariant(status) {
   if (status === 'active') return 'mint';
   if (status === 'failed' || status === 'rolled_back') return 'red';
   if (status === 'draft' || status === 'ready') return 'gold';
-  return 'default';
+  return 'orange';
 }
 
 export default function DeploymentsPage() {
