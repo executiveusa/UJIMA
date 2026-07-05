@@ -28,3 +28,5 @@ handoff/*/managed/release-manifest.json
 
 # Generated backup artifacts (runtime, not committed)
 backups/
+# Exception: Next.js route directories named 'backups' are source code
+!apps/site/app/**/backups/

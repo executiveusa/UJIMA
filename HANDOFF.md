@@ -535,3 +535,59 @@ Bundle smoke: extended with 9 Gate 6A doc-existence checks.
 - TLS verification against live staging domain
 - Smoke test against live staging URL
 - Phase R validator implementation (VPS-side checks)
+
+---
+
+## Gate 6B0 — Final Local App Completion Pack (2026-07-05)
+
+**Branch:** `phase9/final-local-app-completion`
+**Status:** Complete. Awaiting Architect review and human VPS intake.
+
+**New modules:**
+- `packages/core/src/action-dispatcher.js` — approval-gated action dispatcher; all 7 states (DRY_RUN, HARD_BLOCKED, PENDING_APPROVAL, CREDENTIAL_MISSING, ADAPTER_UNAVAILABLE, EXECUTED, ERROR); blocks external mode without GATE_6B_LIVE_APPROVED; emits audit events on every path
+- `packages/core/src/integration-adapters.js` — credential-safe adapter stubs for Postiz, Twilio, Vapi, Retell, generic webhook; returns CREDENTIAL_MISSING when env vars absent; returns SIMULATED in local mode
+- `packages/core/src/storage-factory.js` — canonical wrapper around @asc3nd/db; documents services/mission-api/src/storage.js inconsistency
+
+**New ops pages:**
+- `apps/site/app/ops/readiness/page.jsx` — Gate 6B pre-flight status; shows which items require human VPS intake
+- `apps/site/app/ops/actions/page.jsx` — action audit log
+- `apps/site/app/ops/backups/page.jsx` — local backup drill page
+
+**New API routes:**
+- `apps/site/app/api/ops/readiness/route.js` — readiness checks including GATE_6B_LIVE_APPROVED state
+- `apps/site/app/api/ops/actions/route.js` — GET events log + POST auditOnlyDispatch
+- `apps/site/app/api/ops/approvals/route.js` — GET + POST approval queue (route was missing)
+- `apps/site/app/api/ops/backups/route.js` — GET backup list + POST create backup
+
+**New missionctl commands:**
+- `missionctl demo seed <slug> [--reset-safe] [--dry-run]` — seeds demo tenant data safely
+- `missionctl final-local verify <slug> [--dry-run]` — verifies all Gate 6B0 completion items
+
+**New scripts:**
+- `scripts/phase9-final-local-readiness.mjs` — F1–F10 local readiness checks, JSON output, exits nonzero on failure; F10 re-runs Gate 6A L-script
+
+**New docs:**
+- `docs/FINAL-LOCAL-APP-COMPLETION-PACK.md` — master index for Gate 6B0
+- `docs/FINAL-LOCAL-OPERATOR-RUNBOOK.md` — local operator procedures before Gate 6B
+- `docs/VPS-ONLY-REMAINING-STEPS.md` — explicit list of everything that requires human VPS access
+- `docs/GATE-6B-HUMAN-INTAKE-PACKET.md` — 9-section intake packet for human to fill before Gate 6B; all fields NOT_YET_PROVIDED
+
+**Updated:**
+- `docs/PRODUCTION-GAPS.md` — Gate 6B0 gap classification (P1/P2/P3)
+- `missionctl/missionctl.mjs` — bundleSmoke +18 Gate 6B0 checks; demo + final-local commands
+- `packages/core/package.json` — new exports for action-dispatcher, integration-adapters, storage-factory
+
+**Test suite:** `packages/core/tests/phase9-final-local-app-completion.test.js` (90+ tests).
+
+**Constraints honored:**
+- No SSH, no DNS changes, no live Docker, no real secrets generated or committed
+- GATE_6B_LIVE_APPROVED not set (external mode remains blocked)
+- All 6 hard-block action types enforced by policy.js — non-configurable
+- VPS intake fields remain NOT_YET_PROVIDED
+- No auth changes, no Vercel changes, no external service calls
+
+**What remains for Gate 6B (human + Architect):**
+- Human fills GATE-6B-HUMAN-INTAKE-PACKET.md and VPS-DOMAIN-INTAKE-FORM.md
+- Architect approves Gate 6B
+- Architect sets GATE_6B_LIVE_APPROVED=true on VPS
+- Human executes DEPLOYMENT-DAY-RUNBOOK.md on VPS

@@ -127,7 +127,10 @@ check('L4', 'Caddyfile uses placeholder domains (if present)', () => {
 // ─── L5 — No private key PEM headers in tracked files ────────────────────────
 
 check('L5', 'No private key PEM headers in tracked files', () => {
-  const pemPattern = /BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY/;
+  // Require the actual PEM boundary marker (five dashes) so spec docs showing the
+  // pattern as a git grep example are not flagged. Real PEM files always start with
+  // "-----BEGIN ... PRIVATE KEY-----".
+  const pemPattern = /-----BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/;
   const offenders = [];
   for (const f of trackedFiles) {
     const abs = path.join(ROOT, f);

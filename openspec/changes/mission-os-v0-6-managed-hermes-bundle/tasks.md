@@ -214,6 +214,30 @@
 - [x] Update `HANDOFF.md`, `docs/AGENT-PROVENANCE.md`, `openspec/.../tasks.md` with Gate 6A section. Built in Gate 6A.
 - **Acceptance:** All docs exist, all tests pass, no live deployment performed, all live commands gated, no real secrets committed, rollback runbook complete, first live client safety hard blocks enforced.
 
+### P3-10: Phase 9 Gate 6B0 — Final Local App Completion Pack
+- [x] Create `packages/core/src/action-dispatcher.js` — approval-gated action dispatcher, 7 states, external mode guard. Built in Gate 6B0.
+- [x] Create `packages/core/src/integration-adapters.js` — credential-safe adapter stubs (Postiz, Twilio, Vapi, Retell, generic webhook). Built in Gate 6B0.
+- [x] Create `packages/core/src/storage-factory.js` — canonical wrapper around @asc3nd/db; documents services/mission-api/src/storage.js inconsistency. Built in Gate 6B0.
+- [x] Create `apps/site/app/ops/readiness/page.jsx` — Gate 6B pre-flight readiness dashboard. Built in Gate 6B0.
+- [x] Create `apps/site/app/ops/actions/page.jsx` — action audit log page. Built in Gate 6B0.
+- [x] Create `apps/site/app/ops/backups/page.jsx` — backup drill page. Built in Gate 6B0.
+- [x] Create `apps/site/app/api/ops/readiness/route.js` — readiness API route. Built in Gate 6B0.
+- [x] Create `apps/site/app/api/ops/actions/route.js` — actions API route (GET log + POST auditOnlyDispatch). Built in Gate 6B0.
+- [x] Create `apps/site/app/api/ops/approvals/route.js` — approvals API route (was missing). Built in Gate 6B0.
+- [x] Create `apps/site/app/api/ops/backups/route.js` — backups API route. Built in Gate 6B0.
+- [x] Add `missionctl demo seed <slug>` command. Built in Gate 6B0.
+- [x] Add `missionctl final-local verify <slug>` command. Built in Gate 6B0.
+- [x] Create `scripts/phase9-final-local-readiness.mjs` — F1–F10 local readiness checks. Built in Gate 6B0.
+- [x] Create `docs/FINAL-LOCAL-APP-COMPLETION-PACK.md` — master index for Gate 6B0. Built in Gate 6B0.
+- [x] Create `docs/FINAL-LOCAL-OPERATOR-RUNBOOK.md` — local operator procedures. Built in Gate 6B0.
+- [x] Create `docs/VPS-ONLY-REMAINING-STEPS.md` — explicit list of VPS-only work requiring human access. Built in Gate 6B0.
+- [x] Create `docs/GATE-6B-HUMAN-INTAKE-PACKET.md` — 9-section human intake packet, all fields NOT_YET_PROVIDED. Built in Gate 6B0.
+- [x] Update `docs/PRODUCTION-GAPS.md` — Gate 6B0 gap classification (P1/P2/P3). Built in Gate 6B0.
+- [x] Write Gate 6B0 test suite: `packages/core/tests/phase9-final-local-app-completion.test.js` (90+ tests). Built in Gate 6B0.
+- [x] Extend bundleSmoke with 18 Gate 6B0 checks. Built in Gate 6B0.
+- [x] Update `HANDOFF.md`, `docs/AGENT-PROVENANCE.md`, `openspec/.../tasks.md` with Gate 6B0 section. Built in Gate 6B0.
+- **Acceptance:** All modules exist, all tests pass, no SSH, no DNS, no live Docker, no real secrets, GATE_6B_LIVE_APPROVED not set, all hard-block types non-configurable, VPS intake fields NOT_YET_PROVIDED, integration adapters return CREDENTIAL_MISSING not success.
+
 ### P3-5: Phase 8 final demo offer handoff package
 - [x] Create `docs/PNW-NONPROFIT-OFFER.md` — Built in Phase 8.
 - [x] Create `docs/MANAGED-AGENTS-AS-A-SERVICE.md` — Built in Phase 8.

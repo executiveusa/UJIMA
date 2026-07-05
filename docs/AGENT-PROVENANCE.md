@@ -235,3 +235,17 @@ Every work session logs:
 | Tests passed | All |
 | Beads written | 0 |
 | Decisions | Gate 6A is preparation only — no live deployment, no SSH, no DNS changes, no Docker run, no VPS access, no real secrets, no .env files; all live commands in deployment runbook marked "LIVE COMMAND — DO NOT RUN UNTIL ARCHITECT APPROVES GATE 6B"; local readiness script is local-only (no network/SSH/DNS/Docker); rollback runbook states "Rollback must be tested in staging before production use"; first live client safety checklist hard-blocks grant submission, legal/financial filing, outbound messaging, public publishing, cross-tenant access, and unrestricted execution on day one; intake form explicitly forbids pasting private keys, passwords, API keys, or tokens |
+
+## Session 13 — Gate 6B0 (2026-07-05)
+
+| Field | Value |
+|-------|-------|
+| Gate | 6B0 — Final Local App Completion Pack |
+| Branch | `phase9/final-local-app-completion` |
+| Model | claude-sonnet-4-6 |
+| MCPs used | github |
+| Files created | `packages/core/src/action-dispatcher.js`, `packages/core/src/integration-adapters.js`, `packages/core/src/storage-factory.js`, `apps/site/app/ops/readiness/page.jsx`, `apps/site/app/ops/actions/page.jsx`, `apps/site/app/ops/backups/page.jsx`, `apps/site/app/api/ops/readiness/route.js`, `apps/site/app/api/ops/actions/route.js`, `apps/site/app/api/ops/approvals/route.js`, `apps/site/app/api/ops/backups/route.js`, `scripts/phase9-final-local-readiness.mjs`, `docs/FINAL-LOCAL-APP-COMPLETION-PACK.md`, `docs/FINAL-LOCAL-OPERATOR-RUNBOOK.md`, `docs/VPS-ONLY-REMAINING-STEPS.md`, `docs/GATE-6B-HUMAN-INTAKE-PACKET.md`, `packages/core/tests/phase9-final-local-app-completion.test.js` |
+| Files updated | `packages/core/package.json`, `missionctl/missionctl.mjs`, `docs/PRODUCTION-GAPS.md`, `HANDOFF.md`, `docs/AGENT-PROVENANCE.md` |
+| Tests written | 90+ in `packages/core/tests/phase9-final-local-app-completion.test.js` |
+| Beads written | 0 |
+| Decisions | Gate 6B0 is local-only — no SSH, no DNS, no live Docker, no real secrets; GATE_6B_LIVE_APPROVED not set; all 6 hard-block types non-configurable via policy.js; integration adapters return CREDENTIAL_MISSING when env vars absent (not success); VPS intake fields remain NOT_YET_PROVIDED; storage-factory inconsistency with services/mission-api/src/storage.js documented in PRODUCTION-GAPS.md and deferred to Gate 6B; no Vercel changes, no auth changes, no external service calls |

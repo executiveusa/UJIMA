@@ -63,11 +63,14 @@ async function main() {
   if (group === 'model') return modelCommand(cmd, value, args[3] || getFlag('--slug') || 'demo-pnw');
   // v0.7 billing export
   if (group === 'billing' && cmd === 'export') return billingExportCommand(value || getFlag('--slug') || 'demo-pnw');
+  // Gate 6B0: demo seed + final-local verify
+  if (group === 'demo' && cmd === 'seed') return demoSeedCommand(value || getFlag('--slug') || 'demo-pnw');
+  if (group === 'final-local' && cmd === 'verify') return finalLocalVerifyCommand(value || getFlag('--slug') || 'demo-pnw');
   throw new Error(`Unknown command: ${args.join(' ')}`);
 }
 
 function help() {
-  console.log(`Mission OS control plane v0.6\n\nCommands:\n\n  -- v0.5 (existing) --\n  missionctl doctor\n  missionctl tenant create <slug> --org "Org Name" --region "Seattle" --domain "https://client.org"\n  missionctl tenant keys <slug>\n  missionctl frontend scaffold <slug>\n  missionctl hostinger handoff <slug> --domain "client.org" --api-domain "api.client.org" --email "admin@client.org" --vps-ip "1.2.3.4"\n  missionctl smoke <slug>\n  missionctl backup <slug>\n  missionctl restore <backup-id> [--slug <tenant>]\n  missionctl upgrade <slug> --release <release-id>\n  missionctl rollback <slug> --to <release-id>\n  missionctl icm init <slug> [--org "Org Name"]\n  missionctl icm tree <slug>\n  missionctl icm validate <slug>\n  missionctl icm run <slug> <stage>\n\n  -- v0.6 managed bundle --\n  missionctl bundle up <slug> [--dry-run]\n  missionctl bundle status <slug>\n  missionctl bundle smoke <slug> [--dry-run]\n  missionctl bundle release <slug>\n  missionctl bundle down <slug>\n\n  missionctl pack generate <slug>\n  missionctl pack validate <slug>\n  missionctl pack publish <slug>\n\n  missionctl hermes provision <slug>\n  missionctl hermes health <slug>\n\n  missionctl litellm sync <slug>\n  missionctl langfuse sync <slug>\n  missionctl openwebui sync <slug>\n\n  -- v0.6 model gateway / observability (Phase 4) --\n  missionctl model budget show <slug>\n  missionctl model budget set <slug> --amount 100 [--warning-pct 0.8] [--hard-block-pct 1.0]\n  missionctl model usage summary <slug> [--month 2026-06]\n  missionctl model traces list <slug> [--surface comms]\n\n  -- v0.7 billing / export --\n  missionctl billing export <slug> [--month 2026-06] [--format json|csv]\n`);
+  console.log(`Mission OS control plane v0.6\n\nCommands:\n\n  -- v0.5 (existing) --\n  missionctl doctor\n  missionctl tenant create <slug> --org "Org Name" --region "Seattle" --domain "https://client.org"\n  missionctl tenant keys <slug>\n  missionctl frontend scaffold <slug>\n  missionctl hostinger handoff <slug> --domain "client.org" --api-domain "api.client.org" --email "admin@client.org" --vps-ip "1.2.3.4"\n  missionctl smoke <slug>\n  missionctl backup <slug>\n  missionctl restore <backup-id> [--slug <tenant>]\n  missionctl upgrade <slug> --release <release-id>\n  missionctl rollback <slug> --to <release-id>\n  missionctl icm init <slug> [--org "Org Name"]\n  missionctl icm tree <slug>\n  missionctl icm validate <slug>\n  missionctl icm run <slug> <stage>\n\n  -- v0.6 managed bundle --\n  missionctl bundle up <slug> [--dry-run]\n  missionctl bundle status <slug>\n  missionctl bundle smoke <slug> [--dry-run]\n  missionctl bundle release <slug>\n  missionctl bundle down <slug>\n\n  missionctl pack generate <slug>\n  missionctl pack validate <slug>\n  missionctl pack publish <slug>\n\n  missionctl hermes provision <slug>\n  missionctl hermes health <slug>\n\n  missionctl litellm sync <slug>\n  missionctl langfuse sync <slug>\n  missionctl openwebui sync <slug>\n\n  -- v0.6 model gateway / observability (Phase 4) --\n  missionctl model budget show <slug>\n  missionctl model budget set <slug> --amount 100 [--warning-pct 0.8] [--hard-block-pct 1.0]\n  missionctl model usage summary <slug> [--month 2026-06]\n  missionctl model traces list <slug> [--surface comms]\n\n  -- v0.7 billing / export --\n  missionctl billing export <slug> [--month 2026-06] [--format json|csv]\n\n  -- Gate 6B0: Final local app completion --\n  missionctl demo seed <slug> [--reset-safe] [--dry-run]\n  missionctl final-local verify <slug> [--dry-run]\n`);
 }
 
 function icmInit(slugInput) {
@@ -750,6 +753,25 @@ function bundleSmoke(tenantId) {
     ['environment readiness validator spec doc', fs.existsSync(path.join(ROOT, 'docs', 'ENVIRONMENT-READINESS-VALIDATOR-SPEC.md'))],
     ['phase9 live staging readiness script exists', fs.existsSync(path.join(ROOT, 'scripts', 'phase9-live-staging-readiness.mjs'))],
     ['Gate 6A live staging preparation test suite exists', fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'phase9-live-staging-preparation.test.js'))],
+    // Gate 6B0: Final Local App Completion Pack
+    ['action-dispatcher module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'action-dispatcher.js'))],
+    ['integration-adapters module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'integration-adapters.js'))],
+    ['storage-factory module', fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'storage-factory.js'))],
+    ['ops route: /ops/readiness', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'readiness', 'page.jsx'))],
+    ['ops route: /ops/actions', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'actions', 'page.jsx'))],
+    ['ops route: /ops/backups', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'backups', 'page.jsx'))],
+    ['ops API: /api/ops/readiness', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'api', 'ops', 'readiness', 'route.js'))],
+    ['ops API: /api/ops/actions', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'api', 'ops', 'actions', 'route.js'))],
+    ['ops API: /api/ops/approvals', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'api', 'ops', 'approvals', 'route.js'))],
+    ['ops API: /api/ops/backups', fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'api', 'ops', 'backups', 'route.js'))],
+    ['missionctl demo seed command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('demoSeedCommand')],
+    ['missionctl final-local verify command', fs.readFileSync(path.join(ROOT, 'missionctl', 'missionctl.mjs'), 'utf8').includes('finalLocalVerifyCommand')],
+    ['phase9 final local readiness script', fs.existsSync(path.join(ROOT, 'scripts', 'phase9-final-local-readiness.mjs'))],
+    ['final local app completion pack doc', fs.existsSync(path.join(ROOT, 'docs', 'FINAL-LOCAL-APP-COMPLETION-PACK.md'))],
+    ['final local operator runbook doc', fs.existsSync(path.join(ROOT, 'docs', 'FINAL-LOCAL-OPERATOR-RUNBOOK.md'))],
+    ['VPS only remaining steps doc', fs.existsSync(path.join(ROOT, 'docs', 'VPS-ONLY-REMAINING-STEPS.md'))],
+    ['Gate 6B human intake packet doc', fs.existsSync(path.join(ROOT, 'docs', 'GATE-6B-HUMAN-INTAKE-PACKET.md'))],
+    ['Gate 6B0 final local app completion test suite exists', fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'phase9-final-local-app-completion.test.js'))],
   ];
   const failed = checks.filter(([, ok, gated = true]) => !ok && gated);
   const runtimeMissing = checks.filter(([, ok, gated = true]) => !ok && gated === false);
@@ -1105,6 +1127,96 @@ function billingExportCommand(slugInput) {
   }
 
   appendLog({ event: 'billing.export', tenantId, month: exportData.export_period, format });
+}
+
+// ─── Gate 6B0: demo seed ──────────────────────────────────────────────────────
+
+function demoSeedCommand(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const resetSafe = args.includes('--reset-safe');
+  const dryRun = args.includes('--dry-run');
+
+  const tenantDir = path.join(DATA_DIR, tenantId);
+  fs.mkdirSync(tenantDir, { recursive: true });
+
+  const seedItems = [
+    {
+      file: path.join(tenantDir, 'events.jsonl'),
+      label: 'event journal',
+      content: [
+        JSON.stringify({ tenantId, type: 'DEMO.SEED', actor: 'missionctl', payload: { note: 'Seeded by demo seed command' }, at: new Date().toISOString() }),
+      ].join('\n') + '\n',
+    },
+    {
+      file: path.join(tenantDir, 'artifacts.json'),
+      label: 'artifact registry',
+      content: JSON.stringify([], null, 2),
+      skipIfExists: !resetSafe,
+    },
+    {
+      file: path.join(tenantDir, 'approvals.json'),
+      label: 'approvals store',
+      content: JSON.stringify([], null, 2),
+      skipIfExists: !resetSafe,
+    },
+  ];
+
+  const results = [];
+  for (const item of seedItems) {
+    const exists = fs.existsSync(item.file);
+    if (exists && item.skipIfExists) {
+      results.push({ file: path.relative(ROOT, item.file), action: 'skipped (exists, no --reset-safe)' });
+      continue;
+    }
+    if (!dryRun) {
+      fs.writeFileSync(item.file, item.content, 'utf8');
+    }
+    results.push({ file: path.relative(ROOT, item.file), action: dryRun ? 'dry-run (not written)' : (exists ? 'reset' : 'created') });
+  }
+
+  emitEvent({ tenantId, type: 'DEMO.SEED', actor: 'cli', payload: { resetSafe, dryRun } });
+  generateDashboardState(tenantId);
+  appendLog({ event: 'demo.seed', tenantId, resetSafe, dryRun });
+
+  console.log(JSON.stringify({ ok: true, tenantId, resetSafe, dryRun, results }, null, 2));
+}
+
+// ─── Gate 6B0: final-local verify ────────────────────────────────────────────
+
+function finalLocalVerifyCommand(slugInput) {
+  const tenantId = cleanTenantSlug(slugInput);
+  const dryRun = args.includes('--dry-run');
+
+  const GATE_6B_LIVE_APPROVED = process.env.GATE_6B_LIVE_APPROVED === 'true';
+  const agentMode = process.env.AGENT_EXECUTION_MODE || 'dry-run';
+
+  const checks = [
+    { id: 'gate_6b_blocked', label: 'Gate 6B live execution blocked', pass: !GATE_6B_LIVE_APPROVED, detail: GATE_6B_LIVE_APPROVED ? 'FAIL: GATE_6B_LIVE_APPROVED=true is set — not safe for local-only mode' : 'PASS: GATE_6B_LIVE_APPROVED not set' },
+    { id: 'agent_mode_safe', label: 'Agent execution mode safe', pass: agentMode !== 'external', detail: `AGENT_EXECUTION_MODE=${agentMode}` },
+    { id: 'action_dispatcher', label: 'action-dispatcher module exists', pass: fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'action-dispatcher.js')), detail: '' },
+    { id: 'integration_adapters', label: 'integration-adapters module exists', pass: fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'integration-adapters.js')), detail: '' },
+    { id: 'storage_factory', label: 'storage-factory module exists', pass: fs.existsSync(path.join(ROOT, 'packages', 'core', 'src', 'storage-factory.js')), detail: '' },
+    { id: 'ops_readiness_page', label: '/ops/readiness page exists', pass: fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'readiness', 'page.jsx')), detail: '' },
+    { id: 'ops_actions_page', label: '/ops/actions page exists', pass: fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'actions', 'page.jsx')), detail: '' },
+    { id: 'ops_backups_page', label: '/ops/backups page exists', pass: fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'ops', 'backups', 'page.jsx')), detail: '' },
+    { id: 'api_readiness', label: '/api/ops/readiness route exists', pass: fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'api', 'ops', 'readiness', 'route.js')), detail: '' },
+    { id: 'api_actions', label: '/api/ops/actions route exists', pass: fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'api', 'ops', 'actions', 'route.js')), detail: '' },
+    { id: 'api_approvals', label: '/api/ops/approvals route exists', pass: fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'api', 'ops', 'approvals', 'route.js')), detail: '' },
+    { id: 'api_backups', label: '/api/ops/backups route exists', pass: fs.existsSync(path.join(ROOT, 'apps', 'site', 'app', 'api', 'ops', 'backups', 'route.js')), detail: '' },
+    { id: 'final_local_pack_doc', label: 'FINAL-LOCAL-APP-COMPLETION-PACK.md exists', pass: fs.existsSync(path.join(ROOT, 'docs', 'FINAL-LOCAL-APP-COMPLETION-PACK.md')), detail: '' },
+    { id: 'vps_only_steps_doc', label: 'VPS-ONLY-REMAINING-STEPS.md exists', pass: fs.existsSync(path.join(ROOT, 'docs', 'VPS-ONLY-REMAINING-STEPS.md')), detail: '' },
+    { id: 'gate_6b_intake_doc', label: 'GATE-6B-HUMAN-INTAKE-PACKET.md exists', pass: fs.existsSync(path.join(ROOT, 'docs', 'GATE-6B-HUMAN-INTAKE-PACKET.md')), detail: '' },
+    { id: 'test_suite', label: 'Gate 6B0 test suite exists', pass: fs.existsSync(path.join(ROOT, 'packages', 'core', 'tests', 'phase9-final-local-app-completion.test.js')), detail: '' },
+  ];
+
+  const passed = checks.filter(c => c.pass).length;
+  const failed = checks.filter(c => !c.pass).length;
+  const ready = failed === 0;
+
+  console.table(checks.map(c => ({ id: c.id, label: c.label, status: c.pass ? 'PASS' : 'FAIL', detail: c.detail || '' })));
+  appendLog({ event: 'final-local.verify', tenantId, dryRun, passed, failed });
+  console.log(JSON.stringify({ ok: ready, tenantId, dryRun, passed, failed, gate6bBlocked: !GATE_6B_LIVE_APPROVED, ready }, null, 2));
+  if (!ready) process.exit(1);
 }
 
 function copyHermesTemplates(tenantId, outDir) {
