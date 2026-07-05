@@ -27,3 +27,34 @@ Gate 3 produced the Hostinger VPS staging specification and runbook set (`docs/H
 6. Backups can be restored on a clean VPS.
 7. ACFS doctor passes on the VPS.
 8. Human staff can complete onboarding without a developer.
+
+## Gate 6B0 — Final Local App Completion Gap Classification
+
+These are the known gaps after Gate 6B0. All are expected and classified here for Architect review.
+
+### P1 — Blocking for Production (must be closed before Gate 6B goes live)
+
+| Gap | Location | Resolution |
+|---|---|---|
+| Postgres not connected | `packages/db/src/index.js` `storageMode()` | Set `DATABASE_URL` + `STORAGE_MODE=postgres` on VPS |
+| `services/mission-api/src/storage.js` inconsistency | Returns `postgres-ready`/`json-dry-run` vs canonical `postgres`/`json` | Migrate to `@asc3nd/core/storage-factory` at Gate 6B |
+| Integration adapters are stubs (CREDENTIAL_MISSING) | `packages/core/src/integration-adapters.js` | Provide real credentials on VPS at Gate 6B |
+| `GATE_6B_LIVE_APPROVED` not set | `.env.managed` on VPS | Architect sets this after Gate 6B pre-flight passes |
+
+### P2 — Non-blocking for Gate 6B Staging (deferred to Gate N or later)
+
+| Gap | Location | Note |
+|---|---|---|
+| Postiz real scheduler implementation | `packages/core/src/integration-adapters.js` | Adapter stub returns CREDENTIAL_MISSING until Gate N |
+| Twilio/Vapi/Retell real implementation | `packages/core/src/integration-adapters.js` | Same — stub only |
+| Hermes agent: real Pi/Absurd/Sandcastle execution | `packages/core/src/agent-service.js` | Adapter seams exist; real execution deferred |
+| ACFS/flywheel pre-install | `scripts/install-acfs.sh` | Must run on VPS before Gate N |
+| Multi-tenant operator auth | `apps/site/lib/ops-tenant.js` | Currently single-tenant `OPS_TENANT_ID`; full auth deferred |
+
+### P3 — Acknowledged, Not Blocking
+
+| Gap | Note |
+|---|---|
+| No voice workflow on day one | Hard-blocked by `FIRST-LIVE-CLIENT-SAFETY-CHECKLIST.md` until Gate N |
+| No grant submission on day one | Hard policy block — non-configurable |
+| No outbound messaging on day one | Hard policy block — non-configurable |

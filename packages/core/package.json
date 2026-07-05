@@ -34,6 +34,9 @@
     "./deployment-releases": "./src/deployment-releases.js",
     "./deployment-health": "./src/deployment-health.js",
     "./deployment-backup": "./src/deployment-backup.js",
-    "./agent-service": "./src/agent-service.js"
+    "./agent-service": "./src/agent-service.js",
+    "./action-dispatcher": "./src/action-dispatcher.js",
+    "./integration-adapters": "./src/integration-adapters.js",
+    "./storage-factory": "./src/storage-factory.js"
   }
 }
