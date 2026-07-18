@@ -1,5 +1,16 @@
 # ASC3ND Creative Operating System
 
+## Shared foundation
+
+Before creative, campaign, landing-page, documentary, approval, or learning work, load the applicable files from:
+
+- `../../../shared/creative-operating-system/README.md`
+- `../../../shared/creative-operating-system/REFERENCES.md`
+- `../../../shared/creative-operating-system/REVIEW-GATES.md`
+- the relevant files under `../../../shared/creative-operating-system/laws/`
+
+Shared laws govern durable practice. This file adds ASC3ND-specific interpretation. When shared and tenant rules conflict, youth safety, law, verified facts, consent, and explicit client restrictions take priority.
+
 ## Mission
 
 Build trust that converts into participation while protecting the dignity, privacy, and safety of youth, families, volunteers, partners, and staff.
@@ -23,7 +34,7 @@ Production cannot begin until the campaign defines:
 - consent, privacy, safeguarding, accessibility, and reputational risks;
 - the method used to count results.
 
-## Content functions
+## ASC3ND content functions
 
 Every campaign should include a deliberate mix of:
 
@@ -35,7 +46,7 @@ Every campaign should include a deliberate mix of:
 
 A campaign cannot consist only of flyers.
 
-## Landing-page law
+## ASC3ND landing-page law
 
 Within ten seconds, a first-time visitor must understand:
 
@@ -47,13 +58,19 @@ Within ten seconds, a first-time visitor must understand:
 
 Use one primary call to action, mobile-first layout, clear eligibility language, trustworthy contact information, and working registration or contribution routes.
 
-## Documentary production law
+## ASC3ND documentary law
 
 Before an event, create the story brief, founder interview, shot list, interview list, consent plan, production schedule, crew assignments, sponsor requirements, file-naming convention, and backup plan.
 
 During an event, prioritize emotion, mission, proof, education, beauty, and trust. Capture setup, arrivals, action, details, leadership, partner participation, measurable distribution, closing, and cleanup.
 
 Within 24 hours, back up footage, separate approved and restricted assets, record outcome numbers, and identify missing permissions. Within 72 hours, prepare a factual recap, gratitude assets, sponsor evidence, and the first short-form edit.
+
+## ASC3ND voice and representation
+
+Use hopeful, faith-centered, professional mentor language. Speak about youth through purpose, ability, belonging, growth, leadership, and opportunity.
+
+Never use youth hardship as spectacle. Avoid language that labels people as broken, hopeless, troubled, disadvantaged, failures, charity cases, rescues, or victims.
 
 ## Interview law
 
