@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "description": "Machine-readable gates for approval-gated creative and campaign work.",
+  "gates": [
+    { "id": "purpose", "label": "Purpose", "blocking": false },
+    { "id": "human_truth", "label": "Human truth", "blocking": false },
+    { "id": "clarity", "label": "Clarity and usability", "blocking": false },
+    { "id": "story", "label": "Story and retention", "blocking": false },
+    { "id": "truth", "label": "Truth and factual support", "blocking": true },
+    { "id": "consent", "label": "Consent and release rights", "blocking": true },
+    { "id": "youth_safety", "label": "Youth safeguarding", "blocking": true },
+    { "id": "dignity", "label": "Dignity and non-exploitation", "blocking": true },
+    { "id": "destination", "label": "Working call-to-action destination", "blocking": true },
+    { "id": "brand", "label": "Brand and craft", "blocking": false },
+    { "id": "production", "label": "Production readiness", "blocking": false },
+    { "id": "approval", "label": "Named human approval", "blocking": false }
+  ]
+}
