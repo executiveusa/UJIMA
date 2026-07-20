@@ -27,6 +27,18 @@ export const factoryStageDefinitions = [
   ['09_go_live_readiness', 'Final gate: full validation sequence, both sign-offs required.']
 ];
 
+const DEFAULT_SHARED_FILES = [
+  'README.md',
+  'REVIEW-GATES.md',
+  'laws/human-centered-design.md',
+  'laws/design-ux-and-brand.md',
+  'laws/story-documentary-and-production.md',
+  'laws/growth-offer-and-retention.md',
+  'laws/nonprofit-trust-and-ethics.md'
+];
+
+const BLOCKING_GATE_IDS = new Set(['truth', 'consent', 'youth_safety', 'dignity', 'destination']);
+
 export function tenantRoot(base, tenantId) {
   assertTenantBoundary(tenantId);
   return path.join(base, 'tenants', tenantId);
@@ -44,10 +56,9 @@ export function ensureIcmWorkspace({ base = 'icm', tenantId = 'asc3nd', orgName 
 
   const config = {
     'mission.md': `# Mission\n\n${orgName} exists to create measurable community outcomes. Replace this with the final client mission during onboarding.\n`,
-    'brand.md': `# Brand\n\nVoice: clear, warm, direct, Seattle-native, youth-safe, outcome-focused.\n`,
-    'safety-policy.md': `# Safety Policy\n\nRed actions require authorized human approval: youth records, money, legal/compliance, grant submissions, donor commitments, public claims.\n`,
-    'model-routing.md': `# Model Routing\n\nCheap models handle extraction and formatting. Standard models handle drafting and comparison. Critical models handle high-risk reasoning.\n`,
-    'seattle-resources.md': `# Seattle Resource Layer\n\nTrack Seattle, King County, Washington State, tech, foundation, sponsor, and youth/sports opportunities. Verify all open dates and eligibility before acting.\n`
+    'brand.md': '# Brand\n\nVoice: clear, warm, direct, youth-safe, outcome-focused.\n',
+    'safety-policy.md': '# Safety Policy\n\nRed actions require authorized human approval: youth records, money, legal/compliance, grant submissions, donor commitments, public claims.\n',
+    'model-routing.md': '# Model Routing\n\nCheap models handle extraction and formatting. Standard models handle drafting and comparison. Critical models handle high-risk reasoning.\n'
   };
   for (const [file, body] of Object.entries(config)) writeIfMissing(path.join(root, '_config', file), body);
 
@@ -61,15 +72,158 @@ export function ensureIcmWorkspace({ base = 'icm', tenantId = 'asc3nd', orgName 
 }
 
 export function stageContext(stage, description) {
-  return `# ${stage}\n\n${description}\n\n## Inputs\n\n- Layer 0: ../../AGENT.md\n- Layer 1: ../../CONTEXT.md\n- Layer 2: this CONTEXT.md\n- Layer 3: ../../_config/*.md and references/*.md\n- Layer 4: previous stage output/ as applicable\n\n## Process\n\n1. Load only relevant context.\n2. Produce a concrete artifact, not vague advice.\n3. Classify the action risk as green, yellow, orange, or red.\n4. Write outputs to this stage's output folder.\n5. If approval is needed, create an approval request.\n\n## Outputs\n\n- output/result.md\n- output/audit.json\n- optional output/approval-request.json\n\n## Verify\n\n- Output matches mission and safety policy.\n- Claims have source notes or are marked for verification.\n- No red/orange action is performed without approval.\n`;
+  return `# ${stage}\n\n${description}\n\n## Inputs\n\n- Layer 0: ../../AGENT.md\n- Layer 1: ../../CONTEXT.md\n- Layer 2: this CONTEXT.md\n- Layer 3: ../../_config/*.md and references/*.md\n- Shared laws: ../../../shared/creative-operating-system/\n- Layer 4: previous stage output/ as applicable\n\n## Process\n\n1. Load only relevant context.\n2. Produce a concrete artifact, not vague advice.\n3. Apply the shared creative review gates.\n4. Classify the action risk as green, yellow, orange, or red.\n5. Write outputs to this stage's output folder.\n6. If approval is needed, create an approval request.\n\n## Outputs\n\n- output/result.md\n- output/audit.json\n- optional output/approval-request.json\n\n## Verify\n\n- Output matches mission, safety policy, and shared creative laws.\n- Claims have source notes or are marked for verification.\n- Blocking review-gate failures prevent approval.\n- No red/orange action is performed without approval.\n`;
+}
+
+export function validateStageName(stage) {
+  if (!/^[a-z0-9][a-z0-9_]*$/.test(stage)) {
+    throw new Error(`Invalid stage name: ${stage}. Use lowercase letters, numbers, and underscores.`);
+  }
+  return stage;
+}
+
+export function safeStagePath(base, tenantId, stage, filename = '') {
+  assertTenantBoundary(tenantId, `${stage}/${filename}`);
+  validateStageName(stage);
+  const target = path.join(tenantRoot(base, tenantId), 'stages', stage, 'output');
+  const resolved = filename ? path.resolve(target, filename) : path.resolve(target);
+  const targetRoot = path.resolve(target);
+  if (resolved !== targetRoot && !resolved.startsWith(`${targetRoot}${path.sep}`)) {
+    throw new Error('Path traversal refused. Stage output cannot escape the stage output directory.');
+  }
+  return resolved;
+}
+
+export function loadSharedCreativeContext({ base = 'icm', files = DEFAULT_SHARED_FILES, maxBytes = 250000 } = {}) {
+  const sharedRoot = path.resolve(base, 'shared', 'creative-operating-system');
+  if (!fs.existsSync(sharedRoot)) return { files: [], reviewGates: null, totalBytes: 0 };
+
+  const loaded = [];
+  let totalBytes = 0;
+  for (const relativePath of files) {
+    if (typeof relativePath !== 'string' || relativePath.includes('..') || path.isAbsolute(relativePath)) {
+      throw new Error(`Unsafe shared creative context path: ${relativePath}`);
+    }
+    const absolutePath = path.resolve(sharedRoot, relativePath);
+    if (absolutePath !== sharedRoot && !absolutePath.startsWith(`${sharedRoot}${path.sep}`)) {
+      throw new Error(`Shared creative context path escaped root: ${relativePath}`);
+    }
+    if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) continue;
+    const content = fs.readFileSync(absolutePath, 'utf8');
+    totalBytes += Buffer.byteLength(content, 'utf8');
+    if (totalBytes > maxBytes) throw new Error(`Shared creative context exceeds ${maxBytes} bytes.`);
+    loaded.push({
+      file: relativePath,
+      content,
+      sha256: crypto.createHash('sha256').update(content).digest('hex')
+    });
+  }
+
+  const gatesPath = path.join(sharedRoot, 'review-gates.json');
+  const reviewGates = fs.existsSync(gatesPath) ? JSON.parse(fs.readFileSync(gatesPath, 'utf8')) : null;
+  return { files: loaded, reviewGates, totalBytes };
+}
+
+export function evaluateCreativeReviewGates({ checks = {}, gateDefinition = null } = {}) {
+  const configuredGates = gateDefinition?.gates || [];
+  const ids = configuredGates.length
+    ? configuredGates.map((gate) => gate.id)
+    : ['purpose', 'human_truth', 'clarity', 'story', 'truth', 'consent', 'youth_safety', 'dignity', 'destination', 'brand', 'production', 'approval'];
+
+  const results = ids.map((id) => {
+    const value = checks[id];
+    const status = value === true || value === 'pass' ? 'pass' : value === false || value === 'fail' ? 'fail' : 'unknown';
+    const configured = configuredGates.find((gate) => gate.id === id);
+    const blocking = configured?.blocking === true || BLOCKING_GATE_IDS.has(id);
+    return { id, status, blocking };
+  });
+  const blockingFailures = results.filter((item) => item.blocking && item.status !== 'pass');
+  return {
+    status: blockingFailures.length ? 'blocked' : 'pass',
+    canApprove: blockingFailures.length === 0,
+    results,
+    blockingFailures: blockingFailures.map((item) => item.id)
+  };
+}
+
+export function readStageContext({ base = 'icm', tenantId, stage, sharedFiles } = {}) {
+  assertTenantBoundary(tenantId, stage);
+  validateStageName(stage);
+  const root = tenantRoot(base, tenantId);
+  const stageDir = path.join(root, 'stages', stage);
+  if (!fs.existsSync(stageDir)) throw new Error(`Stage not found: ${stage}`);
+
+  const configDir = path.join(root, '_config');
+  const refsDir = path.join(stageDir, 'references');
+  const previousStage = stageDefinitions[stageDefinitions.findIndex(([name]) => name === stage) - 1];
+  const sharedCreative = loadSharedCreativeContext({ base, files: sharedFiles || DEFAULT_SHARED_FILES });
+
+  return {
+    agent: readText(path.join(root, 'AGENT.md')),
+    workspace: readText(path.join(root, 'CONTEXT.md')),
+    stageContext: readText(path.join(stageDir, 'CONTEXT.md')),
+    config: readMarkdownDirectory(configDir),
+    references: readMarkdownDirectory(refsDir),
+    sharedCreative,
+    previousStage: previousStage?.[0] || null,
+    previousOutput: previousStage ? readPreviousOutput(base, tenantId, previousStage[0]) : null
+  };
+}
+
+export function runIcmStage({ base = 'icm', tenantId = 'asc3nd', stage, result = '', audit = {}, approvalRequest = null, reviewChecks = {}, onArtifact } = {}) {
+  assertTenantBoundary(tenantId, stage);
+  validateStageName(stage);
+  const context = readStageContext({ base, tenantId, stage });
+  const review = evaluateCreativeReviewGates({ checks: reviewChecks, gateDefinition: context.sharedCreative.reviewGates });
+  const outDir = safeStagePath(base, tenantId, stage);
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const now = new Date().toISOString();
+  const artifacts = [];
+  const resultPath = path.join(outDir, 'result.md');
+  fs.writeFileSync(resultPath, result || `# ${stage} result\n\nGenerated ${now}\n`, 'utf8');
+  artifacts.push({ stage, filename: 'result.md', path: resultPath, createdAt: now });
+
+  const auditPath = path.join(outDir, 'audit.json');
+  const auditBody = {
+    stage,
+    tenantId,
+    ranAt: now,
+    contextLayers: {
+      agent: Boolean(context.agent),
+      workspace: Boolean(context.workspace),
+      stageContext: Boolean(context.stageContext),
+      configFiles: context.config.length,
+      referenceFiles: context.references.length,
+      sharedCreativeFiles: context.sharedCreative.files.map(({ file, sha256 }) => ({ file, sha256 })),
+      previousStage: context.previousStage
+    },
+    creativeReview: review,
+    ...audit
+  };
+  fs.writeFileSync(auditPath, JSON.stringify(auditBody, null, 2), 'utf8');
+  artifacts.push({ stage, filename: 'audit.json', path: auditPath, createdAt: now });
+
+  const effectiveApprovalRequest = approvalRequest
+    ? { ...approvalRequest, status: review.canApprove ? (approvalRequest.status || 'pending') : 'blocked', blockingFailures: review.blockingFailures }
+    : null;
+  if (effectiveApprovalRequest) {
+    const approvalPath = path.join(outDir, 'approval-request.json');
+    fs.writeFileSync(approvalPath, JSON.stringify({ stage, tenantId, createdAt: now, ...effectiveApprovalRequest }, null, 2), 'utf8');
+    artifacts.push({ stage, filename: 'approval-request.json', path: approvalPath, createdAt: now });
+  }
+
+  if (typeof onArtifact === 'function') {
+    for (const artifact of artifacts) {
+      onArtifact({ id: `icm_${crypto.randomBytes(4).toString('hex')}`, tenantId, ...artifact });
+    }
+  }
+  return { stage, tenantId, outDir, artifacts, context, review };
 }
 
 export function writeStageOutput({ base = 'icm', tenantId = 'asc3nd', stage = '02_opportunity_scan', filename = 'result.md', content = '' }) {
-  assertTenantBoundary(tenantId, `${stage}/${filename}`);
-  const root = tenantRoot(base, tenantId);
-  const out = path.join(root, 'stages', stage, 'output');
-  fs.mkdirSync(out, { recursive: true });
-  const target = path.join(out, filename);
+  const target = safeStagePath(base, tenantId, stage, filename);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, content, 'utf8');
   return target;
 }
@@ -82,150 +236,52 @@ export function listIcmTree({ base = 'icm', tenantId = 'asc3nd' } = {}) {
   return results;
 }
 
-function walk(root, current, results) {
-  for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-    if (entry.name.startsWith('.')) continue;
-    const full = path.join(current, entry.name);
-    const rel = path.relative(root, full);
-    results.push({ path: rel, type: entry.isDirectory() ? 'dir' : 'file' });
-    if (entry.isDirectory()) walk(root, full, results);
-  }
-}
-
-function writeIfMissing(file, content) {
-  if (!fs.existsSync(file)) fs.writeFileSync(file, content, 'utf8');
-}
-
-// P0-5: ICM runner hardening.
-// Validates tenant paths, reads Layer 0-4 context, refuses path traversal,
-// writes result.md / audit.json / approval-request.json, indexes artifact
-// metadata, never loads unrelated tenant files.
-
-export function validateStageName(stage) {
-  if (!/^[a-z0-9][a-z0-9_]*$/.test(stage)) {
-    throw new Error(`Invalid stage name: ${stage}. Use lowercase letters, numbers, and underscores.`);
-  }
-  return stage;
-}
-
-export function safeStagePath(base, tenantId, stage, filename = '') {
-  assertTenantBoundary(tenantId, `${stage}/${filename}`);
-  validateStageName(stage);
+export function validateIcmWorkspace({ base = 'icm', tenantId = 'asc3nd' } = {}) {
+  assertTenantBoundary(tenantId);
   const root = tenantRoot(base, tenantId);
-  const target = path.join(root, 'stages', stage, 'output');
-  const resolved = filename ? path.resolve(target, filename) : target;
-  // Ensure the resolved path is inside the stage output dir (refuse traversal).
-  if (!resolved.startsWith(path.resolve(target)) && resolved !== path.resolve(target)) {
-    throw new Error('Path traversal refused. Stage output cannot escape the stage output directory.');
+  const errors = [];
+  if (!fs.existsSync(root)) return { ok: false, tenantId, errors: [`workspace missing: ${root}`], stages: [] };
+  for (const file of ['AGENT.md', 'CONTEXT.md']) {
+    if (!fs.existsSync(path.join(root, file))) errors.push(`missing root file: ${file}`);
   }
-  return resolved;
+  if (!fs.existsSync(path.join(root, '_config'))) errors.push('missing _config/ directory');
+  const stages = stageDefinitions.map(([stage]) => {
+    const stageDir = path.join(root, 'stages', stage);
+    const exists = fs.existsSync(stageDir);
+    const hasContext = fs.existsSync(path.join(stageDir, 'CONTEXT.md'));
+    if (!exists) errors.push(`missing stage directory: stages/${stage}`);
+    else if (!hasContext) errors.push(`missing CONTEXT.md: stages/${stage}/CONTEXT.md`);
+    return { stage, exists, hasContext };
+  });
+  return { ok: errors.length === 0, tenantId, errors, stages };
 }
 
-export function readStageContext({ base, tenantId, stage }) {
-  assertTenantBoundary(tenantId, stage);
-  validateStageName(stage);
-  const root = tenantRoot(base, tenantId);
-  const stageDir = path.join(root, 'stages', stage);
-  if (!fs.existsSync(stageDir)) throw new Error(`Stage not found: ${stage}`);
-
-  // Layer 0: AGENT.md
-  const agent = readText(path.join(root, 'AGENT.md'));
-  // Layer 1: CONTEXT.md
-  const workspace = readText(path.join(root, 'CONTEXT.md'));
-  // Layer 2: stage CONTEXT.md
-  const stageContext = readText(path.join(stageDir, 'CONTEXT.md'));
-  // Layer 3: _config/*.md
-  const configDir = path.join(root, '_config');
-  const config = fs.existsSync(configDir)
-    ? fs.readdirSync(configDir).filter((f) => f.endsWith('.md')).map((f) => ({ file: f, content: readText(path.join(configDir, f)) }))
-    : [];
-  // Layer 3b: stage references/*.md
-  const refsDir = path.join(stageDir, 'references');
-  const references = fs.existsSync(refsDir)
-    ? fs.readdirSync(refsDir).filter((f) => f.endsWith('.md')).map((f) => ({ file: f, content: readText(path.join(refsDir, f)) }))
-    : [];
-  // Layer 4: previous stage output (best effort)
-  const previousStage = stageDefinitions[stageDefinitions.findIndex(([s]) => s === stage) - 1];
-  const previousOutput = previousStage ? readPreviousOutput(base, tenantId, previousStage[0]) : null;
-
-  return { agent, workspace, stageContext, config, references, previousStage: previousStage?.[0] || null, previousOutput };
+function readMarkdownDirectory(directory) {
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory)
+    .filter((file) => file.endsWith('.md'))
+    .sort()
+    .map((file) => ({ file, content: readText(path.join(directory, file)) }));
 }
 
 function readPreviousOutput(base, tenantId, stage) {
-  const dir = path.join(tenantRoot(base, tenantId), 'stages', stage, 'output');
-  if (!fs.existsSync(dir)) return null;
-  const result = path.join(dir, 'result.md');
-  return fs.existsSync(result) ? readText(result) : null;
+  const resultPath = path.join(tenantRoot(base, tenantId), 'stages', stage, 'output', 'result.md');
+  return fs.existsSync(resultPath) ? readText(resultPath) : null;
 }
 
 function readText(file) {
   try { return fs.readFileSync(file, 'utf8'); } catch { return ''; }
 }
 
-export function runIcmStage({ base = 'icm', tenantId = 'asc3nd', stage, result = '', audit = {}, approvalRequest = null, onArtifact } = {}) {
-  assertTenantBoundary(tenantId, stage);
-  validateStageName(stage);
-  const context = readStageContext({ base, tenantId, stage });
-  const outDir = safeStagePath(base, tenantId, stage);
-  fs.mkdirSync(outDir, { recursive: true });
-
-  const now = new Date().toISOString();
-  const artifacts = [];
-
-  // result.md
-  const resultPath = path.join(outDir, 'result.md');
-  fs.writeFileSync(resultPath, result || `# ${stage} result\n\nGenerated ${now}\n`, 'utf8');
-  artifacts.push({ stage, filename: 'result.md', path: resultPath, createdAt: now });
-
-  // audit.json
-  const auditPath = path.join(outDir, 'audit.json');
-  const auditBody = { stage, tenantId, ranAt: now, contextLayers: { agent: Boolean(context.agent), workspace: Boolean(context.workspace), stageContext: Boolean(context.stageContext), configFiles: context.config.length, referenceFiles: context.references.length, previousStage: context.previousStage }, ...audit };
-  fs.writeFileSync(auditPath, JSON.stringify(auditBody, null, 2), 'utf8');
-  artifacts.push({ stage, filename: 'audit.json', path: auditPath, createdAt: now });
-
-  // approval-request.json (only when needed)
-  if (approvalRequest) {
-    const apPath = path.join(outDir, 'approval-request.json');
-    fs.writeFileSync(apPath, JSON.stringify({ stage, tenantId, createdAt: now, ...approvalRequest }, null, 2), 'utf8');
-    artifacts.push({ stage, filename: 'approval-request.json', path: apPath, createdAt: now });
-  }
-
-  // Index artifact metadata via callback (wired to the DB repo in the API).
-  if (typeof onArtifact === 'function') {
-    for (const a of artifacts) {
-      onArtifact({ id: `icm_${crypto.randomBytes(4).toString('hex')}`, tenantId, ...a });
-    }
-  }
-
-  return { stage, tenantId, outDir, artifacts, context };
+function writeIfMissing(file, content) {
+  if (!fs.existsSync(file)) fs.writeFileSync(file, content, 'utf8');
 }
 
-export function validateIcmWorkspace({ base = 'icm', tenantId = 'asc3nd' } = {}) {
-  assertTenantBoundary(tenantId);
-  const root = tenantRoot(base, tenantId);
-  const errors = [];
-
-  if (!fs.existsSync(root)) {
-    return { ok: false, tenantId, errors: [`workspace missing: ${root}`], stages: [] };
+function walk(root, current, results) {
+  for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+    if (entry.name.startsWith('.')) continue;
+    const full = path.join(current, entry.name);
+    results.push({ path: path.relative(root, full), type: entry.isDirectory() ? 'dir' : 'file' });
+    if (entry.isDirectory()) walk(root, full, results);
   }
-
-  const requiredRootFiles = ['AGENT.md', 'CONTEXT.md'];
-  for (const f of requiredRootFiles) {
-    if (!fs.existsSync(path.join(root, f))) errors.push(`missing root file: ${f}`);
-  }
-
-  if (!fs.existsSync(path.join(root, '_config'))) errors.push('missing _config/ directory');
-
-  const stageResults = [];
-  for (const [stage] of stageDefinitions) {
-    const stageDir = path.join(root, 'stages', stage);
-    const contextFile = path.join(stageDir, 'CONTEXT.md');
-    const exists = fs.existsSync(stageDir);
-    const hasContext = fs.existsSync(contextFile);
-    if (!exists) errors.push(`missing stage directory: stages/${stage}`);
-    else if (!hasContext) errors.push(`missing CONTEXT.md: stages/${stage}/CONTEXT.md`);
-    stageResults.push({ stage, exists, hasContext });
-  }
-
-  return { ok: errors.length === 0, tenantId, errors, stages: stageResults };
 }
