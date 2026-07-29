@@ -104,16 +104,23 @@ label { display:grid; gap:7px; color:var(--muted); font-size:13px; font-weight:7
 .code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:#14110b; color:#f5ead8; border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:16px; overflow:auto; line-height:1.55; }
 .notice { border:1px solid rgba(243,165,30,.33); background:rgba(243,165,30,.12); color:#6c4308; padding:14px 16px; border-radius:18px; margin-bottom:14px; }
 ul { color:var(--muted); line-height:1.6; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+.sr-only.focus\:not-sr-only:focus { position: static; width: auto; height: auto; padding: 12px 18px; background: var(--ink); color: #fffaf0; z-index: 100; border-radius: 8px; }
+:focus-visible { outline: 3px solid var(--gold2) !important; outline-offset: 2px !important; }
+.lang-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: rgba(255,255,255,.5); }
+.lang-btn { background: transparent; border: 0; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 750; color: var(--muted); cursor: pointer; }
+.lang-btn.active { background: var(--ink); color: #fffaf0; }
 /* Mobile nav summary is hidden on desktop — details/nav always visible */
 .mobile-nav-summary { display:none; }
 @media (max-width: 980px) {
   .hero-grid, .grid.cols-3, .grid.cols-4, .split, .ops-layout { grid-template-columns:1fr; }
   .sidebar { position:relative; height:auto; order:2; }
   .ops-main { order:1; }
-  .nav-links { display:none; }
+  .nav-inner { gap: 12px; }
+  .nav-links { display: flex; gap: 8px; font-size: 13px; }
+  .nav-links a:not(.cta):not(.brand) { display: none; }
   .today-hero { align-items:flex-start; flex-direction:column; }
   .device-card { min-height:auto; }
-  /* Mobile: show collapsible nav toggle */
   .mobile-nav-summary { display:list-item; padding:10px 0; font-weight:700; cursor:pointer; user-select:none; list-style:revert; }
   .mobile-nav-details[open] .side-nav { margin-top:8px; }
 }

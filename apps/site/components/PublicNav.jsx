@@ -10,6 +10,10 @@ export function PublicNav() {
           <a href="/#system">System</a>
           <a href="/#outcomes">Outcomes</a>
           <a href="/#offer">Offer</a>
+          <span className="lang-switch" aria-label="Language options">
+            <button type="button" className="lang-btn active" aria-current="true">EN</button>
+            <button type="button" className="lang-btn">ES</button>
+          </span>
           <a href="/login" className="cta dark">Ops login</a>
         </div>
       </div>
