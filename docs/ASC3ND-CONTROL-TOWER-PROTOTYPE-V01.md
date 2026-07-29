@@ -1,407 +1,197 @@
-# ASC3ND Control Tower Prototype v0.1
+# ASC3ND RSVP Organizer Prototype v0.1
 
-## Purpose
-Build a separate, safe prototype of the ASC3ND operational micro-app without modifying the live event landing page or the current interactive workbook.
+## Decision
 
-The prototype should prove that ASC3ND can:
-- understand event status at a glance;
-- ask grounded questions in natural language;
-- see where registrations and leads come from;
-- review alerts and follow-up needs;
-- create only approved, brand-safe drafts;
-- progressively unlock agent capabilities during a 90-day onboarding.
+The first ASC3ND operational prototype is a read-only RSVP Organizer built around the existing Community Cuts registration system.
 
-## Build location
+It is not a general Control Tower, campaign generator, autonomous agent, CRM replacement, or ThePopeBot integration.
 
-Repository: `executiveusa/ascend-social-purpose-agentic-systems-`
+## Objective
 
-Prototype app path:
+Turn existing RSVP submissions into a clear operational view so ASC3ND can understand:
 
-```text
-apps/asc3nd-control-tower-prototype/
-```
+- how many responses exist;
+- estimated children and attendance demand;
+- which records need review or follow-up;
+- preferred language and arrival window;
+- service demand;
+- accessibility-contact flags;
+- current RSVP lifecycle status;
+- the freshness and source of the displayed data.
 
-Deployment target:
+## Existing source of truth
 
-```text
-asc3nd-control-tower-prototype.vercel.app
-```
+Use the current RSVP implementation in `executiveusa/asce3nd-interactive-document`:
 
-The prototype must have its own Vercel project and environment variables. It must not share the production alias or deployment project used by the public ASC3ND landing page.
+- `api/rsvp.js`
+- `api/rsvp-verify.js`
+- `api/rsvp-cancel.js`
+- `api/_lib/rsvp-summary-adapter.js`
+- `sql/rsvp.sql`
 
-## Product model
+Supabase remains the only RSVP database. Do not create a second RSVP datastore.
 
-The interface is not a chatbot with a dashboard attached. It is an operational workspace with an embedded, bounded assistant.
+## Verified read-only data contract
 
-```text
-Control Tower UI
-  -> ASC3ND Agent Gateway
-  -> ThePopeBot runtime
-  -> scoped ASC3ND Event Operator
-  -> approved Mission OS / Supabase tools
-```
+The documented redacted adapter exposes only:
 
-ThePopeBot remains invisible to the client during early onboarding. ASC3ND sees only the capabilities enabled for its current onboarding stage.
+- first name;
+- children count;
+- age range;
+- requested service;
+- arrival window;
+- preferred language;
+- accessibility-contact flag;
+- RSVP status;
+- created and updated timestamps.
 
-## Design principles
+Do not invent volunteer, mentor, donor, sponsor, partner, attribution, assignment, notes, or campaign fields until they are verified in the existing form and database schema.
 
-1. **Dashboard first, conversation second**
-   - The first screen must answer what is happening before the user asks a question.
-   - Chat is a guided analysis and action layer, not the whole product.
+## Prototype location
 
-2. **One clear next action**
-   - Every screen should make the recommended next step obvious.
-   - Avoid walls of metrics, settings, or model controls.
-
-3. **Progressive disclosure**
-   - Show only current-stage tools.
-   - Advanced capabilities remain hidden until unlocked.
-
-4. **Grounded by default**
-   - Every factual answer must come from approved tenant data or locked ASC3ND facts.
-   - Answers must include last-updated time and supporting records or metrics.
-
-5. **Draft before action**
-   - Content creation produces a draft package.
-   - Publishing, sending, bulk changes, and external actions always require approval.
-
-6. **Brand protection over output volume**
-   - The system should refuse low-context, repetitive, off-brand, or unsupported content generation.
-   - Quality gates are mandatory before a draft can be approved.
-
-## Prototype navigation
-
-Keep v0.1 to five destinations:
+Build the interface in the workbook repository:
 
 ```text
-Overview
-Leads
-Campaigns
-Alerts
-Ask ASC3ND
+Repository: executiveusa/asce3nd-interactive-document
+Suggested route: /rsvp-organizer
 ```
 
-Do not expose:
-- terminal;
-- code workspaces;
-- repositories;
-- raw agent jobs;
-- provider settings;
-- model temperatures;
-- prompt editing;
-- ThePopeBot admin screens;
-- auto-merge controls.
-
-## Screen 1: Overview
-
-The default screen should contain:
-
-### Event header
-- Community Cuts for Kids
-- date, time, venue
-- last data refresh
-- system health indicator
-
-### Primary metrics
-- planning responses
-- estimated attendees
-- confirmed responses
-- follow-up required
-- volunteer interest
-- partner or sponsor interest
-
-### Readiness strip
-- attendance readiness
-- volunteer readiness
-- supply readiness
-- communications readiness
-- system health
-
-### What needs attention
-A ranked list of no more than five items, each with:
-- why it matters;
-- affected count;
-- age of issue;
-- recommended action;
-- open-review button.
-
-### Today's briefing
-A concise generated briefing grounded only in current event data.
-
-## Screen 2: Leads
-
-Provide a simple operational pipeline:
+The public event page remains in:
 
 ```text
-New
-Needs review
-Contacted
-Confirmed
-Follow-up required
-Completed
-Archived
+executiveusa/asc3nd-frontend-website-
 ```
 
-The prototype starts read-only. It may display redacted records and follow-up queues, but it may not alter production data.
+The reusable agent infrastructure remains in:
 
-Filters:
-- lead type;
-- status;
+```text
+executiveusa/ascend-social-purpose-agentic-systems-
+```
+
+No live repository or production deployment may be changed until the exact commit is reviewed and approved by Jeremy.
+
+## Screens
+
+### 1. Overview
+
+Show:
+
+- total responses;
+- confirmed responses;
+- estimated children;
+- needs-review count;
+- follow-up-required count;
+- cancellations;
+- service-demand breakdown;
+- language breakdown;
+- arrival-window breakdown;
+- last refresh time.
+
+### 2. People
+
+A redacted list with filters for:
+
+- RSVP status;
 - language;
-- source;
-- age of record;
-- assigned or unassigned.
+- requested service;
+- arrival window;
+- accessibility-contact flag;
+- age of record.
 
-## Screen 3: Campaigns
+Do not expose surnames, email addresses, telephone numbers, child names, health information, or private notes in the general list.
 
-Campaign tools must be structured workflows, not a blank generation box.
+### 3. Follow-up queue
 
-Allowed prototype workflow:
+Derive a deterministic queue from existing statuses and timestamps.
 
-```text
-Create campaign draft
-  1. choose approved objective
-  2. choose approved audience
-  3. choose approved format
-  4. load locked event facts
-  5. load current brand kit
-  6. generate one primary concept and one alternate
-  7. run brand and factual review
-  8. present as UNAPPROVED DRAFT
-```
+Initial queue rules:
 
-Initial formats:
-- print flyer copy;
-- Instagram post copy;
-- Instagram story copy;
-- Spanish adaptation;
-- QR attribution link definition.
+- `NEEDS_REVIEW` appears first;
+- `FOLLOWUP_REQUIRED` appears next;
+- stale `NEW` records appear after a documented threshold;
+- cancelled and archived records do not appear;
+- every item explains why it is in the queue.
 
-Image generation and public publishing are excluded from v0.1.
+The first release is read-only. It cannot send messages or alter RSVP records.
 
-## Screen 4: Alerts
+### 4. Person detail
 
-Show only actionable alerts:
-- stale lead;
-- unassigned high-value partner lead;
-- volunteer coverage below threshold;
-- projected supply gap;
-- registration endpoint failure;
-- source attribution missing;
-- workbook and database totals disagree;
-- agent tool failure.
+Show only the redacted fields supplied by the adapter plus:
 
-Each alert must have:
-- severity;
-- plain-language explanation;
-- evidence;
-- recommended action;
-- acknowledgement state.
+- plain-language status explanation;
+- record age;
+- deterministic recommended next step;
+- data-source and freshness note.
 
-The prototype may simulate alerts from fixture data. It must not send production email, SMS, or Telegram messages.
+## Status model
 
-## Screen 5: Ask ASC3ND
-
-The assistant panel should feel conversational but remain constrained.
-
-### Suggested actions
-- Give me today's event briefing
-- What needs attention?
-- Where are our leads coming from?
-- Show the follow-up queue
-- Explain volunteer readiness
-- Draft a family follow-up
-- Draft a sponsor follow-up
-- Prepare a campaign brief
-
-### Response contract
-Every answer should use this structure when applicable:
-
-1. Direct answer
-2. Supporting metrics or records
-3. Why it matters
-4. Recommended next action
-5. Available approved actions
-6. Data freshness and source note
-
-### Scope boundaries
-The assistant may discuss:
-- ASC3ND;
-- current ASC3ND events;
-- leads, volunteers, partners, supplies, campaigns, and readiness;
-- approved brand and messaging guidance;
-- operational recommendations based on tenant data.
-
-The assistant must decline unrelated general-purpose conversation and redirect:
-
-> I am configured for ASC3ND event and campaign operations. I can help with event readiness, leads, volunteers, supplies, outreach, follow-up, and approved campaign drafts.
-
-## Anti-slop content controls
-
-### No open-ended content factory
-Do not provide a generic "Create anything" prompt.
-
-### Required creation inputs
-Before generating campaign material, the workflow must have:
-- objective;
-- audience;
-- channel or format;
-- approved facts;
-- CTA;
-- language;
-- brand-kit version;
-- attribution identifier.
-
-### Quality gate
-Every generated draft must pass:
-- factual consistency check;
-- brand voice check;
-- duplication check;
-- prohibited-claim check;
-- youth privacy check;
-- CTA clarity check;
-- reading-level and accessibility check;
-- English/Spanish parity check when bilingual.
-
-### Output limit
-For each request, create:
-- one recommended concept;
-- one meaningfully different alternate;
-- no bulk variations unless explicitly approved.
-
-### Draft labeling
-Every generated artifact must display:
+Use the existing RSVP lifecycle values:
 
 ```text
-UNAPPROVED DRAFT — REVIEW REQUIRED
+NEW
+NEEDS_REVIEW
+ATTENDANCE_CONFIRMED
+WAITLISTED
+CANCELLED
+CHECKED_IN
+HAIRCUT_COMPLETED
+ATTENDED_NO_HAIRCUT
+NO_SHOW
+FOLLOWUP_REQUIRED
 ```
 
-### Publishing rule
-The prototype cannot publish, send, schedule, or export a contact list.
+Do not replace these with a second pipeline in v0.1.
 
-## Agent architecture
+## Data modes
 
-Create a scoped agent definition:
+### Fixture mode
 
-```text
-agents/asc3nd-event-operator/
-  SYSTEM.md
-  FACTS.md
-  PRIVACY.md
-  BRAND-GUARDRAILS.md
-  APPROVALS.md
-  tools/
-```
+Use deterministic fixture records shaped exactly like the redacted adapter response. Fixtures must be clearly labeled and must not contain real personal information.
 
-### v0.1 read tools
-- get_event_overview
-- get_event_readiness
-- get_follow_up_queue
-- get_attribution_summary
-- get_recent_changes
-- get_system_health
+### Read-only production mode
 
-### v0.1 draft tools
-- draft_daily_brief
-- draft_follow_up_message
-- draft_campaign_brief
+Connect server-side to the existing redacted adapter. Never expose privileged Supabase credentials to the browser.
 
-### No v0.1 write tools
-No database mutation, outbound messages, scheduling, publishing, deletion, or bulk operations.
+## Privacy and safety
 
-## Data strategy
+- No youth PII enters model context.
+- No client-side privileged database key.
+- No readable check-in or RSVP list is exposed to a camera operator.
+- No contact-list export.
+- No automated outreach.
+- No generated impact claims.
+- No production mutation in v0.1.
 
-### First prototype mode
-Use deterministic fixture data shaped like the real RSVP adapter response.
+## Assistant scope
 
-### Second prototype mode
-Connect read-only to the existing redacted RSVP summary adapter.
+An LLM is excluded from the first implementation.
 
-### Production data rule
-- no email, phone, surname, child name, school, health information, or private notes in model context;
-- no second RSVP database;
-- no direct browser access to privileged Supabase credentials;
-- tenant and event scope injected server-side.
+The interface may include deterministic explanations and recommended next steps generated from explicit rules. A bounded assistant may be considered only after the visual organizer is verified and trusted.
 
-## Observability
+ThePopeBot work remains deferred under GitHub issue #19.
 
-Record each assistant run:
-- tenant;
-- user;
-- event;
-- session;
-- onboarding stage;
-- provider and model;
-- prompt category;
-- tools called;
-- records accessed;
-- latency;
-- token usage and estimated cost where available;
-- cache use;
-- policy decisions;
-- errors and retries;
-- draft or action status.
+## Acceptance criteria
 
-Client-facing activity should be translated into plain language. Raw traces remain admin-only.
-
-## 90-day capability ladder
-
-### Stage 1: Understand
-- dashboard;
-- read-only assistant;
-- daily briefing;
-- source attribution;
-- alerts.
-
-### Stage 2: Prepare
-- follow-up drafts;
-- campaign briefs;
-- flyer and social copy drafts;
-- Spanish adaptations.
-
-### Stage 3: Confirm small actions
-- lead assignments;
-- status changes;
-- notes;
-- follow-up dates;
-- alert acknowledgements.
-
-### Stage 4: Approved automation
-- morning brief;
-- stale-lead alerts;
-- supply-gap alerts;
-- weekly attribution report.
-
-### Stage 5: Expanded ownership
-- BYOK;
-- optional Telegram or voice;
-- advanced workflow unlocks;
-- self-managed handoff or continued managed service.
-
-## Prototype acceptance criteria
-
-- separate app and deployment from all live ASC3ND public properties;
-- responsive at 375, 768, and 1280 pixels;
-- Overview, Leads, Campaigns, Alerts, and Ask ASC3ND screens work with fixtures;
-- assistant answers are visibly grounded and source-labeled;
-- off-topic prompts are redirected;
-- campaign generation requires structured inputs;
-- outputs are limited to one recommendation and one alternate;
-- every generated artifact is labeled unapproved;
-- no write-capable or outbound tool exists;
-- provider can be changed server-side without changing the client UI;
-- observability trace is produced for every run;
-- no production landing-page code is changed.
+- uses the existing RSVP schema and redacted adapter contract;
+- creates no second database;
+- contains Overview, People, Follow-up Queue, and Person Detail views;
+- works at 375, 768, and 1280 pixel widths;
+- clearly distinguishes fixture data from live read-only data;
+- contains no write, send, publish, scheduling, or export capability;
+- exposes no prohibited PII in the general interface;
+- provides source and freshness information;
+- modifies neither the live event landing page nor production workbook without explicit commit approval;
+- passes lint, build, accessibility smoke checks, and a manual browser review before a PR is approved.
 
 ## Build order
 
-1. Scaffold standalone prototype app.
-2. Implement fixture data contract.
-3. Build the five-screen shell.
-4. Add deterministic assistant-response simulator.
-5. Add ThePopeBot gateway adapter behind a feature flag.
-6. Add scoped agent files and policy enforcement.
-7. Add observability ledger.
-8. Connect the read-only RSVP adapter.
-9. Run usability test with ASC3ND stakeholders.
-10. Decide what to integrate into the live workbook after approval.
+1. Inspect the exact public event form fields.
+2. Inspect the exact RSVP SQL schema and adapter output.
+3. Document verified fields and any mismatches.
+4. Scaffold `/rsvp-organizer` behind a non-production branch.
+5. Implement fixture data using the verified adapter shape.
+6. Build Overview, People, Follow-up Queue, and Person Detail.
+7. Add responsive and accessibility checks.
+8. Connect the read-only adapter behind a server-side feature flag.
+9. Create a preview deployment.
+10. Present the exact preview commit for Jeremy’s approval before any production merge.
