@@ -146,7 +146,7 @@ export default function HomePage() {
             <div className="section-heading">
               <span className="eyebrow">Event Location</span>
               <h2>Tangles & Locs Salon & Spa</h2>
-              <p>2253 S 123rd St, Suite 6 · Seattle, WA</p>
+              <p><a href="https://maps.google.com/?q=2253+S+123rd+St+Suite+6+Seattle+WA" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>2253 S 123rd St, Suite 6 · Seattle, WA</a></p>
             </div>
             <div className="card venue-card" style={{ display: 'grid', placeItems: 'center', background: '#0a0e17', borderRadius: '24px', padding: '20px', overflow: 'hidden' }}>
               <div style={{ width: '100%', maxWidth: '720px', height: '480px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#131b2e', borderRadius: '16px', overflow: 'hidden' }}>

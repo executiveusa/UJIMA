@@ -3,7 +3,7 @@ export function PublicNav() {
     <nav className="nav">
       <div className="container nav-inner">
         <a className="brand" href="/">
-          <span className="logo">A3</span>
+          <img src="/images/asc3nd-logo.jpg" alt="ASC3ND Logo" style={{ height: '32px', width: 'auto', display: 'block' }} />
           <span>Asc3nd Social Purpose OS</span>
         </a>
         <div className="nav-links">
