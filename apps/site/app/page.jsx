@@ -61,8 +61,12 @@ export default function HomePage() {
           <div className="container hero-grid">
             <div>
               <span className="eyebrow">Seattle youth + sports + social purpose</span>
-              <h1>One calm AI operating system for the work nonprofits actually need to finish.</h1>
-              <p className="lead">Funding, approvals, donors, calls, reports, campaigns, founder memory, and an AI-readable public site. Built once as a shared backend. Customized through the frontend and ICM files for each organization.</p>
+              <img 
+                src="/images/community-cuts-logo-graphic.png" 
+                alt="Community Cuts For Kids" 
+                style={{ width: '100%', maxWidth: '520px', height: 'auto', display: 'block', margin: '0 0 20px 0' }} 
+              />
+              <p className="lead" style={{ fontSize: '1.5rem', fontWeight: '600' }}>Fresh Fade, Fresh Grade</p>
               <div className="hero-actions">
                 <a className="cta" href="#rsvp">RSVP for Community Event</a>
                 <a className="cta ghost" href="#offer">View deployment package</a>
