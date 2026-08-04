@@ -1,0 +1,25 @@
+name: Repository Boundary Guard
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate repository and deployment role
+        run: node scripts/repo-boundary-guard.mjs
+      - name: Confirm required governance files
+        run: |
+          test -f REPO_SCOPE.md
+          test -f repo-boundary.json
+          test -f deployment-lock.json
