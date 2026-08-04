@@ -1,0 +1,18 @@
+{
+  "stage": "00_intake_and_evidence",
+  "status": "ready",
+  "owner": "GLM-5.2",
+  "reviewer": "ChatGPT",
+  "started_at": null,
+  "completed_at": null,
+  "approval_required": true,
+  "approval_id": null,
+  "blockers": [
+    "Interactive workbook repository is not currently available through the connected GitHub installation in this chat.",
+    "ASC3ND client Supabase project is not currently connected; only botanic-creations is visible.",
+    "No interview media URLs or files have been supplied to the connected Descript tool.",
+    "Exact session dates and proof have not yet been reconciled."
+  ],
+  "evidence": [],
+  "next_action": "GLM 5.2 begins read-only workbook and artifact inventory using JCodeMunch MCP, then returns one consolidated missing-input request."
+}

@@ -1,0 +1,83 @@
+{
+  "contract_name": "90-Day Social Presence Builder",
+  "client": "ASC3ND COLLECTIVE",
+  "provider": "Macs Digital Media",
+  "price_usd": 2450,
+  "completion_rule": "Every item requires client-ready artifact plus evidence.",
+  "deliverables": [
+    {
+      "id": "D1",
+      "name": "Interactive Strategy Workbook",
+      "value_usd": 400,
+      "requirements": ["own URL", "EN/ES", "team shareable", "cloud autosave", "client ownership"],
+      "current_status": "partial",
+      "estimated_completion_percent": 80,
+      "missing": ["canonical production URL proof", "autosave/database proof", "EN/ES parity audit", "final export", "operating instructions"]
+    },
+    {
+      "id": "D2",
+      "name": "Four Guided Strategy Sessions",
+      "value_usd": 800,
+      "requirements": ["4 sessions", "60-90 minutes each", "answers captured permanently"],
+      "current_status": "evidence_required",
+      "estimated_completion_percent": null,
+      "missing": ["dates", "attendees", "notes or recordings", "sections completed", "proof all four occurred"]
+    },
+    {
+      "id": "D3",
+      "name": "EN/ES Bilingual Support",
+      "value_usd": 200,
+      "requirements": ["support throughout workbook, calendar, captions, shot list, bios as applicable"],
+      "current_status": "partial",
+      "estimated_completion_percent": 60,
+      "missing": ["translation policy", "native-level QA", "final parity report"]
+    },
+    {
+      "id": "D4",
+      "name": "90-Day Content Calendar",
+      "value_usd": 600,
+      "requirements": ["12 weeks", "themes", "post ideas", "short video concepts", "engagement actions", "based on approved strategy"],
+      "current_status": "not_delivered",
+      "estimated_completion_percent": 25,
+      "missing": ["authoritative weekly rhythm", "12-week completed calendar", "owners", "assets", "approval and publish states"]
+    },
+    {
+      "id": "D5",
+      "name": "30-Post Caption Bank",
+      "value_usd": 450,
+      "requirements": ["30 captions", "ASC3ND voice", "actual audiences", "approved pillars", "ready to post or adapt"],
+      "current_status": "not_delivered",
+      "estimated_completion_percent": 15,
+      "missing": ["30 finalized captions", "pillar distribution", "platform variants", "bilingual treatment", "approval evidence"]
+    },
+    {
+      "id": "D6",
+      "name": "Month 1 Shot List and Visual Direction",
+      "value_usd": 200,
+      "requirements": ["photography", "video", "spaces", "faces", "moments", "behind the scenes", "trust-building direction"],
+      "current_status": "partial",
+      "estimated_completion_percent": 55,
+      "missing": ["one final Month 1 guide", "priority and owner", "aspect ratios", "consent requirements", "capture checklist"]
+    },
+    {
+      "id": "D7",
+      "name": "Platform Bio Updates",
+      "value_usd": 150,
+      "requirements": ["up to 3 platforms", "clear", "consistent", "aligned to voice and mission"],
+      "current_status": "not_delivered",
+      "estimated_completion_percent": 15,
+      "missing": ["select platforms", "approved bios", "handles", "CTA", "contact and URL", "implementation proof"]
+    },
+    {
+      "id": "D8",
+      "name": "Independent Operating Handoff",
+      "value_usd": 0,
+      "requirements": ["clear documented strategy", "system runnable without provider after Day 60", "client owns all work"],
+      "current_status": "not_delivered",
+      "estimated_completion_percent": 30,
+      "missing": ["final package", "ownership map", "workflow guide", "approval process", "measurement routine", "client acceptance"]
+    }
+  ],
+  "explicit_non_promises": ["follower counts", "growth rates", "viral posts", "engagement guarantees", "donor amounts", "fundraising outcomes", "exploitative pain-based marketing"],
+  "out_of_scope_unless_amended": ["full professional logo redesign", "complete brand identity system", "website and RSVP build", "production Meta automation", "general agent platform development"]
+}

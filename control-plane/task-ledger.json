@@ -1,0 +1,117 @@
+{
+  "version": "1.0.0",
+  "updated_at": "2026-08-04T15:24:00-06:00",
+  "operating_model": "one orchestrator, bounded workers, human approval gates",
+  "tasks": [
+    {
+      "id": "T001",
+      "title": "Extract authoritative workbook and session evidence",
+      "deliverables": ["D1", "D2", "D3"],
+      "repo": "executiveusa/asce3nd-interactive-document",
+      "agent": "GLM-5.2",
+      "status": "ready",
+      "risk": "yellow",
+      "outputs": ["evidence/workbook-export.json", "evidence/session-ledger.json", "evidence/bilingual-parity.json"],
+      "acceptance": ["all client answers have provenance", "four sessions proven or gap declared", "contract text preserved verbatim", "no guessed answers"]
+    },
+    {
+      "id": "T002",
+      "title": "Freeze canonical strategy manifest",
+      "deliverables": ["D1", "D3", "D4", "D5", "D6", "D7"],
+      "repo": "executiveusa/ascend-social-purpose-agentic-systems-",
+      "agent": "GLM-5.2",
+      "status": "blocked_by_T001",
+      "risk": "green",
+      "outputs": ["tenants/asc3nd/strategy-manifest.json", "tenants/asc3nd/provenance.json"],
+      "acceptance": ["every field cites source", "unknowns remain null", "approved wording is locked"]
+    },
+    {
+      "id": "T003",
+      "title": "Ingest interview footage and generate corrected transcript",
+      "deliverables": ["D4", "D5", "D6"],
+      "repo": "external:Descript",
+      "agent": "ChatGPT-connected-tools + GLM-5.2 review",
+      "status": "blocked_by_media_links",
+      "risk": "yellow",
+      "outputs": ["media/transcript-master.docx", "media/transcript-master.json", "media/story-map.json"],
+      "acceptance": ["original media imported without recompression", "speakers labeled", "ASC3ND names and terminology corrected", "timestamps retained", "no meaning-changing edits"]
+    },
+    {
+      "id": "T004",
+      "title": "Create master interview edit and short clip candidates",
+      "deliverables": ["D4", "D5", "D6"],
+      "repo": "external:Descript+OpusClip",
+      "agent": "Media worker",
+      "status": "blocked_by_T003",
+      "risk": "yellow",
+      "outputs": ["media/master-edit", "media/clip-candidates.json", "media/caption-qa.csv"],
+      "acceptance": ["one coherent master story", "clips mapped to pillars", "captions manually QA-ready", "9:16 and 4:5 priority", "no synthetic documentary claims"]
+    },
+    {
+      "id": "T005",
+      "title": "Build complete 12-week content calendar",
+      "deliverables": ["D4"],
+      "repo": "executiveusa/ascend-social-purpose-agentic-systems-",
+      "agent": "GLM-5.2",
+      "status": "blocked_by_T002_T003",
+      "risk": "green",
+      "outputs": ["deliverables/90-day-calendar.csv", "deliverables/90-day-calendar.json", "deliverables/90-day-calendar.md"],
+      "acceptance": ["12 weeks complete", "Monday-Wednesday-Friday rhythm sourced", "themes, posts, videos, engagement actions included", "realistic capacity", "30 caption slots identified"]
+    },
+    {
+      "id": "T006",
+      "title": "Write and QA 30-post caption bank",
+      "deliverables": ["D5"],
+      "repo": "executiveusa/ascend-social-purpose-agentic-systems-",
+      "agent": "GLM-5.2",
+      "status": "blocked_by_T005",
+      "risk": "yellow",
+      "outputs": ["deliverables/30-caption-bank.json", "deliverables/30-caption-bank.docx"],
+      "acceptance": ["exactly 30", "pillar balance", "voice match", "platform labels", "CTA", "visual requirement", "no AI slop", "EN/ES where strategy requires"]
+    },
+    {
+      "id": "T007",
+      "title": "Finalize Month 1 shot list and visual direction",
+      "deliverables": ["D6"],
+      "repo": "executiveusa/asc3nd-brand-kit-",
+      "agent": "GLM-5.2 + design reviewer",
+      "status": "blocked_by_T002_T003",
+      "risk": "yellow",
+      "outputs": ["deliverables/month-1-shot-list.pdf", "deliverables/visual-direction.md", "deliverables/capture-manifest.csv"],
+      "acceptance": ["spaces, faces, moments, BTS", "priorities", "owners", "orientations", "consent", "audio and subtitle notes", "trust-building rationale"]
+    },
+    {
+      "id": "T008",
+      "title": "Create and implement three platform bios",
+      "deliverables": ["D7"],
+      "repo": "executiveusa/ascend-social-purpose-agentic-systems-",
+      "agent": "GLM-5.2",
+      "status": "blocked_by_T002",
+      "risk": "yellow",
+      "outputs": ["deliverables/platform-bios.json", "deliverables/platform-bios.md"],
+      "acceptance": ["up to three platforms selected from strategy", "display name", "handle", "short bio", "long about where supported", "URL", "CTA", "contact", "implementation proof or explicit pending status"]
+    },
+    {
+      "id": "T009",
+      "title": "Complete Facebook launch package",
+      "deliverables": ["D4", "D5", "D7"],
+      "repo": "executiveusa/asc3nd-brand-kit-",
+      "agent": "GLM-5.2 + browser worker",
+      "status": "blocked_by_T005_T006_T008",
+      "risk": "red",
+      "outputs": ["deliverables/facebook-assets", "evidence/meta-setup.json"],
+      "acceptance": ["profile and cover assets", "launch posts", "page/about copy", "ownership and 2FA proof", "no accidental posts", "publishing requires approval_id"]
+    },
+    {
+      "id": "T010",
+      "title": "Assemble client handoff and fulfillment report",
+      "deliverables": ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8"],
+      "repo": "executiveusa/ascend-social-purpose-agentic-systems-",
+      "agent": "ChatGPT QA + GLM-5.2",
+      "status": "blocked_by_T001_T009",
+      "risk": "yellow",
+      "outputs": ["delivery/ASC3ND-fulfillment-ledger.json", "delivery/client-flipbook", "delivery/ownership-map.md", "delivery/operations-guide.md"],
+      "acceptance": ["every contract item has proof", "gaps disclosed", "editable sources included", "credentials separated", "client acceptance field present"]
+    }
+  ]
+}
