@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "executiveusa/ascend-social-purpose-agentic-systems-",
+  "package_name": "asc3nd-social-purpose-os",
+  "purpose": "Reusable multi-tenant social-purpose operating system",
+  "owns": [
+    "agent routing and ICM workflows",
+    "approval and audit systems",
+    "operations console capabilities",
+    "Postiz and communications adapters",
+    "tenant scaffolding, SDKs and deployment handoffs",
+    "platform safety policies and tests"
+  ],
+  "forbids": [
+    "production ASC3ND event or evergreen frontend",
+    "client contract and workbook truth as shared defaults",
+    "brand and QR master assets",
+    "raw client interview media",
+    "design demonstration work",
+    "hidden client-specific databases",
+    "unapproved external publishing"
+  ],
+  "route_to": {
+    "public_frontend_and_event": "executiveusa/asc3nd-frontend-website-",
+    "workbook_contract_strategy": "executiveusa/asce3nd-interactive-document",
+    "brand_qr_campaign_assets": "executiveusa/asc3nd-brand-kit-",
+    "design_demonstrations": "executiveusa/ascend-demonstration-page"
+  },
+  "tenant_isolation_required": true,
+  "required_checks": [
+    "repository_identity",
+    "package_identity",
+    "deployment_role_identity"
+  ],
+  "fail_closed": true
+}
