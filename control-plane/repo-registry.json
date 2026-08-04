@@ -1,0 +1,62 @@
+{
+  "version": "1.0.0",
+  "control_plane_repo": "executiveusa/ascend-social-purpose-agentic-systems-",
+  "rules": {
+    "one_repo_one_purpose": true,
+    "cross_repo_edits_require_handoff": true,
+    "production_deploy_requires_triple_identity_check": true,
+    "client_data_in_platform_defaults": false
+  },
+  "repositories": [
+    {
+      "name": "executiveusa/ascend-social-purpose-agentic-systems-",
+      "purpose": "Reusable ICM workflows, task routing, approvals, adapters, evidence, and agent instructions",
+      "allowed": ["control plane", "ICM stages", "reusable workflow code", "approval rules", "integration contracts"],
+      "forbidden": ["canonical public website", "raw client footage", "brand master assets", "hardcoded client records"],
+      "deployment_role": "platform only"
+    },
+    {
+      "name": "executiveusa/asc3nd-frontend-website-",
+      "purpose": "Canonical public website and Community Cuts event funnel",
+      "allowed": ["public frontend", "event funnel", "server API routes", "frontend tests"],
+      "forbidden": ["strategy source of truth", "raw media archive", "brand master ownership", "shared agent platform"],
+      "deployment_role": "public frontend"
+    },
+    {
+      "name": "executiveusa/asce3nd-interactive-document",
+      "purpose": "Client workbook, approved answers, signed scope, strategy record",
+      "allowed": ["workbook", "contract evidence", "client approvals", "final strategy export"],
+      "forbidden": ["competing public event app", "duplicate RSVP truth store", "unapproved publishing"],
+      "deployment_role": "client workbook"
+    },
+    {
+      "name": "executiveusa/asc3nd-brand-kit-",
+      "purpose": "Approved logo sources, QR masters, campaign templates, visual rules and exports",
+      "allowed": ["brand masters", "campaign assets", "export manifests", "visual direction"],
+      "forbidden": ["website runtime", "RSVP records", "private transcript archive"],
+      "deployment_role": "none"
+    },
+    {
+      "name": "executiveusa/ascend-demonstration-page",
+      "purpose": "Non-production design demonstrations and client-facing prototypes",
+      "allowed": ["design experiments", "before/after demos"],
+      "forbidden": ["production RSVP", "canonical contract copy without sync", "primary domain"],
+      "deployment_role": "preview only"
+    },
+    {
+      "name": "executiveusa/asc3nd-events-page",
+      "purpose": "Legacy event implementation pending audit",
+      "allowed": ["unique event assets or tests not present in canonical frontend"],
+      "forbidden": ["parallel production event deployment"],
+      "deployment_role": "archive or merge candidate"
+    },
+    {
+      "name": "executiveusa/asc3nd-supabase-landing",
+      "purpose": "Experimental RSVP improvements pending audit",
+      "allowed": ["proven improvements ported through PR"],
+      "forbidden": ["second RSVP database", "parallel production domain"],
+      "deployment_role": "archive or merge candidate"
+    }
+  ],
+  "handoff_required_fields": ["task_id", "source_repo", "destination_repo", "artifact_paths", "integration_contract", "evidence", "approval_id"]
+}
