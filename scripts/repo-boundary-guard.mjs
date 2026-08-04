@@ -41,20 +41,28 @@ if (process.env.VERCEL === '1') {
       received: `${vercelOwner}/${vercelSlug}`
     });
   }
+
   const target = process.env.VERCEL_PROJECT_PRODUCTION_URL || '';
   if (lock.forbidden_public_targets.includes(target)) {
     fail('The reusable platform is connected to an ASC3ND public frontend target.', { received: target });
   }
-  if (process.env[lock.required_override_variable] !== lock.required_override_value) {
-    fail('Platform Vercel deployment is not explicitly approved.', {
+
+  const vercelEnvironment = process.env.VERCEL_ENV || 'unknown';
+  if (vercelEnvironment === 'production' && process.env[lock.required_override_variable] !== lock.required_override_value) {
+    fail('Platform production deployment is not explicitly approved.', {
       required_variable: lock.required_override_variable,
       required_value: lock.required_override_value,
-      deployment_role: lock.deployment_role
+      deployment_role: lock.deployment_role,
+      vercel_environment: vercelEnvironment
     });
   }
+
+  console.log(`PASS vercel_environment: ${vercelEnvironment}`);
 }
 
 console.log('PASS repository_identity');
 console.log('PASS package_identity');
 console.log(`PASS deployment_role: ${lock.deployment_role}`);
-if (process.env.VERCEL === '1') console.log('PASS explicit_platform_deployment_approval');
+if (process.env.VERCEL === '1' && process.env.VERCEL_ENV === 'production') {
+  console.log('PASS explicit_platform_production_approval');
+}
