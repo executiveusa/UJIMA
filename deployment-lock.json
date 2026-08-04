@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "executiveusa/ascend-social-purpose-agentic-systems-",
+  "package_name": "asc3nd-social-purpose-os",
+  "deployment_role": "reusable-operations-platform",
+  "allowed_vercel_git_owner": "executiveusa",
+  "allowed_vercel_git_repo_slug": "ascend-social-purpose-agentic-systems-",
+  "vercel_production_authorized": false,
+  "forbidden_public_targets": [
+    "asc3nd.org",
+    "www.asc3nd.org",
+    "asc3nd-frontend.vercel.app",
+    "asc3nd-frontend-website.vercel.app"
+  ],
+  "required_override_variable": "ASC3ND_PLATFORM_DEPLOYMENT_APPROVED",
+  "required_override_value": "true",
+  "triple_check": [
+    "source repository identity",
+    "package/platform identity",
+    "explicit deployment-role approval"
+  ],
+  "fail_closed_on_vercel": true
+}

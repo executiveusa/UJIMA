@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
   "installCommand": "cd ../.. && npm install",
-  "buildCommand": "cd ../.. && npm run build --workspace @asc3nd/site",
+  "buildCommand": "cd ../.. && npm run guard:repo && npm run build --workspace @asc3nd/site",
   "outputDirectory": ".next"
 }
