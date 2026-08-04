@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ASC3ND Platform Bios (3 platforms)",
+  "note": "Instagram spec confirmed. Facebook + LinkedIn use industry-standard dimensions until client provides specific specs.",
+  "platforms": [
+    {
+      "platform": "Instagram",
+      "display_name": "The Asc3nd Collective",
+      "proposed_handle": "@asc3ndcollective",
+      "category": "Nonprofit Organization",
+      "short_bio": "Empower youth. Elevate futures. Build community. / Empoderar jóvenes. Elevar futuros. Construir comunidad.",
+      "long_about": null,
+      "website": "asc3nd.org",
+      "cta": "RSVP for Community Cuts for Kids — Aug 30",
+      "contact": "social@asc3nd.org",
+      "english": "Empower youth. Elevate futures. Build community.",
+      "spanish": "Empoderar jóvenes. Elevar futuros. Construir comunidad.",
+      "character_count": 152,
+      "character_limit": 150,
+      "character_status": "OVER_BY_2 — trim needed",
+      "short_bio_trimmed": "Empower youth. Elevate futures. Build community. / Empoderar jóvenes.",
+      "trimmed_count": 80,
+      "implementation_status": "pending_handle_creation"
+    },
+    {
+      "platform": "Facebook",
+      "display_name": "The Asc3nd Collective",
+      "proposed_handle": "N/A (Facebook uses page name)",
+      "page_name": "The Asc3nd Collective",
+      "category": "Nonprofit Organization",
+      "short_bio": "Asc3nd exists to equip young people with the confidence, support, and opportunities they need to keep moving forward.",
+      "long_about": "The Asc3nd Collective was founded by Otha and Elisha Minnifield on a simple belief: one caring mentor, one meaningful opportunity, and one supportive community can change the trajectory of a young person's life. Through Mentorship, Leadership, Life Skills & Athletics, and Community Connection, we empower youth in Seattle/King County to discover their potential and build a brighter future.",
+      "website": "asc3nd.org",
+      "cta": "Get involved — volunteer, donate, or partner with us",
+      "contact": "social@asc3nd.org",
+      "english": "Asc3nd exists to equip young people with confidence, support, and opportunities.",
+      "spanish": "Asc3nd existe para equipar a los jóvenes con confianza, apoyo y oportunidades.",
+      "character_count": 525,
+      "character_limit": 155,
+      "character_status": "SHORT_BIO_FITS; LONG_ABOUT_SEPARATE",
+      "implementation_status": "pending_page_creation"
+    },
+    {
+      "platform": "LinkedIn",
+      "display_name": "The Asc3nd Collective",
+      "proposed_handle": "N/A (LinkedIn uses company page name)",
+      "page_name": "The Asc3nd Collective",
+      "category": "Nonprofit Organization Management",
+      "tagline": "Equipping young people with confidence, support, and opportunities.",
+      "about": "The Asc3nd Collective is a Seattle/King County nonprofit founded by Otha and Elisha Minnifield. We invest in young people through four pillars: Mentorship, Leadership, Life Skills & Athletics, and Community Connection. Our mission is to ensure every young person has the confidence, support, and opportunities they need to keep moving forward.",
+      "website": "asc3nd.org",
+      "cta": "Partner with us or learn more at asc3nd.org",
+      "contact": "social@asc3nd.org",
+      "specialties": ["Youth Mentorship", "Leadership Development", "Community Engagement", "Life Skills"],
+      "english_only": true,
+      "character_count": 445,
+      "character_limit": 2000,
+      "character_status": "FITS",
+      "implementation_status": "pending_page_creation"
+    }
+  ],
+  "spec_gap": {
+    "instagram": "CONFIRMED — full asset spec received",
+    "facebook": "MISSING — using industry-standard: profile 170x170, cover 820x312",
+    "linkedin": "MISSING — using industry-standard: logo 300x300, cover 1128x191"
+  }
+}

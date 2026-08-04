@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-05T00:00:00Z",
+  "source": "asc3nd-frontend-website- repo (client-feedback-copy.js at commit 2dee57e + event-content.js)",
+  "copy_hash_sha256": "3e3d8715cb9d3564020ff320e6379be77a7b75df3a2d0942ec1d896c15d55317",
+  "organization": {
+    "name": "The Asc3nd Collective",
+    "founders": "Otha and Elisha Minnifield",
+    "ein": "99-1881891",
+    "location": "Seattle / King County, WA",
+    "tagline": "Empower youth. Elevate futures. Build community.",
+    "mission_statement": "Asc3nd exists to equip young people with the confidence, support, and opportunities they need to keep moving forward.",
+    "domains": ["asc3nd.org", "theasc3ndcollective.org"]
+  },
+  "event": {
+    "name": "Community Cuts for Kids",
+    "campaign": "Fresh Fade, Fresh Grade",
+    "date": "Sunday, August 30, 2026",
+    "time": "12:00 PM - 3:00 PM",
+    "venue": "Tangles & Locs",
+    "address": "7425 Hardeson Rd, Everett, WA 98203",
+    "description": "Fresh Fade, Fresh Grade is a free back-to-school community event designed to help students start the school year with confidence. Through free haircuts, school supplies, and community support, we're bringing families together to ensure every child feels prepared, empowered, and ready to succeed.",
+    "features": ["Free Haircuts for Kids", "School Supplies & Giveaways", "Food, Fun & Community"],
+    "supply_drive_window": "July 15 through August 15, 2026",
+    "supply_link": "https://www.everettsd.org/families/school-supply-lists"
+  },
+  "programs": [
+    { "name": "Mentorship", "description": "Trusted mentors who encourage, guide, and help young people discover their potential." },
+    { "name": "Leadership", "description": "Programs that develop confidence, character, responsibility, and purpose through real-world experiences." },
+    { "name": "Life Skills & Athletics", "description": "Hands-on experiences that build life skills, healthy habits, teamwork, and resilience." },
+    { "name": "Community Connection", "description": "Bringing together families, mentors, schools, businesses, churches, and neighbors to create a community where every young person can succeed." }
+  ],
+  "audiences": [
+    "Families and youth guardians (primary)",
+    "Volunteers and mentors",
+    "Supply donors",
+    "Community partners and businesses",
+    "ASC3ND staff"
+  ],
+  "founder_story": "The Asc3nd Collective was founded by Otha and Elisha Minnifield on a simple belief: one caring mentor, one meaningful opportunity, and one supportive community can change the trajectory of a young person's life.",
+  "voice": {
+    "tone": "Warm, direct, community-oriented, confident without arrogance",
+    "rules": [
+      "Preserve founder language exactly",
+      "No pain-based marketing",
+      "No exploitation of youth stories",
+      "Bilingual EN/ES",
+      "First-come, first-served honesty",
+      "No false promises"
+    ]
+  },
+  "content_pillars": [
+    { "id": "origin", "name": "Origin & Mission", "description": "Why ASC3ND started, who founded it, what they believe" },
+    { "id": "programs", "name": "Programs & Impact", "description": "Mentorship, leadership, life skills, community connection" },
+    { "id": "events", "name": "Events & Community", "description": "Community Cuts, future events, community gatherings" },
+    { "id": "invitation", "name": "Invitation & Action", "description": "Volunteer, donate, partner, attend" }
+  ],
+  "platforms": {
+    "instagram": { "status": "spec_received", "assets_defined": true },
+    "facebook": { "status": "spec_missing", "assets_defined": false },
+    "linkedin": { "status": "spec_missing", "assets_defined": false }
+  },
+  "bilingual_parity": {
+    "status": "partial",
+    "en_complete": true,
+    "es_complete": true,
+    "notes": "The event site has full EN/ES parity (verified by copy-integrity test). The workbook EN/ES parity has not been independently audited."
+  },
+  "gap_report": {
+    "workbook_repo_access": "asce3nd-interactive-document repo not yet audited for full client answers",
+    "session_evidence": "Zero of four sessions have documented evidence",
+    "facebook_linkedin_specs": "Only Instagram asset specifications received",
+    "interview_transcript": "Videos available but not yet transcribed in Descript"
+  }
+}

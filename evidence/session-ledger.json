@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-05T00:00:00Z",
+  "contract_requirement": "Four guided strategy sessions, 60-90 minutes each, answers permanently captured",
+  "sessions": [
+    {
+      "session_number": 1,
+      "status": "evidence_gap",
+      "topic": "Mission, Origin, Why It Started",
+      "date": null,
+      "duration_minutes": null,
+      "attendees": [],
+      "notes": "No session evidence found. The workbook repository (asce3nd-interactive-document) may contain session answers but has not been audited. GAP: dates, attendees, and recordings/notes required.",
+      "provenance": "No evidence found in control-plane repo, event site, or uploaded materials"
+    },
+    {
+      "session_number": 2,
+      "status": "evidence_gap",
+      "topic": "Audiences, Community, Voice",
+      "date": null,
+      "duration_minutes": null,
+      "attendees": [],
+      "notes": "No session evidence found. GAP: same as session 1.",
+      "provenance": "No evidence found"
+    },
+    {
+      "session_number": 3,
+      "status": "evidence_gap",
+      "topic": "Content Pillars, Platform Strategy, 90-Day Roadmap",
+      "date": null,
+      "duration_minutes": null,
+      "attendees": [],
+      "notes": "No session evidence found. GAP: same as session 1.",
+      "provenance": "No evidence found"
+    },
+    {
+      "session_number": 4,
+      "status": "evidence_gap",
+      "topic": "Measurement, Risk Rules, Approval Workflow",
+      "date": null,
+      "duration_minutes": null,
+      "attendees": [],
+      "notes": "No session evidence found. GAP: same as session 1.",
+      "provenance": "No evidence found"
+    }
+  ],
+  "gap_summary": "ZERO of four sessions have documented evidence (dates, attendees, notes, recordings). This is the most exposed deliverable ($800). Either: (a) sessions occurred but were not documented, (b) sessions occurred via the interactive workbook itself, or (c) sessions have not yet occurred. Human clarification required.",
+  "human_action_required": "Confirm: Did 4 guided strategy sessions occur? If yes, provide dates + any notes/recordings. If sessions were conducted via the interactive workbook, confirm that the workbook answers ARE the session evidence."
+}

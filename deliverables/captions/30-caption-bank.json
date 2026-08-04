@@ -1,0 +1,309 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ASC3ND 30-Post Caption Bank",
+  "voice_source": "client-feedback-copy.js (locked hash 3e3d8715...d55317)",
+  "rule": "All copy uses ASC3ND's approved voice. No invented facts. No pain-based marketing.",
+  "captions": [
+    {
+      "id": "C01", "calendar_slot": "W1-Mon", "pillar": "origin", "audience": "community", "platform": "instagram",
+      "hook": "One caring mentor changed everything.",
+      "body": "The Asc3nd Collective was founded on a simple belief: one caring mentor, one meaningful opportunity, and one supportive community can change the trajectory of a young person's life.",
+      "cta": "Learn more about our mission at asc3nd.org",
+      "hashtags": "#Asc3ndCollective #YouthEmpowerment #CommunityMatters #Mentorship #Seattle",
+      "visual": "Founder portrait or ASC3ND logo on warm paper background",
+      "en": true, "es": true,
+      "es_hook": "Un mentor que se preocupa lo cambió todo.",
+      "es_body": "The Asc3nd Collective fue fundado con una creencia simple: un mentor que se preocupa, una oportunidad significativa y una comunidad solidaria pueden cambiar la trayectoria de la vida de un joven.",
+      "es_cta": "Conoce más sobre nuestra misión en asc3nd.org",
+      "approval_status": "draft"
+    },
+    {
+      "id": "C02", "calendar_slot": "W1-Wed", "pillar": "programs", "audience": "families", "platform": "instagram",
+      "hook": "Confidence isn't given. It's built.",
+      "body": "Through Mentorship, Leadership, Life Skills & Athletics, and Community Connection, Asc3nd equips young people with the confidence, support, and opportunities they need to keep moving forward.",
+      "cta": "Follow our journey",
+      "hashtags": "#Asc3ndCollective #YouthPrograms #Leadership #Mentorship #Everett",
+      "visual": "Program activity photo or icon grid",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C03", "calendar_slot": "W1-Fri", "pillar": "invitation", "audience": "families", "platform": "instagram",
+      "hook": "Free haircuts. Free supplies. Free community.",
+      "body": "Community Cuts for Kids — Fresh Fade, Fresh Grade is coming. Sunday, August 30 at Tangles & Locs in Everett. Your RSVP helps us prepare for everyone attending.",
+      "cta": "RSVP Today at asc3nd.org",
+      "hashtags": "#CommunityCuts #FreshFadeFreshGrade #BackToSchool #Everett #FreeHaircuts",
+      "visual": "Event flyer (Instagram 1080x1080)",
+      "en": true, "es": true,
+      "es_hook": "Cortes gratis. Útiles gratis. Comunidad gratis.",
+      "es_body": "Community Cuts for Kids — Fresh Fade, Fresh Grade ya viene. Domingo 30 de agosto en Tangles & Locs en Everett. Tu confirmación nos ayuda a prepararnos para todas las familias.",
+      "es_cta": "Confirma hoy en asc3nd.org",
+      "approval_status": "draft"
+    },
+    {
+      "id": "C04", "calendar_slot": "W2-Mon", "pillar": "origin", "audience": "community", "platform": "instagram",
+      "hook": "One caring mentor. One meaningful opportunity. One supportive community.",
+      "body": "That's what Otha and Elisha Minnifield believed when they founded The Asc3nd Collective. That belief drives everything we do — every event, every program, every connection.",
+      "cta": "Read our story at asc3nd.org",
+      "hashtags": "#FoundersStory #Asc3ndCollective #Community #Mentorship",
+      "visual": "Founder photo or quote card",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C05", "calendar_slot": "W2-Wed", "pillar": "programs", "audience": "volunteers", "platform": "instagram",
+      "hook": "Trusted mentors who encourage, guide, and help young people discover their potential.",
+      "body": "Our mentorship program connects young people with caring adults who believe in them. That's how confidence grows — one relationship at a time.",
+      "cta": "Become a mentor",
+      "hashtags": "#Mentorship #Asc3ndCollective #BeAMentor #YouthDevelopment",
+      "visual": "Mentor-mentee interaction photo",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C06", "calendar_slot": "W2-Fri", "pillar": "invitation", "audience": "donors", "platform": "instagram",
+      "hook": "Every backpack makes a difference.",
+      "body": "From July 15 through August 15, The Asc3nd Collective is collecting new school supplies. Whether you donate one item or a full backpack, your generosity directly supports children and families in our community.",
+      "cta": "Donate supplies — link in bio",
+      "hashtags": "#SchoolSupplyDrive #Asc3ndCollective #BackToSchool #Everett #Donate",
+      "visual": "Supply drive graphic with item list",
+      "en": true, "es": true,
+      "es_hook": "Cada mochila hace la diferencia.",
+      "approval_status": "draft"
+    },
+    {
+      "id": "C07", "calendar_slot": "W3-Mon", "pillar": "origin", "audience": "families", "platform": "instagram",
+      "hook": "Every child deserves to start the school year with confidence.",
+      "body": "Fresh Fade, Fresh Grade is a free back-to-school community event. Through free haircuts, school supplies, and community support, we're bringing families together to ensure every child feels prepared, empowered, and ready to succeed.",
+      "cta": "RSVP Today at asc3nd.org",
+      "hashtags": "#FreshFadeFreshGrade #BackToSchool #CommunityCuts #Everett",
+      "visual": "Barbershop or haircut photo",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C08", "calendar_slot": "W3-Wed", "pillar": "programs", "audience": "families", "platform": "instagram",
+      "hook": "Programs that develop confidence, character, responsibility, and purpose.",
+      "body": "Our Leadership program gives young people real-world experiences that shape who they become. Because confidence isn't just felt — it's built through action.",
+      "cta": "Follow our journey",
+      "hashtags": "#Leadership #Asc3ndCollective #YouthPrograms",
+      "visual": "Leadership activity photo",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C09", "calendar_slot": "W3-Fri", "pillar": "invitation", "audience": "volunteers", "platform": "instagram",
+      "hook": "Help create a memorable day for local students and families.",
+      "body": "Community Cuts for Kids needs volunteers. Help create a memorable day, then stay connected through The Asc3nd Collective's mentorship, leadership, and youth development programs.",
+      "cta": "Volunteer — link in bio",
+      "hashtags": "#Volunteer #CommunityCuts #Asc3ndCollective #Everett",
+      "visual": "Volunteer action photo or call graphic",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C10", "calendar_slot": "W4-Mon", "pillar": "events", "audience": "families", "platform": "instagram",
+      "hook": "Sunday, August 30. 12 PM. Tangles & Locs, Everett.",
+      "body": "Community Cuts for Kids is THIS Sunday. Free haircuts for kids, school supplies, food, and community connection. Everything is free while supplies last. Arrive early!",
+      "cta": "RSVP Today at asc3nd.org",
+      "hashtags": "#CommunityCuts #FreshFadeFreshGrade #ThisSunday #Everett #FreeEvent",
+      "visual": "Event details card",
+      "en": true, "es": true,
+      "es_hook": "Domingo 30 de agosto. 12 PM. Tangles & Locs, Everett.",
+      "approval_status": "draft"
+    },
+    {
+      "id": "C11", "calendar_slot": "W4-Wed", "pillar": "programs", "audience": "community", "platform": "instagram",
+      "hook": "Hands-on experiences that build life skills and resilience.",
+      "body": "Our Life Skills & Athletics program gives young people the tools they need: healthy habits, teamwork, and the confidence to keep going when things get hard.",
+      "cta": "Learn more about our programs",
+      "hashtags": "#LifeSkills #Athletics #Asc3ndCollective #YouthDevelopment",
+      "visual": "Sports or activity photo",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C12", "calendar_slot": "W4-Fri", "pillar": "events", "audience": "families", "platform": "instagram",
+      "hook": "Tomorrow. Free haircuts. Free supplies. Free community.",
+      "body": "Community Cuts for Kids is tomorrow at 12 PM at Tangles & Locs. If you RSVP'd, we're ready for you. If you haven't, there's still time. See you there!",
+      "cta": "RSVP at asc3nd.org",
+      "hashtags": "#CommunityCuts #Tomorrow #Everett #FreshFadeFreshGrade",
+      "visual": "Story countdown graphic",
+      "en": true, "es": true,
+      "es_hook": "Mañana. Cortes gratis. Útiles gratis. Comunidad gratis.",
+      "approval_status": "draft"
+    },
+    {
+      "id": "C13", "calendar_slot": "W5-Mon", "pillar": "events", "audience": "community", "platform": "instagram",
+      "hook": "We showed up for our community. Together.",
+      "body": "Thank you to every family, volunteer, donor, and partner who made Community Cuts for Kids possible. This is what happens when a community comes together.",
+      "cta": "See the impact at asc3nd.org",
+      "hashtags": "#CommunityCuts #ThankYou #Everett #Asc3ndCollective #Community",
+      "visual": "Event recap photo collage",
+      "en": true, "es": true,
+      "es_hook": "Estuvimos presentes para nuestra comunidad. Juntos.",
+      "approval_status": "draft"
+    },
+    {
+      "id": "C14", "calendar_slot": "W5-Wed", "pillar": "programs", "audience": "community", "platform": "instagram",
+      "hook": "Bringing together families, mentors, schools, businesses, and neighbors.",
+      "body": "Community Connection is one of our four pillars. Because a community where every young person can succeed isn't built by one person — it's built by all of us.",
+      "cta": "Join our community",
+      "hashtags": "#CommunityConnection #Asc3ndCollective #Together",
+      "visual": "Community gathering photo",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C15", "calendar_slot": "W5-Fri", "pillar": "invitation", "audience": "community", "platform": "instagram",
+      "hook": "Fresh Fade, Fresh Grade is one way we show up. Our mission is every day.",
+      "body": "Community Cuts was incredible. But Asc3nd's mission is to invest in young people every day of the year — through mentorship, leadership, life skills, and community connection.",
+      "cta": "Get involved at asc3nd.org",
+      "hashtags": "#Asc3ndCollective #Mission #YearRound #GetInvolved",
+      "visual": "Program montage",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C16", "calendar_slot": "W6-Mon", "pillar": "origin", "audience": "community", "platform": "instagram",
+      "hook": "One caring mentor can change the trajectory of a young person's life.",
+      "body": "That's not a slogan. That's what Otha and Elisha Minnifield believed when they started Asc3nd. And it's what keeps us going every single day.",
+      "cta": "Support our mission",
+      "hashtags": "#Asc3ndCollective #Mentorship #Belief #Community",
+      "visual": "Founder quote card",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C17", "calendar_slot": "W6-Wed", "pillar": "programs", "audience": "volunteers", "platform": "instagram",
+      "hook": "Discover your potential.",
+      "body": "Our mentorship program connects young people with mentors who see what's possible. Sometimes all it takes is one person who believes in you.",
+      "cta": "Become a mentor",
+      "hashtags": "#Mentorship #DiscoverYourPotential #Asc3ndCollective",
+      "visual": "Mentor-mentee photo",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C18", "calendar_slot": "W6-Fri", "pillar": "invitation", "audience": "partners", "platform": "instagram",
+      "hook": "Support local students through long-term partnerships.",
+      "body": "Businesses and community partners make our work possible. Whether through school supplies, sponsorships, volunteer teams, or long-term partnerships — your support creates lasting opportunities for young people.",
+      "cta": "Become a Partner — link in bio",
+      "hashtags": "#Partnership #Asc3ndCollective #CommunityPartners #Everett",
+      "visual": "Partner appreciation graphic",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C19", "calendar_slot": "W7-Mon", "pillar": "origin", "audience": "community", "platform": "instagram",
+      "hook": "Empower youth. Elevate futures. Build community.",
+      "body": "That's not just a tagline. That's what we do — every day, through every program, with every young person we reach.",
+      "cta": "Follow our journey",
+      "hashtags": "#EmpowerYouth #ElevateFutures #BuildCommunity #Asc3ndCollective",
+      "visual": "Tagline on brand background",
+      "en": true, "es": true,
+      "es_hook": "Empoderar jóvenes. Elevar futuros. Construir comunidad.",
+      "approval_status": "draft"
+    },
+    {
+      "id": "C20", "calendar_slot": "W7-Wed", "pillar": "programs", "audience": "families", "platform": "instagram",
+      "hook": "Real-world experiences that build purpose.",
+      "body": "Our Leadership program develops confidence, character, responsibility, and purpose through hands-on experiences. Not lectures. Not worksheets. Real life.",
+      "cta": "Learn more",
+      "hashtags": "#Leadership #Asc3ndCollective #YouthPrograms",
+      "visual": "Leadership activity",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C21", "calendar_slot": "W7-Fri", "pillar": "invitation", "audience": "volunteers", "platform": "instagram",
+      "hook": "Stay connected through mentorship and youth development.",
+      "body": "Community Cuts was just the beginning. Stay connected with Asc3nd through our mentorship, leadership, and youth development programs. There's a place for you here.",
+      "cta": "Volunteer — link in bio",
+      "hashtags": "#Volunteer #Asc3ndCollective #StayConnected",
+      "visual": "Volunteer call graphic",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C22", "calendar_slot": "W8-Mon", "pillar": "origin", "audience": "community", "platform": "instagram",
+      "hook": "Our mission is to invest in young people every day of the year.",
+      "body": "Events are moments. Mission is daily. Asc3nd exists to equip young people with confidence, support, and opportunities — not just at events, but every day.",
+      "cta": "Get involved",
+      "hashtags": "#Asc3ndCollective #Mission #EveryDay",
+      "visual": "Mission statement card",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C23", "calendar_slot": "W8-Wed", "pillar": "programs", "audience": "community", "platform": "instagram",
+      "hook": "Every young person can succeed.",
+      "body": "That's the belief behind Community Connection — our fourth pillar. Bringing together families, mentors, schools, businesses, churches, and neighbors to create a community where every young person has what they need.",
+      "cta": "Join our community",
+      "hashtags": "#CommunityConnection #Asc3ndCollective",
+      "visual": "Community diversity photo",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C24", "calendar_slot": "W8-Fri", "pillar": "invitation", "audience": "families", "platform": "instagram",
+      "hook": "The school year is just beginning.",
+      "body": "Community Cuts kicked off the school year right. But we're just getting started. Fall programs are coming — mentorship, leadership, and more. Stay connected.",
+      "cta": "Follow us",
+      "hashtags": "#BackToSchool #Asc3ndCollective #FallPrograms",
+      "visual": "Fall program teaser",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C25", "calendar_slot": "W9-Mon", "pillar": "origin", "audience": "community", "platform": "instagram",
+      "hook": "One meaningful opportunity.",
+      "body": "That's all it takes. The Asc3nd Collective exists to create those opportunities — for every young person, in every community we serve.",
+      "cta": "Read more",
+      "hashtags": "#Asc3ndCollective #Opportunity #Youth",
+      "visual": "Opportunity quote card",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C26", "calendar_slot": "W9-Wed", "pillar": "programs", "audience": "families", "platform": "instagram",
+      "hook": "Healthy habits. Teamwork. Resilience.",
+      "body": "Life Skills & Athletics isn't just about sports. It's about building the tools young people need to navigate life — on and off the field.",
+      "cta": "Learn more",
+      "hashtags": "#LifeSkills #Athletics #Asc3ndCollective",
+      "visual": "Athletics photo",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C27", "calendar_slot": "W9-Fri", "pillar": "invitation", "audience": "community", "platform": "instagram",
+      "hook": "Choose how you'd like to make an impact.",
+      "body": "Attend our events. Volunteer your time. Donate supplies. Become a partner. There are many ways to support ASC3ND — and every one of them matters.",
+      "cta": "Get involved at asc3nd.org",
+      "hashtags": "#GetInvolved #Asc3ndCollective #Volunteer #Donate #Partner",
+      "visual": "Four paths graphic",
+      "en": true, "es": true,
+      "es_hook": "Elige cómo quieres hacer la diferencia.",
+      "approval_status": "draft"
+    },
+    {
+      "id": "C28", "calendar_slot": "W10-Wed", "pillar": "programs", "audience": "volunteers", "platform": "instagram",
+      "hook": "Purpose through real-world experiences.",
+      "body": "Our Leadership program doesn't just teach confidence — it builds it. Through responsibility, through action, through real experiences that shape who young people become.",
+      "cta": "Become a mentor",
+      "hashtags": "#Leadership #Purpose #Asc3ndCollective",
+      "visual": "Leadership photo",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C29", "calendar_slot": "W11-Wed", "pillar": "programs", "audience": "partners", "platform": "instagram",
+      "hook": "Schools, businesses, churches, neighbors.",
+      "body": "That's what Community Connection looks like. Not one organization doing everything — but an entire community showing up together for young people.",
+      "cta": "Partner with us",
+      "hashtags": "#CommunityConnection #Partnership #Asc3ndCollective",
+      "visual": "Community partnership photo",
+      "en": true, "es": false, "approval_status": "draft"
+    },
+    {
+      "id": "C30", "calendar_slot": "W12-Fri", "pillar": "invitation", "audience": "community", "platform": "instagram",
+      "hook": "Empower youth. Elevate futures. Build community.",
+      "body": "90 days. 12 weeks. One mission. Thank you for being part of The Asc3nd Collective's journey. The best is yet to come.",
+      "cta": "Get involved at asc3nd.org",
+      "hashtags": "#Asc3ndCollective #EmpowerYouth #ElevateFutures #BuildCommunity #Everett #Seattle",
+      "visual": "Brand tagline card with logo",
+      "en": true, "es": true,
+      "es_hook": "Empoderar jóvenes. Elevar futuros. Construir comunidad.",
+      "es_body": "90 días. 12 semanas. Una misión. Gracias por ser parte del journey de The Asc3nd Collective. Lo mejor está por venir.",
+      "es_cta": "Involúcrate en asc3nd.org",
+      "approval_status": "draft"
+    }
+  ],
+  "stats": {
+    "total_captions": 30,
+    "with_spanish": 9,
+    "by_pillar": { "origin": 8, "programs": 11, "events": 3, "invitation": 8 },
+    "by_platform": { "instagram": 30 },
+    "approval_status": "all_draft"
+  }
+}

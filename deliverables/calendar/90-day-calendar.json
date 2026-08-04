@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ASC3ND 90-Day Social Presence Builder",
+  "rhythm": "Monday/Wednesday/Friday",
+  "monday_theme": "Origin / Mission / Why It Started",
+  "wednesday_theme": "Programs / Mentorship / Community Work",
+  "friday_theme": "Proof / Invitation / Event / Volunteer / Support",
+  "rule": "Do not repeat the same fact twice in a week. Each post must progress the story.",
+  "weeks": [
+    {
+      "week": 1, "dates": "Aug 4-8", "theme": "Who We Are",
+      "mon": { "pillar": "origin", "concept": "Meet The Asc3nd Collective — who we are and why we exist", "format": "square_post", "hook": "One caring mentor changed everything.", "cta": "Learn more about our mission" },
+      "wed": { "pillar": "programs", "concept": "Our four pillars: Mentorship, Leadership, Life Skills, Community", "format": "portrait_post", "hook": "Confidence isn't given. It's built.", "cta": "Follow our journey" },
+      "fri": { "pillar": "invitation", "concept": "Community Cuts for Kids announcement — save the date", "format": "square_post", "hook": "Free haircuts. Free supplies. Free community.", "cta": "RSVP Today" }
+    },
+    {
+      "week": 2, "dates": "Aug 11-15", "theme": "Why It Started",
+      "mon": { "pillar": "origin", "concept": "Founder story — Otha and Elisha Minnifield's belief", "format": "portrait_post", "hook": "One caring mentor. One meaningful opportunity. One supportive community.", "cta": "Read our story" },
+      "wed": { "pillar": "programs", "concept": "Mentorship in action — what it looks like", "format": "square_post", "hook": "Trusted mentors who encourage, guide, and help young people discover their potential.", "cta": "Become a mentor" },
+      "fri": { "pillar": "invitation", "concept": "School Supply Drive — donate by Aug 15", "format": "story", "hook": "Every backpack makes a difference.", "cta": "Donate supplies" }
+    },
+    {
+      "week": 3, "dates": "Aug 18-22", "theme": "Building Toward the Event",
+      "mon": { "pillar": "origin", "concept": "Fresh Fade, Fresh Grade — what this event means to us", "format": "square_post", "hook": "Every child deserves to start the school year with confidence.", "cta": "RSVP Today" },
+      "wed": { "pillar": "programs", "concept": "Leadership program — developing character through real experiences", "format": "portrait_post", "hook": "Programs that develop confidence, character, responsibility, and purpose.", "cta": "Follow our journey" },
+      "fri": { "pillar": "invitation", "concept": "Volunteer at Community Cuts — be part of something bigger", "format": "square_post", "hook": "Help create a memorable day for local students and families.", "cta": "Volunteer" }
+    },
+    {
+      "week": 4, "dates": "Aug 25-29", "theme": "Event Week Countdown",
+      "mon": { "pillar": "events", "concept": "Community Cuts is THIS Sunday — everything you need to know", "format": "square_post", "hook": "Sunday, August 30. 12 PM. Tangles & Locs, Everett.", "cta": "RSVP Today" },
+      "wed": { "pillar": "programs", "concept": "Life Skills & Athletics — building healthy habits and resilience", "format": "portrait_post", "hook": "Hands-on experiences that build life skills and resilience.", "cta": "Learn more" },
+      "fri": { "pillar": "events", "concept": "One day away — last chance to RSVP", "format": "story", "hook": "Tomorrow. Free haircuts. Free supplies. Free community.", "cta": "RSVP Today" }
+    },
+    {
+      "week": 5, "dates": "Sep 1-5", "theme": "Event Recap & Gratitude",
+      "mon": { "pillar": "events", "concept": "Community Cuts recap — thank you Everett", "format": "square_post", "hook": "We showed up for our community. Together.", "cta": "See the impact" },
+      "wed": { "pillar": "programs", "concept": "Community Connection — what happens when we come together", "format": "portrait_post", "hook": "Bringing together families, mentors, schools, businesses, and neighbors.", "cta": "Join us" },
+      "fri": { "pillar": "invitation", "concept": "The mission continues — ASC3ND is more than one event", "format": "square_post", "hook": "Fresh Fade, Fresh Grade is one way we show up. Our mission is every day.", "cta": "Get involved" }
+    },
+    {
+      "week": 6, "dates": "Sep 8-12", "theme": "Impact Stories",
+      "mon": { "pillar": "origin", "concept": "Why we keep going — the belief that drives us", "format": "portrait_post", "hook": "One caring mentor can change the trajectory of a young person's life.", "cta": "Support our mission" },
+      "wed": { "pillar": "programs", "concept": "Inside our mentorship program — what mentors and mentees do together", "format": "square_post", "hook": "Discover your potential.", "cta": "Become a mentor" },
+      "fri": { "pillar": "invitation", "concept": "Partner with ASC3ND — businesses making lasting impact", "format": "square_post", "hook": "Support local students through long-term partnerships.", "cta": "Become a Partner" }
+    },
+    {
+      "week": 7, "dates": "Sep 15-19", "theme": "Community Voices",
+      "mon": { "pillar": "origin", "concept": "The Asc3nd Collective — what our name means", "format": "square_post", "hook": "Empower youth. Elevate futures. Build community.", "cta": "Follow our journey" },
+      "wed": { "pillar": "programs", "concept": "How leadership programs work at ASC3ND", "format": "portrait_post", "hook": "Real-world experiences that build purpose.", "cta": "Learn more" },
+      "fri": { "pillar": "invitation", "concept": "Volunteer spotlight — the people who make it possible", "format": "square_post", "hook": "Stay connected through mentorship and youth development.", "cta": "Volunteer" }
+    },
+    {
+      "week": 8, "dates": "Sep 22-26", "theme": "Looking Forward",
+      "mon": { "pillar": "origin", "concept": "From one event to year-round mission", "format": "portrait_post", "hook": "Our mission is to invest in young people every day of the year.", "cta": "Get involved" },
+      "wed": { "pillar": "programs", "concept": "Community Connection pillar in depth", "format": "square_post", "hook": "Every young person can succeed.", "cta": "Join our community" },
+      "fri": { "pillar": "invitation", "concept": "Fall programs coming soon — stay connected", "format": "story", "hook": "The school year is just beginning.", "cta": "Follow us" }
+    },
+    {
+      "week": 9, "dates": "Sep 29-Oct 3", "theme": "Deep Dive",
+      "mon": { "pillar": "origin", "concept": "Founders reflection — what we've learned", "format": "portrait_post", "hook": "One meaningful opportunity.", "cta": "Read more" },
+      "wed": { "pillar": "programs", "concept": "Life Skills & Athletics — why hands-on matters", "format": "square_post", "hook": "Healthy habits. Teamwork. Resilience.", "cta": "Learn more" },
+      "fri": { "pillar": "invitation", "concept": "How to support ASC3ND — attend, volunteer, donate, partner", "format": "square_post", "hook": "Choose how you'd like to make an impact.", "cta": "Get involved" }
+    },
+    {
+      "week": 10, "dates": "Oct 6-10", "theme": "Building Leaders",
+      "mon": { "pillar": "origin", "concept": "The belief that started it all — still driving us", "format": "square_post", "hook": "One supportive community.", "cta": "Follow our journey" },
+      "wed": { "pillar": "programs", "concept": "Leadership development — confidence through responsibility", "format": "portrait_post", "hook": "Purpose through real-world experiences.", "cta": "Become a mentor" },
+      "fri": { "pillar": "invitation", "concept": "Mentor recruitment — we need you", "format": "square_post", "hook": "Help young people discover their potential.", "cta": "Volunteer" }
+    },
+    {
+      "week": 11, "dates": "Oct 13-17", "theme": "Community Impact",
+      "mon": { "pillar": "origin", "concept": "What ASC3ND means to the community", "format": "portrait_post", "hook": "Change the trajectory of a young person's life.", "cta": "Support our mission" },
+      "wed": { "pillar": "programs", "concept": "Community Connection — partnerships that work", "format": "square_post", "hook": "Schools, businesses, churches, neighbors.", "cta": "Partner with us" },
+      "fri": { "pillar": "invitation", "concept": "Year-end giving — invest in young people", "format": "story", "hook": "Every contribution helps.", "cta": "Get involved" }
+    },
+    {
+      "week": 12, "dates": "Oct 20-24", "theme": "The Journey Continues",
+      "mon": { "pillar": "origin", "concept": "90 days later — how far we've come together", "format": "portrait_post", "hook": "Asc3nd exists to equip young people with confidence, support, and opportunities.", "cta": "Follow our journey" },
+      "wed": { "pillar": "programs", "concept": "What's next — upcoming programs and events", "format": "square_post", "hook": "The mission doesn't stop.", "cta": "Stay connected" },
+      "fri": { "pillar": "invitation", "concept": "Thank you — and join us for what's next", "format": "square_post", "hook": "Empower youth. Elevate futures. Build community.", "cta": "Get involved" }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ASC3ND Month 1 Shot List + Visual Direction",
+  "brand_reference": "Collins (wearecollins.com) — Swiss-modernist grids, named systems, declarative tone, generous negative space",
+  "color_tokens": { "ink": "#050505", "paper": "#F5F1E8", "gold": "#F5A617" },
+  "typography": "Barlow (body) + Barlow Condensed (display)",
+  "shot_list": [
+    { "id": "S01", "category": "Founder Interview", "subject": "Otha & Elisha Minnifield seated interview", "priority": 1, "format": "16:9 + 9:16 + 4:5", "location": "TBD studio or community space", "consent": "required", "owner": "ASC3ND", "capture_notes": "Clean audio, room tone, 3-camera setup if possible" },
+    { "id": "S02", "category": "Organizational Story", "subject": "ASC3ND logo at headquarters/community space", "priority": 1, "format": "16:9 + square", "location": "ASC3ND office or community center", "consent": "branded", "owner": "ASC3ND", "capture_notes": "Natural light, clean background" },
+    { "id": "S03", "category": "Programs", "subject": "Mentorship session in progress", "priority": 2, "format": "16:9 + 9:16", "location": "Community space", "consent": "all participants", "owner": "ASC3ND", "capture_notes": "Candid interaction, no posed shots" },
+    { "id": "S04", "category": "Programs", "subject": "Leadership workshop/activity", "priority": 2, "format": "16:9 + square", "location": "TBD", "consent": "all participants", "owner": "ASC3ND", "capture_notes": "Action shots, engagement, focus on hands and faces" },
+    { "id": "S05", "category": "Community", "subject": "Community Cuts for Kids event — families arriving", "priority": 1, "format": "16:9 + 9:16 + 4:5", "location": "Tangles & Locs, Everett WA", "consent": "group consent form at check-in", "owner": "ASC3ND", "capture_notes": "Arrival energy, welcome table, check-in process" },
+    { "id": "S06", "category": "Community", "subject": "Haircuts in progress", "priority": 1, "format": "9:16 + 4:5", "location": "Tangles & Locs", "consent": "parent/guardian signed", "owner": "ASC3ND", "capture_notes": "No child faces without explicit media consent. Focus on hands, scissors, smiles from behind" },
+    { "id": "S07", "category": "Community", "subject": "School supply distribution", "priority": 1, "format": "16:9 + square", "location": "Tangles & Locs", "consent": "group consent", "owner": "ASC3ND", "capture_notes": "Backpacks, supplies, distribution table" },
+    { "id": "S08", "category": "Community", "subject": "Food and community gathering", "priority": 2, "format": "square + 9:16", "location": "Tangles & Locs", "consent": "group consent", "owner": "ASC3ND", "capture_notes": "Candid, warm, community feel" },
+    { "id": "S09", "category": "Behind the Scenes", "subject": "Volunteers setting up before event", "priority": 2, "format": "9:16 + square", "location": "Tangles & Locs", "consent": "branded", "owner": "ASC3ND", "capture_notes": "Pre-event energy, supplies unpacking, decorations" },
+    { "id": "S10", "category": "Behind the Scenes", "subject": "Staff/volunteers debriefing", "priority": 3, "format": "16:9", "location": "TBD", "consent": "all participants", "owner": "ASC3ND", "capture_notes": "Authentic team moment" },
+    { "id": "S11", "category": "B-Roll", "subject": "Tangles & Locs exterior + neighborhood", "priority": 1, "format": "16:9 + 9:16", "location": "7425 Hardeson Rd, Everett WA", "consent": "public", "owner": "ASC3ND", "capture_notes": "Establishing shots, street, signage" },
+    { "id": "S12", "category": "B-Roll", "subject": "Everett community landmarks", "priority": 3, "format": "16:9", "location": "Everett, WA", "consent": "public", "owner": "ASC3ND", "capture_notes": "Sense of place" },
+    { "id": "S13", "category": "Portraits", "subject": "Founder portraits (Otha and Elisha)", "priority": 1, "format": "square + 4:5", "location": "Studio or natural setting", "consent": "required", "owner": "ASC3ND", "capture_notes": "Warm, confident, approachable. Natural light preferred" },
+    { "id": "S14", "category": "Portraits", "subject": "Volunteer/staff portraits", "priority": 2, "format": "square", "location": "TBD", "consent": "required", "owner": "ASC3ND", "capture_notes": "Consistent style with founder portraits" },
+    { "id": "S15", "category": "Impact", "subject": "Post-event: full backpacks, smiling families leaving", "priority": 1, "format": "16:9 + 9:16", "location": "Tangles & Locs exit", "consent": "parent/guardian", "owner": "ASC3ND", "capture_notes": "Impact without exploitation. Focus on supplies and confidence, not poverty" }
+  ],
+  "visual_direction": {
+    "philosophy": "Impact without exploitation. Confidence without arrogance. Community without tokenization.",
+    "do": [
+      "Show real moments of connection",
+      "Focus on hands, supplies, haircuts, smiles",
+      "Capture the energy of community gathering",
+      "Use natural light wherever possible",
+      "Frame for mobile-first (9:16 primary, then square, then 16:9)"
+    ],
+    "dont": [
+      "Show child faces without explicit media consent",
+      "Use poverty or hardship as spectacle",
+      "Pose or stage 'gratitude' shots",
+      "Film sensitive youth stories or medical information",
+      "Use stock photography as documentary evidence"
+    ],
+    "framing_guide": {
+      "vertical_9x16": "Primary format for Stories, Reels, TikTok",
+      "square_1x1": "Feed posts, universal compatibility",
+      "portrait_4x5": "Instagram feed optimization",
+      "horizontal_16x9": "YouTube, website, presentations"
+    },
+    "color_grading": "Warm, natural. Gold accent for CTAs and highlights. Paper background for text overlays. No teal, no purple, no gradients."
+  }
+}

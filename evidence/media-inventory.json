@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-05T00:00:00Z",
+  "videos": [
+    {
+      "id": "vid-001",
+      "filename": "vc(1).mp4",
+      "local_path": "E:/ACTIVE PROJECTS-PIPELINE/ACTIVE PROJECTS-PIPELINE/ASC3END MASTER FILES/videos/vc(1).mp4",
+      "size_bytes": 2411796746,
+      "size_gb": 2.25,
+      "format": "MP4",
+      "description": "Founder interview video (primary)",
+      "descript_status": "not_imported",
+      "clip_potential": "high"
+    },
+    {
+      "id": "vid-002",
+      "filename": "vc.m4v(1).mp4",
+      "local_path": "E:/ACTIVE PROJECTS-PIPELINE/ACTIVE PROJECTS-PIPELINE/ASC3END MASTER FILES/videos/vc.m4v(1).mp4",
+      "size_bytes": 761461458,
+      "size_gb": 0.71,
+      "format": "MP4 (M4V variant)",
+      "description": "Founder interview video (compressed/alternate)",
+      "descript_status": "not_imported",
+      "clip_potential": "medium"
+    },
+    {
+      "id": "vid-003",
+      "filename": "youtube 4k.mp4",
+      "local_path": "E:/ACTIVE PROJECTS-PIPELINE/ACTIVE PROJECTS-PIPELINE/ASC3END MASTER FILES/videos/youtube 4k.mp4",
+      "size_bytes": 2521845444,
+      "size_gb": 2.35,
+      "format": "MP4 (4K)",
+      "description": "4K version for YouTube / high-quality masters",
+      "descript_status": "not_imported",
+      "clip_potential": "high"
+    }
+  ],
+  "google_drive": {
+    "url": "https://drive.google.com/drive/folders/1kH7AaWVE-Gzi4JVuIsbL8wR64zChmJub",
+    "status": "accessible_by_link",
+    "notes": "Cloud mirror of video files"
+  },
+  "flyers": [
+    { "filename": "flyerV.2-duplicate text removed.png", "size_bytes": 1091293, "type": "revised_flyer" },
+    { "filename": "horizontal-flyer-solid-black-background-.png", "size_bytes": 900973, "type": "horizontal_flyer" },
+    { "filename": "INSTAGRAM 1080 X 1080.png", "size_bytes": 880094, "type": "instagram_square" },
+    { "filename": "a3-vertical-flyer.png", "size_bytes": 685082, "type": "a3_print" },
+    { "filename": "1080x1920-instagram-story-reminder.png", "size_bytes": 418785, "type": "instagram_story" }
+  ],
+  "brand_assets": [
+    { "filename": "asc3nd-client-logo-transparent.png", "status": "in_use", "sha256": "65b9b79bae3c9bd9990cfd1de3c4b8257fe84b20fe9873b8c20e0074d35b2a0e" },
+    { "filename": "community-cuts-for-kids.png", "status": "in_use", "description": "Campaign artwork (EN)" },
+    { "filename": "cortes-comunitarios-para-ninos.png", "status": "in_use", "description": "Campaign artwork (ES)" },
+    { "filename": "tangles-locs-exterior.jpg", "status": "in_use", "description": "Venue photo" }
+  ],
+  "descript_project": {
+    "id": "2ff5097b-6807-4325-ac50-0f8139ed9699",
+    "name": "ASC3ND — Founder Interview — Contract Closeout",
+    "media_imported": false,
+    "composition_duration_seconds": 0
+  },
+  "ingest_manifest": {
+    "priority_order": ["vid-001 (vc(1).mp4 - primary interview)", "vid-002 (vc.m4v(1).mp4 - alternate)", "vid-003 (youtube 4k.mp4 - 4K master)"],
+    "action_required": "Import vid-001 into Descript project for transcription. Use vid-003 for final export masters. Use vid-002 as backup if vid-001 has issues.",
+    "note": "Files are large (2.25GB + 0.71GB + 2.35GB). Descript cloud import recommended over manual upload. Google Drive link can be used for cloud-to-cloud transfer."
+  }
+}
