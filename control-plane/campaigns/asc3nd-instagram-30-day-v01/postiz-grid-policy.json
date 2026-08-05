@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "policy_id": "asc3nd-instagram-grid-preflight-v01",
+  "platform": "instagram",
+  "default_state": {
+    "status": "draft",
+    "publish": false,
+    "approval_required": true,
+    "grid_preflight_required": true
+  },
+  "preflight_steps": [
+    "Read the current ASC3ND Instagram profile.",
+    "Inspect the latest twelve Feed items.",
+    "Detect pinned posts, manual posts, archived posts, and deletions.",
+    "Compare current visible order against the approved grid manifest.",
+    "Simulate the proposed post position.",
+    "Generate or record a post-publication grid preview.",
+    "Confirm asset ID, row, column, visual family, date, and caption.",
+    "Obtain human approval before scheduling or publishing."
+  ],
+  "failure_behavior": {
+    "status": "blocked",
+    "publish": false,
+    "action": "request_human_review"
+  },
+  "fail_closed_reasons": [
+    "profile_unreadable",
+    "manual_post_detected",
+    "pinned_post_changed",
+    "post_deleted_or_archived",
+    "layout_changed",
+    "grid_manifest_mismatch",
+    "asset_missing_grid_position",
+    "human_approval_missing",
+    "media_approval_missing",
+    "consent_missing",
+    "transcript_not_approved"
+  ],
+  "post_publish_verification": [
+    "Confirm the intended post is live.",
+    "Confirm the correct cover is visible.",
+    "Confirm the expected grid position.",
+    "Confirm there is no duplicate or accidental post.",
+    "Record the live URL and verification timestamp."
+  ],
+  "event_day_rule": "Use Stories and Reels for event-day coverage. Do not add an unplanned Feed tile that disrupts the four-row system."
+}
