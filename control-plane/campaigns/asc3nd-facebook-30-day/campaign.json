@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0.0",
+  "campaign": {
+    "id": "asc3nd-facebook-30-day-2026",
+    "name": "ASC3ND Facebook 30-Day Campaign",
+    "platform": "facebook",
+    "start_date": "2026-08-10",
+    "end_date": "2026-09-04",
+    "timezone": "America/Los_Angeles",
+    "event": {
+      "name": "Community Cuts for Kids",
+      "tagline": "Fresh Fade, Fresh Grade",
+      "date": "2026-08-30",
+      "time": "12:00 PM–3:00 PM",
+      "venue": "Tangles & Locs",
+      "address": "7425 Hardeson Rd, Everett, WA 98203",
+      "audience": "Boys & Girls K–12 Welcome",
+      "url": "https://asc3nd.org"
+    },
+    "cadence": {
+      "monday": "mission_identity_image",
+      "wednesday": "interview_or_documentary_reel",
+      "friday": "community_participation_image",
+      "supplemental": "shorts_and_event_day_updates"
+    },
+    "publishing_policy": "draft_only_until_human_approval"
+  },
+  "visual_system": {
+    "background": "white",
+    "palette": {
+      "black": "#141414",
+      "orange": "#F75714",
+      "teal": "#00677E",
+      "pale_gray": "#E4E7E9"
+    },
+    "families": {
+      "monday": "identity, strong grid, maximum whitespace, one statement",
+      "wednesday": "vertical video cover, episode marker, centered safe title",
+      "friday": "community, participation, event and invitation emphasis"
+    },
+    "protected_assets": [
+      "current approved circular ASC3ND logo",
+      "verified Community Cuts QR master"
+    ]
+  },
+  "asset_groups": [
+    {"range":"FB-01–FB-03","group":"page_identity"},
+    {"range":"FB-04–FB-05","group":"event_covers"},
+    {"range":"FB-06–FB-10","group":"monday_identity_images"},
+    {"range":"FB-11–FB-14","group":"wednesday_reel_covers"},
+    {"range":"FB-15–FB-18","group":"friday_community_images"},
+    {"range":"FB-19–FB-25","group":"event_conversion"},
+    {"range":"FB-26–FB-28","group":"video_support"},
+    {"range":"FB-29–FB-30","group":"post_event_templates"}
+  ],
+  "primary_schedule": [
+    {"date":"2026-08-10","day":"Monday","asset_id":"FB-06","theme":"Welcome to ASC3ND","status":"draft"},
+    {"date":"2026-08-12","day":"Wednesday","asset_id":"FB-11","theme":"Why We Started","status":"blocked_by_transcript"},
+    {"date":"2026-08-14","day":"Friday","asset_id":"FB-15","theme":"Mission","status":"draft"},
+    {"date":"2026-08-17","day":"Monday","asset_id":"FB-07","theme":"What ASC3ND Stands For","status":"draft"},
+    {"date":"2026-08-19","day":"Wednesday","asset_id":"FB-12","theme":"What a Mentor Can Do","status":"blocked_by_transcript"},
+    {"date":"2026-08-21","day":"Friday","asset_id":"FB-16","theme":"Community Cuts Announcement","status":"draft"},
+    {"date":"2026-08-24","day":"Monday","asset_id":"FB-09","theme":"A Fresh Start Can Build Confidence","status":"draft"},
+    {"date":"2026-08-26","day":"Wednesday","asset_id":"FB-13","theme":"Getting Ready for Community Cuts","status":"blocked_by_footage"},
+    {"date":"2026-08-28","day":"Friday","asset_id":"FB-17","theme":"Final Event Reminder","status":"draft"},
+    {"date":"2026-08-30","day":"Sunday","asset_id":"FB-25","theme":"Event Day","status":"draft"},
+    {"date":"2026-08-31","day":"Monday","asset_id":"FB-10","theme":"Community Thank You","status":"draft_template"},
+    {"date":"2026-09-02","day":"Wednesday","asset_id":"FB-14","theme":"Community in Action","status":"blocked_by_event_footage"},
+    {"date":"2026-09-04","day":"Friday","asset_id":"FB-18","theme":"What Comes Next","status":"draft"}
+  ],
+  "automation_laws": [
+    "Never publish without a recorded human approval.",
+    "Never alter or regenerate the QR code.",
+    "Never treat draft transcript language as a verified quote.",
+    "Never identify minors or expose sensitive youth or family information.",
+    "Never insert sponsor names, partner claims, event results or impact numbers until verified.",
+    "Use the package asset IDs and relative file paths exactly as recorded in ASSET_MANIFEST.csv."
+  ]
+}
