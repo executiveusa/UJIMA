@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "asc3nd-instagram-30-day-v01",
+  "package_name": "ASC3ND_INSTAGRAM_30_DAY_CAMPAIGN_v01.zip",
+  "platform": "instagram",
+  "campaign_window": {
+    "start": "2026-08-10",
+    "end": "2026-09-08"
+  },
+  "primary_feed_window": {
+    "start": "2026-08-10",
+    "end": "2026-09-04"
+  },
+  "timezone": "America/Los_Angeles",
+  "creative_principle": "Every post can work on its own while the profile still feels like one intentional brand system.",
+  "cadence": {
+    "monday": "identity image",
+    "wednesday": "interview or documentary Reel",
+    "friday": "community or event image"
+  },
+  "grid": {
+    "columns": 3,
+    "campaign_rows": 4,
+    "primary_feed_posts": 12,
+    "publishing_order": ["Monday", "Wednesday Reel", "Friday"],
+    "completed_row_display": ["Friday", "Wednesday Reel", "Monday"],
+    "rows": [
+      {
+        "row": 1,
+        "theme": "Who ASC3ND is",
+        "left": "IG-08",
+        "center": "IG-07",
+        "right": "IG-06"
+      },
+      {
+        "row": 2,
+        "theme": "What ASC3ND does",
+        "left": "IG-11",
+        "center": "IG-10",
+        "right": "IG-09"
+      },
+      {
+        "row": 3,
+        "theme": "Why the event matters",
+        "left": "IG-14",
+        "center": "IG-13",
+        "right": "IG-12"
+      },
+      {
+        "row": 4,
+        "theme": "Community, impact, and continuation",
+        "left": "IG-17",
+        "center": "IG-16",
+        "right": "IG-15"
+      }
+    ]
+  },
+  "asset_groups": {
+    "account_identity": ["IG-01"],
+    "highlight_covers": ["IG-02", "IG-03", "IG-04", "IG-05"],
+    "primary_feed": ["IG-06", "IG-07", "IG-08", "IG-09", "IG-10", "IG-11", "IG-12", "IG-13", "IG-14", "IG-15", "IG-16", "IG-17"],
+    "stories": ["IG-18", "IG-19", "IG-20", "IG-21", "IG-22", "IG-23", "IG-24", "IG-25"],
+    "supplemental_reels": ["IG-26", "IG-27", "IG-28", "IG-29"],
+    "video_end_card": ["IG-30"]
+  },
+  "publishing": {
+    "default_status": "draft",
+    "publish": false,
+    "approval_required": true,
+    "grid_preflight_required": true,
+    "event_day_feed_post_allowed": false
+  },
+  "media_blockers": [
+    "footage",
+    "corrected transcript",
+    "speaker labels",
+    "consent review",
+    "subtitle QA",
+    "editorial selection",
+    "human approval"
+  ],
+  "protected_facts": {
+    "event": "Community Cuts for Kids",
+    "campaign_line": "Fresh Fade, Fresh Grade",
+    "date": "Sunday, August 30, 2026",
+    "time": "12:00 PM–3:00 PM",
+    "venue": "Tangles & Locs",
+    "address": "7425 Hardeson Rd, Everett, WA 98203",
+    "audience": "Boys & Girls K–12 Welcome",
+    "service_condition": "First come, first served while capacity and supplies last."
+  }
+}
