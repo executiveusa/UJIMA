@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "adapter": "postiz",
+  "mode": "draft_only",
+  "platforms": ["facebook"],
+  "default_timezone": "America/Los_Angeles",
+  "required_fields": [
+    "external_id",
+    "platforms",
+    "scheduled_at_local",
+    "asset_path",
+    "caption",
+    "status",
+    "approval_required",
+    "publish"
+  ],
+  "hard_guards": {
+    "publish_must_equal_false_on_import": true,
+    "approval_required_must_equal_true": true,
+    "reject_missing_asset": true,
+    "reject_unverified_quote": true,
+    "reject_minor_identity_or_sensitive_information": true,
+    "reject_unverified_sponsor_partner_or_impact_claim": true,
+    "reject_modified_qr": true
+  },
+  "approval_transition": {
+    "from": "draft",
+    "to": "approved_for_scheduling",
+    "requires": [
+      "human_approver_id",
+      "approval_timestamp",
+      "final_caption_hash",
+      "final_asset_hash"
+    ]
+  },
+  "publishing_transition": {
+    "from": "approved_for_scheduling",
+    "to": "scheduled",
+    "requires": [
+      "postiz_connection_verified",
+      "page_ownership_verified",
+      "scheduled_time_verified",
+      "render_preview_verified"
+    ]
+  },
+  "prohibited": [
+    "automatic publication immediately after import",
+    "silent caption rewriting",
+    "silent schedule changes",
+    "asset substitution by filename similarity",
+    "publishing interview clips before transcript and consent review"
+  ],
+  "local_package_files": {
+    "asset_manifest": "ASSET_MANIFEST.csv",
+    "campaign_manifest": "COPY/facebook-campaign-manifest.json",
+    "calendar": "COPY/facebook-calendar.json",
+    "draft_records": "COPY/postiz-draft-import.json",
+    "shorts_plan": "COPY/facebook-shorts-plan.json"
+  }
+}
