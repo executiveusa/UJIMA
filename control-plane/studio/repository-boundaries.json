@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0.0",
+  "policy_name": "Agenix Repository Boundary Enforcement",
+  "mode": "fail_closed",
+  "principle": "One repository, one bounded responsibility. Cross-repo work must use explicit handoff artifacts. Agents may not write outside the declared owner repository for a task.",
+  "repositories": [
+    {
+      "repo": "executiveusa/ascend-social-purpose-agentic-systems-",
+      "role": "studio_control_plane",
+      "owns": ["ICM", "Beads", "client lifecycle", "contract/task ledgers", "approval workflows", "publishing adapters", "agent policies", "observability", "delivery orchestration"],
+      "forbidden": ["production website implementation", "client brand masters", "raw client records", "experimental design pages", "duplicate RSVP stores"],
+      "handoff_types": ["task_manifest", "approval_record", "content_manifest", "schema_contract", "asset_manifest"]
+    },
+    {
+      "repo": "executiveusa/asce3nd-interactive-document",
+      "role": "client_strategy_hq",
+      "owns": ["interactive workbook", "client strategy", "session outputs", "client approval surface", "handoff portal", "operating playbook"],
+      "forbidden": ["public production website code", "brand-master source files", "shared Agenix platform code", "duplicate publishing engine"],
+      "handoff_types": ["approved_strategy_manifest", "session_evidence", "client_approval_record", "handoff_package"]
+    },
+    {
+      "repo": "executiveusa/asc3nd-frontend-website-",
+      "role": "public_production_website",
+      "owns": ["asc3nd.org frontend", "public pages", "SEO", "accessibility", "public integrations", "production runtime"],
+      "forbidden": ["studio control-plane logic", "experimental design truth", "brand-master editing", "raw client strategy source", "duplicate databases"],
+      "handoff_types": ["approved_copy_manifest", "asset_manifest", "api_contract", "release_evidence"]
+    },
+    {
+      "repo": "executiveusa/asc3nd-brand-kit-",
+      "role": "brand_vault",
+      "owns": ["logo masters", "SVGs", "QR masters", "colors", "typography", "templates", "campaign masters", "visual guidelines"],
+      "forbidden": ["application business logic", "client database records", "publishing logic", "website routing", "agent orchestration"],
+      "handoff_types": ["versioned_asset_manifest", "brand_tokens", "approved_template_package"]
+    },
+    {
+      "repo": "executiveusa/asc3nd-supabase-landing",
+      "role": "client_data_package",
+      "owns": ["database schema documentation", "migrations", "RLS policy definitions", "data contracts", "backup/restore instructions", "API contracts"],
+      "forbidden": ["competing public landing page", "client-facing design experiments", "brand masters", "studio orchestration"],
+      "handoff_types": ["schema_contract", "migration_manifest", "rls_report", "backup_runbook"]
+    },
+    {
+      "repo": "executiveusa/asc3nd-events-page",
+      "role": "event_engine",
+      "owns": ["event microsites", "RSVP UX", "maps", "event templates", "event galleries", "event-specific campaign pages"],
+      "forbidden": ["main nonprofit site ownership", "studio control-plane", "brand-master source editing", "general-purpose client strategy"],
+      "handoff_types": ["event_manifest", "approved_event_copy", "asset_manifest", "api_contract"]
+    },
+    {
+      "repo": "executiveusa/ascend-demonstration-page",
+      "role": "design_rnd_showroom",
+      "owns": ["design experiments", "prototype concepts", "alternate art directions", "non-production previews"],
+      "forbidden": ["production truth", "live client records", "final brand masters", "production publishing", "production DNS"],
+      "handoff_types": ["design_proposal", "prototype_review_record"]
+    }
+  ],
+  "enforcement": {
+    "required_before_write": ["identify_task_owner_repo", "load_repo_boundary", "claim_bead", "record_handoff_if_cross_repo"],
+    "on_boundary_violation": "REPOSITORY_BOUNDARY_STOP",
+    "cross_repo_direct_write": false,
+    "one_writer_per_output_path": true,
+    "production_actions_require_approval": true,
+    "sensitive_data_allowed_in_control_plane": false
+  }
+}
