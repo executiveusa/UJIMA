@@ -1,0 +1,91 @@
+project:
+  name: montage-local-footage-factory
+  target_repo: executiveusa/pauli-montage-video-agent
+  control_repo: executiveusa/ascend-social-purpose-agentic-systems-
+  base_branch: main
+  mission: >-
+    Finish the four-phase Montage footage hardening program with ASC3ND as the real acceptance test.
+
+rules:
+  - "Read the target repository AGENTS.md, project context, current-state docs, and tests before editing."
+  - "Use test-driven development: failing test first for every durable capability."
+  - "One phase at a time; do not begin the next phase before the current phase PR is green, merged, and post-merge verified."
+  - "Maximum two active workstreams: ASC3ND Local Footage Factory and Montage Golden-Path UX."
+  - "No fake project state, no fake documentary media, no fabricated completion evidence."
+  - "StudioProject remains canonical project truth; external editors are replaceable adapters."
+  - "Do not auto-publish or schedule social content."
+  - "Do not trigger material paid AI/media processing without an explicit approved budget."
+  - "Routine ASC3ND reel production target is zero Descript AI credits."
+  - "Inspect and fix valid CodeRabbit/reviewer comments before merge."
+  - "After merge, verify the exact main SHA and deployed runtime before advancing."
+
+boundaries:
+  never_touch_without_human_approval:
+    - "production client database migrations"
+    - "source-media deletion"
+    - "approved master overwrite"
+    - "social publishing or scheduling"
+    - "protected ASC3ND facts and consent assumptions"
+
+commands:
+  discover: "inspect repository-native scripts before choosing commands"
+  test: "run targeted tests, then repository-required integration/contract suite"
+  typecheck: "run repository-native typecheck when present"
+  lint: "run repository-native lint when present"
+  build: "run repository-native production build when present"
+  browser: "run browser smoke test for the current golden path when UI changed"
+
+merge_policy:
+  method: squash
+  require_ci: true
+  require_review_clean: true
+  require_no_conflicts: true
+  require_post_merge_verification: true
+
+phases:
+  - id: phase-1
+    title: "Connect project truth and baseline the golden path"
+    parallel_group: 1
+    completed: false
+    tasks:
+      - "Inventory current frontend/backend/persistence/API/runtime state and write capability matrix."
+      - "Add failing persistence and timeline reopen tests."
+      - "Connect Studio frontend to real Studio API/persistence path."
+      - "Prove create/reopen and timeline save/reopen round trips."
+      - "Run bounded Krug audit on Projects → New Project → Edit and fix severity-1 issues."
+      - "Commit, push, open PR, inspect CI/reviews, fix valid comments, merge, post-merge verify, write PASS receipt."
+
+  - id: phase-2
+    title: "Build zero-credit local media engine"
+    parallel_group: 2
+    completed: false
+    tasks:
+      - "Add failing tests for immutable ingest, transcript mapping, edit apply/revert, reopen, 9:16, captions, deterministic export."
+      - "Implement source registration, ffprobe, proxies, Faster-Whisper/WhisperX adapter, transcript persistence."
+      - "Implement reversible remove/restore/move/shorten-gap operations."
+      - "Implement local preview/export, 9:16 reframe, editable captions and SRT."
+      - "Add bounded SynthCut adapter only if it reduces mechanical work without owning canonical state."
+      - "Commit, push, open PR, inspect CI/reviews, fix valid comments, merge, post-merge verify, write PASS receipt."
+
+  - id: phase-3
+    title: "Prove workflow on ASC3ND footage"
+    parallel_group: 3
+    completed: false
+    tasks:
+      - "Reproduce Why We Started Reel locally from approved ASC3ND footage."
+      - "Verify 1080x1920 MP4, SRT, captions, framing, audio, facts, brand, project reopen and cost telemetry."
+      - "Run same workflow for What a Mentor Can Do and Getting Ready for Community Cuts."
+      - "Target zero Descript AI credits for routine production."
+      - "Commit, push, open PR for code/config/fixture evidence, inspect CI/reviews, fix valid comments, merge, post-merge verify, write PASS receipt."
+
+  - id: phase-4
+    title: "Harden UX, recovery, verification and product delivery"
+    parallel_group: 4
+    completed: false
+    tasks:
+      - "Run full Krug audit on Projects → Import → Transcript → Edit → Review → Deliver."
+      - "Fix unclear actions, jargon, dead controls, loading/error states, rollback visibility, accessibility and tablet failures."
+      - "Harden progress/cancel, change history, selective rollback, export verification, cost telemetry and local/cloud routing."
+      - "Add local worker runbook, regression fixtures and browser/deployment smoke tests."
+      - "Verify no unresolved valid reviews, no unmerged program branches, final Vercel production on exact main SHA, and full golden path works."
+      - "Write final PASS receipt; only then mark program DONE."
