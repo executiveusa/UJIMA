@@ -13,26 +13,45 @@ Before broad repository reading, edits, migrations, asset generation, publishing
    - `control-plane/contract-ledger.json`
    - `control-plane/task-ledger.json`
    - `control-plane/architecture.md`
-   - the current numbered stage under `icm/asc3nd-contract-closeout/`
-3. Run `npm run guard:repo` before build or deployment work.
-4. Use JCodeMunch MCP first: `plan_turn`, file outlines, symbol search, symbol source, importers, and blast radius. Do not load whole repositories when targeted retrieval is sufficient.
-5. For multi-step work, initialize/query Beads and work from the ready graph before editing. Read `.agents/skills/beads-observability/SKILL.md`.
-6. Read `.agents/skills/i-have-adhd/SKILL.md` for operator-facing responses and handoffs. In this repository its actionability rules are always-on unless the human explicitly requests normal mode.
-7. Record every claimed fact with a source path, URL, database query, transcript timestamp, or human approval.
-8. Work only inside the current stage's allowed outputs.
-9. Stop at approval gates. Silence is not approval.
+   - `control-plane/studio/repository-boundaries.json`
+   - `control-plane/studio/role-security.json`
+   - the current numbered ICM stage under `icm/asc3nd-contract-closeout/`
+3. Determine the task's single owner repository before editing. If ownership is ambiguous, STOP.
+4. Run `npm run guard:repo` before build or deployment work.
+5. Use JCodeMunch MCP first: `plan_turn`, file outlines, symbol search, symbol source, importers, and blast radius. Do not load whole repositories when targeted retrieval is sufficient.
+6. For multi-step work, initialize/query Beads and work from the ready graph before editing. Read `.agents/skills/beads-observability/SKILL.md`.
+7. Read `.agents/skills/i-have-adhd/SKILL.md` for operator-facing responses and handoffs. Its actionability rules are always-on unless the human explicitly requests normal mode.
+8. Record every claimed fact with a source path, URL, database query, transcript timestamp, or human approval.
+9. Work only inside the current stage's allowed outputs and the owner repository's allowed responsibility.
+10. Stop at approval gates. Silence is not approval.
+
+## Global default-deny architecture law
+
+Agenix uses default-deny role security for repository writes.
+
+- Agents do not choose repository ownership ad hoc. `control-plane/studio/repository-boundaries.json` decides.
+- Agents do not assume permissions from capability. `control-plane/studio/role-security.json` decides.
+- One task has one writing role and one owner repository.
+- One output path has one writer.
+- Cross-repository direct writes are prohibited. Cross-repo work requires a typed handoff artifact.
+- Writer and final approver must be different roles for yellow/red work.
+- No local prompt, task note, sub-agent, or convenience override may weaken a repository boundary.
+- If a requested change belongs elsewhere, emit `REPOSITORY_BOUNDARY_STOP` and create/route the handoff instead of writing.
+- Missing ownership, missing approval, missing proof, or policy disagreement means FAIL CLOSED.
 
 ## Product boundary
 
 The backend is reusable product infrastructure. Client-specific facts enter through approved tenant manifests and artifacts, not platform defaults.
 
-Route work as follows:
+Canonical routing is machine-readable in `control-plane/studio/repository-boundaries.json`. Human summary:
 
-- Public website and Community Cuts funnel → `executiveusa/asc3nd-frontend-website-`
-- Client answers, paid scope, workbook → `executiveusa/asce3nd-interactive-document`
+- Public website and production runtime → `executiveusa/asc3nd-frontend-website-`
+- Client answers, paid scope, workbook, strategy HQ → `executiveusa/asce3nd-interactive-document`
 - Brand masters, QR, templates → `executiveusa/asc3nd-brand-kit-`
-- Design experiments → `executiveusa/ascend-demonstration-page`
-- Reusable workflows, approvals, adapters, task ledger → this repository
+- Event microsites and RSVP UX → `executiveusa/asc3nd-events-page`
+- Data contracts, migrations, RLS, backup/runbooks → `executiveusa/asc3nd-supabase-landing`
+- Design experiments only → `executiveusa/ascend-demonstration-page`
+- Reusable workflows, approvals, adapters, Beads, ICM, task ledger → this repository
 
 ## ICM law
 
@@ -68,7 +87,7 @@ Client-facing UIs consume a safe projection of Beads state; they do not expose r
 
 ## Operator-output law — i-have-adhd
 
-The upstream `i-have-adhd` skill is an **agent communication/output skill**, not a visual-design system. Use it exactly for the friction it solves: making work easy to start, resume, and finish.
+The upstream `i-have-adhd` skill is an agent communication/output skill, not a visual-design system. Use it for making work easy to start, resume, and finish.
 
 For every operator-facing status, task handoff, approval request, error report, or agent completion report:
 
@@ -78,9 +97,7 @@ For every operator-facing status, task handoff, approval request, error report, 
 4. Make completed work visible and give concrete time estimates when useful.
 5. Suppress tangents; if anything remains open, end with one concrete next action.
 
-Cap routine lists at five items by splitting `do now` from `later` when needed. Errors are matter-of-fact: location → cause → fix.
-
-Do **not** label or diagnose a client as having ADHD. Client-facing artifacts inherit the actionability principles (clear next action, bounded choices, visible progress, low working-memory burden) without medical labeling.
+Do not label or diagnose a client as having ADHD. Client-facing artifacts inherit the actionability principles without medical labeling.
 
 ## Client delivery law
 
@@ -95,7 +112,7 @@ Primary client UI must make these states obvious:
 
 The client should not need to understand GitHub, Vercel, Supabase, agent names, branch SHAs, JSON manifests, or Beads IDs to operate the engagement.
 
-The client-facing design layer uses the visual/interface skill. The `i-have-adhd` skill governs information architecture and actionability. Beads provides the underlying work/proof state. Do not collapse these responsibilities into one generic "polish" skill.
+The client-facing design layer uses the visual/interface skill. The `i-have-adhd` skill governs information architecture and actionability. Beads provides the underlying work/proof state. Do not collapse these responsibilities into one generic polish skill.
 
 ## Contract truth
 
@@ -139,12 +156,13 @@ Required handoff artifact: <issue/PR/file/schema/media manifest>
 
 ## Coding loop
 
-1. Read control-plane and current ICM stage.
-2. Use JCodeMunch for targeted discovery.
-3. Inspect docs and conventions.
+1. Read control-plane, repository-boundary policy, role-security policy, and current ICM stage.
+2. Determine owner repo and role. Stop if ambiguous.
+3. Use JCodeMunch for targeted discovery.
 4. Run `bd ready`; claim/create the bounded Bead and update the task claim before editing.
 5. Add or update tests.
 6. Implement in the correct repository only.
 7. Run local tests, boundary guard, smoke tests, and `bd doctor` when applicable.
 8. Attach proof; update the Bead, `STATUS.json`, and task ledger.
-9. Open a PR; do not silently deploy production.
+9. Obtain independent review/approval where required.
+10. Open a PR; do not silently deploy production.
