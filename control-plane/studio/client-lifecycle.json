@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "lifecycle_id": "agenix-client-lifecycle-v1",
+  "classification": "reusable_studio_workflow",
+  "states": [
+    {"id":"lead","exit":"qualified_or_declined"},
+    {"id":"vibe_audit","exit":"problem_and_value_verified"},
+    {"id":"discovery","exit":"source_inventory_complete"},
+    {"id":"contract_lock","exit":"scope_price_approver_and_proof_defined"},
+    {"id":"workspace_create","exit":"isolated_client_icm_workspace_exists"},
+    {"id":"truth_freeze","exit":"approved_manifest_with_provenance"},
+    {"id":"production_plan","exit":"all_paid_items_mapped"},
+    {"id":"production","exit":"client_ready_artifacts_exist"},
+    {"id":"independent_review","exit":"required_reviews_pass"},
+    {"id":"client_approval","exit":"approval_or_change_request_recorded"},
+    {"id":"delivery","exit":"versioned_delivery_package_exists"},
+    {"id":"acceptance","exit":"contract_closed_or_gap_disclosed"},
+    {"id":"bonus","exit":"bonus_delivered_or_parked"},
+    {"id":"case_study","exit":"permission_and_verified_case_material"},
+    {"id":"maxx_operations","exit":"recurring_service_active_or_declined"}
+  ],
+  "required_client_fields": [
+    "organization_name",
+    "primary_contact",
+    "approval_authority",
+    "commercial_outcome",
+    "primary_user_or_customer",
+    "constraints",
+    "protected_assets",
+    "proof_required",
+    "ownership_map",
+    "data_sensitivity",
+    "deadline"
+  ],
+  "deliverable_contract": {
+    "required_fields": ["id","name","paid_or_bonus","dependencies","owner","output","acceptance","proof","approval_required","status"],
+    "completion_rule": "client_ready_artifact_plus_evidence"
+  },
+  "allowed_statuses": ["not_started","ready","in_progress","partial","blocked","review","client_review","approved","delivered","accepted","parked"],
+  "approval_law": "silence_is_not_approval",
+  "bonus_law": "paid_scope_must_be_complete_or_explicitly_amended_before_bonus_becomes_primary_work",
+  "case_study_law": "publicity_requires_permission_and_verified_claims"
+}

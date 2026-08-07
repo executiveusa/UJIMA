@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "studio_name": "Agenix Systems",
+  "repository": "executiveusa/ascend-social-purpose-agentic-systems-",
+  "status": "proposed_v1",
+  "client_workspace_path": "icm/tenants/<client-slug>",
+  "laws": [
+    "paid_scope_before_bonus",
+    "client_truth_separate_from_platform_code",
+    "one_stage_one_job",
+    "deterministic_code_owns_known_mechanics",
+    "agents_own_bounded_judgment",
+    "proof_required_for_done",
+    "builders_cannot_self_approve",
+    "irreversible_actions_require_human_approval",
+    "client_ui_hides_operator_complexity",
+    "rollback_and_ownership_required"
+  ],
+  "engagement_stages": [
+    {"id":"00","name":"intake_and_evidence","gate":"source_truth_inventoried"},
+    {"id":"01","name":"canonical_truth","gate":"approved_strategy_manifest"},
+    {"id":"02","name":"production_plan","gate":"all_paid_deliverables_mapped"},
+    {"id":"03","name":"production","gate":"artifact_acceptance_tests_pass"},
+    {"id":"04","name":"independent_review","gate":"builder_not_approver"},
+    {"id":"05","name":"client_approval","gate":"approval_recorded"},
+    {"id":"06","name":"delivery","gate":"versioned_package_and_proof"},
+    {"id":"07","name":"acceptance","gate":"contract_items_closed_or_gaps_disclosed"},
+    {"id":"08","name":"bonus","gate":"paid_scope_complete_or_amended"},
+    {"id":"09","name":"case_study","gate":"client_publicity_permission"}
+  ],
+  "execution_loop": ["plan","claim","load_stage_context","execute","test","review","attach_proof","update_ledger","handoff"],
+  "content_states": ["idea","draft","fact_checked","asset_ready","internal_review","client_review","approved","scheduled","published","verified","measured","archived"],
+  "graph_edge_types": ["CONTRACT_REQUIRES","DEPENDS_ON","SOURCE_FOR","DERIVED_FROM","APPROVED_BY","BLOCKED_BY","DELIVERED_AS","PUBLISHED_AS","VERIFIED_BY","OWNED_BY","MEASURED_BY"],
+  "integration_policy": {
+    "source_of_truth": "control_plane_and_client_icm_files",
+    "publishing_adapters": ["postiz","zernio","native"],
+    "adapter_rule": "no_adapter_is_canonical_truth",
+    "dry_run_default": true
+  },
+  "commercial_path": ["vibe_audit","vibe_rescue_sprint","sovereign_launch","maxx_operations"],
+  "proof_questions": ["what_was_promised","what_is_complete","what_is_blocked","who_must_approve","where_is_artifact","what_proof_exists","what_was_delivered","what_can_be_rolled_back"]
+}
