@@ -114,6 +114,23 @@ The client should not need to understand GitHub, Vercel, Supabase, agent names, 
 
 The client-facing design layer uses the visual/interface skill. The `i-have-adhd` skill governs information architecture and actionability. Beads provides the underlying work/proof state. Do not collapse these responsibilities into one generic polish skill.
 
+## Browser video documentation law
+
+Any task that designs a prompt/mission for a browser agent to operate **Descript or OpusClip**, or performs video-editing automation in those products, MUST read `.agents/skills/browser-video-editor/SKILL.md` before planning or execution.
+
+Before the browser agent touches the editor:
+
+1. Refresh from the current official docs for the exact operation being requested.
+2. For Descript, inspect the current Descript Help/API documentation and `https://github.com/descriptinc/skills`, including the relevant `SKILL.md` and `references/descript-api.md`.
+3. For OpusClip, start from the current documentation index at `https://help.opus.pro/llms.txt`, then read the exact pages for the operation.
+4. Record the URLs and refresh date in the browser mission.
+5. Current official docs override repository memory, prior prompts, screenshots, and remembered UI behavior.
+6. If docs cannot be refreshed, emit `DOCS_REFRESH_BLOCKED` and STOP. Never invent menu names, editor capabilities, API parameters, costs, or workarounds.
+7. Browser/manual mechanical editing is the default low-cost execution path. Expensive semantic video-agent operations require a documented reason and cost approval when material.
+8. Browser agents execute approved edit briefs. They do not freestyle story, quotes, facts, footage, branding, effects, publishing, or destructive actions.
+9. Descript/Opus publishing, scheduling, social-account connection, master overwrite, delete/archive, or irreversible project changes require explicit human approval.
+10. Every browser-video completion report must include proof: target composition/clip, before/after duration, aspect ratio, captions QA, protected-facts QA, export artifact/review link, visible credits/minutes consumed when available, and confirmation that nothing was published without approval.
+
 ## Contract truth
 
 The current paid engagement is **$2,450**, not $2,500. Contracted outputs are:
