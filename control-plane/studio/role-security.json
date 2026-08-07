@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "policy_name": "Agenix Agent Role Security",
+  "default": "deny",
+  "roles": {
+    "orchestrator": {
+      "may": ["route_tasks", "read_all_manifests", "create_beads", "reconcile_evidence", "request_approvals"],
+      "may_not": ["publish_without_approval", "edit_brand_masters", "write_production_site_code", "change_database_schema_directly"]
+    },
+    "strategy_agent": {
+      "owner_repo": "executiveusa/asce3nd-interactive-document",
+      "may": ["draft_strategy", "normalize_session_outputs", "prepare_client_approval_artifacts"],
+      "may_not": ["publish", "deploy", "edit_public_site", "edit_brand_masters"]
+    },
+    "brand_agent": {
+      "owner_repo": "executiveusa/asc3nd-brand-kit-",
+      "may": ["prepare_brand_assets", "version_templates", "maintain_asset_manifest"],
+      "may_not": ["change_database", "publish_social", "edit_client_strategy_truth", "deploy_public_site"]
+    },
+    "website_agent": {
+      "owner_repo": "executiveusa/asc3nd-frontend-website-",
+      "may": ["implement_public_ui", "integrate_approved_api_contracts", "run_tests", "prepare_preview"],
+      "may_not": ["invent_copy", "edit_brand_masters", "change_contract_scope", "migrate_database_without_approval"]
+    },
+    "event_agent": {
+      "owner_repo": "executiveusa/asc3nd-events-page",
+      "may": ["build_event_pages", "implement_event_ui", "consume_approved_event_manifest"],
+      "may_not": ["own_main_site", "publish_social", "edit_brand_master", "change_strategy_truth"]
+    },
+    "data_agent": {
+      "owner_repo": "executiveusa/asc3nd-supabase-landing",
+      "may": ["draft_migrations", "audit_rls", "document_schema", "prepare_backup_restore"],
+      "may_not": ["apply_production_migration_without_approval", "handle_unscoped_client_data", "edit_public_ui"]
+    },
+    "publishing_agent": {
+      "owner_repo": "executiveusa/ascend-social-purpose-agentic-systems-",
+      "may": ["prepare_zernio_drafts", "validate_schedule", "run_grid_preflight", "verify_live_post"],
+      "may_not": ["publish_without_approval", "alter_locked_assets", "skip_grid_preflight"]
+    },
+    "review_agent": {
+      "may": ["read_outputs", "check_acceptance_criteria", "request_changes", "attach_evidence"],
+      "may_not": ["self_approve_own_work", "publish", "deploy", "migrate"]
+    }
+  },
+  "rules": [
+    "An agent may have one active writing role per task.",
+    "The writer and final approver must be different roles for yellow/red work.",
+    "Cross-repository work requires a handoff artifact; direct cross-repo writes are denied.",
+    "If role ownership is ambiguous, stop and escalate to orchestrator.",
+    "No role can override a repository boundary locally.",
+    "Human approval is mandatory for production publishing, production deploys, DNS, secrets, migrations, and destructive actions."
+  ]
+}
