@@ -16,9 +16,10 @@ Before broad repository reading, edits, migrations, asset generation, publishing
    - the current numbered stage under `icm/asc3nd-contract-closeout/`
 3. Run `npm run guard:repo` before build or deployment work.
 4. Use JCodeMunch MCP first: `plan_turn`, file outlines, symbol search, symbol source, importers, and blast radius. Do not load whole repositories when targeted retrieval is sufficient.
-5. Record every claimed fact with a source path, URL, database query, transcript timestamp, or human approval.
-6. Work only inside the current stage's allowed outputs.
-7. Stop at approval gates. Silence is not approval.
+5. For multi-step work, initialize/query Beads and work from the ready graph before editing. Read `.agents/skills/beads-observability/SKILL.md`.
+6. Record every claimed fact with a source path, URL, database query, transcript timestamp, or human approval.
+7. Work only inside the current stage's allowed outputs.
+8. Stop at approval gates. Silence is not approval.
 
 ## Product boundary
 
@@ -46,6 +47,36 @@ Each stage contains:
 One stage reads only its own files plus explicitly linked prior outputs. Scripts perform deterministic work. Agents perform judgment. Irreversible actions require human approval.
 
 Sub-agents may perform bounded work in parallel, but the orchestrator owns reconciliation, evidence, and the final state update.
+
+## Beads law
+
+ICM owns interpretable context and stage contracts. Beads owns the durable work graph and agent movement history.
+
+For multi-step client work:
+
+- run `bd init --init-if-missing` in a working checkout;
+- run `bd ready` before starting;
+- one bounded outcome per Bead;
+- record dependencies instead of hiding sequencing in prose;
+- record ownership, handoffs, blockers, approval gates, and proof expectations;
+- close Beads only after verification evidence exists;
+- run `bd doctor` before major delivery or after Beads upgrades/migrations;
+- never store secrets or sensitive client/youth data in Beads.
+
+Client-facing UIs consume a safe projection of Beads state; they do not expose raw agent internals by default.
+
+## Client delivery law
+
+Every substantial interactive client artifact, calendar, dashboard, review surface, or handoff must read `.agents/skills/client-delivery-polish/SKILL.md` and satisfy `docs/CLIENT-DELIVERY-APPROVAL-ARTIFACT.md` where applicable.
+
+Primary client UI must make these states obvious:
+
+- Needs your approval
+- In production / scheduled
+- Delivered
+- Blocked — needs input
+
+The client should not need to understand GitHub, Vercel, Supabase, agent names, branch SHAs, JSON manifests, or Beads IDs to operate the engagement.
 
 ## Contract truth
 
@@ -92,9 +123,9 @@ Required handoff artifact: <issue/PR/file/schema/media manifest>
 1. Read control-plane and current ICM stage.
 2. Use JCodeMunch for targeted discovery.
 3. Inspect docs and conventions.
-4. Update task claim before editing.
+4. Run `bd ready`; claim/create the bounded Bead and update the task claim before editing.
 5. Add or update tests.
 6. Implement in the correct repository only.
-7. Run local tests, boundary guard, and smoke tests.
-8. Attach proof and update `STATUS.json` / task ledger.
+7. Run local tests, boundary guard, smoke tests, and `bd doctor` when applicable.
+8. Attach proof; update the Bead, `STATUS.json`, and task ledger.
 9. Open a PR; do not silently deploy production.
