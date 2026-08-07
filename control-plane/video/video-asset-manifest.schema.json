@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenix.local/schemas/video-asset-manifest.schema.json",
+  "title": "Agenix Video Asset Manifest",
+  "type": "object",
+  "required": ["asset_id", "client", "channel", "scheduled_date", "current_stage", "current_version", "editor", "missions", "change_beads", "approval_state", "publish_state"],
+  "properties": {
+    "asset_id": {"type": "string", "pattern": "^[A-Z0-9]+-[A-Z0-9]+-[0-9]{8}-[A-Z0-9-]+$"},
+    "client": {"type": "string"},
+    "campaign": {"type": ["string", "null"]},
+    "channel": {"type": "string"},
+    "scheduled_date": {"type": "string", "format": "date"},
+    "current_stage": {"enum": ["SOURCE", "MASTER", "REVIEW", "APPROVED", "FINAL", "ARCHIVE"]},
+    "current_version": {"type": "integer", "minimum": 1},
+    "editor": {
+      "type": "object",
+      "required": ["product", "project_id"],
+      "properties": {
+        "product": {"enum": ["Descript", "OpusClip", "Hybrid"]},
+        "project_id": {"type": "string"},
+        "project_url": {"type": ["string", "null"]},
+        "composition_id": {"type": ["string", "null"]},
+        "composition_name": {"type": ["string", "null"]}
+      }
+    },
+    "source_media": {"type": "array", "items": {"type": "string"}},
+    "protected_facts": {"type": "array", "items": {"type": "string"}},
+    "missions": {"type": "array", "items": {"type": "string"}},
+    "change_beads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["bead_id", "mission_id", "sequence", "category", "intent", "target", "before_state", "action", "after_state", "verification", "rollback_instruction", "status"],
+        "properties": {
+          "bead_id": {"type": "string"},
+          "mission_id": {"type": "string"},
+          "sequence": {"type": "integer", "minimum": 1},
+          "category": {"enum": ["crop", "caption", "timing", "audio", "brand", "endcard", "text", "layout", "metadata", "export", "other"]},
+          "intent": {"type": "string"},
+          "target": {"type": "string"},
+          "before_state": {"type": "string"},
+          "action": {"type": "string"},
+          "after_state": {"type": "string"},
+          "verification": {"type": "string"},
+          "rollback_instruction": {"type": "string"},
+          "status": {"enum": ["proposed", "applied", "verified", "accepted", "rejected", "rolled_back", "blocked"]},
+          "proof": {"type": "object"},
+          "created_at": {"type": ["string", "null"], "format": "date-time"},
+          "verified_at": {"type": ["string", "null"], "format": "date-time"},
+          "reviewed_by": {"type": ["string", "null"]},
+          "notes": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "exports": {"type": "array", "items": {"type": "object"}},
+    "approval_state": {"enum": ["not_requested", "needs_review", "partially_approved", "approved", "changes_requested"]},
+    "publish_state": {"enum": ["not_published", "scheduled", "published", "failed"]},
+    "cost_telemetry": {"type": "object"}
+  }
+}

@@ -4,6 +4,8 @@ Use with Claude browser control or another approved browser agent.
 
 ```text
 MISSION_ID:
+ASSET_ID:
+RUN_ID:
 CLIENT:
 PRODUCT: Descript | OpusClip | Hybrid
 DOCS_REFRESHED_AT:
@@ -11,8 +13,10 @@ DOCS_READ:
 - <official URL>
 - <official URL>
 
-PROJECT:
-TARGET_COMPOSITION_OR_CLIP:
+PROJECT_ID:
+PROJECT_URL:
+TARGET_COMPOSITION_OR_CLIP_ID:
+TARGET_COMPOSITION_OR_CLIP_NAME:
 SOURCE_MEDIA:
 SOURCE_TRUTH:
 - transcript/timestamps:
@@ -21,10 +25,19 @@ SOURCE_TRUTH:
 
 GOAL:
 
-EXACT_ALLOWED_EDITS:
-1.
-2.
-3.
+CHECKPOINT_REQUIRED: yes|no
+CHECKPOINT_NAME:
+
+PLANNED_CHANGE_BEADS:
+- BEAD_ID:
+  CATEGORY:
+  TARGET:
+  INTENT:
+  BEFORE_STATE:
+  ACTION:
+  EXPECTED_AFTER_STATE:
+  VERIFICATION:
+  ROLLBACK_INSTRUCTION:
 
 PROTECTED_FACTS:
 PROTECTED_ASSETS:
@@ -47,6 +60,8 @@ FORBIDDEN_ACTIONS:
 - do not change brand system
 - do not publish/schedule/connect social accounts
 - do not delete/archive/overwrite masters
+- do not combine unrelated edits into one bead
+- do not silently repair a failed bead; log a corrective bead
 
 STOP_CONDITIONS:
 - current docs unavailable
@@ -55,18 +70,36 @@ STOP_CONDITIONS:
 - source truth conflicts with editor transcript
 - protected asset is missing
 - action would consume unapproved credits/minutes
-- action becomes destructive or irreversible
+- action becomes destructive or irreversible without a checkpoint
+- rollback path for a risky bead cannot be established
+
+INVARIANTS_AFTER_EACH_BEAD:
+- source/master untouched
+- accepted prior beads still intact
+- protected facts unchanged unless specifically approved
+- aspect ratio remains correct
+- no accidental publish/schedule
+- no unapproved stock/AI/effects/music/transitions/emoji
+- no unintended timeline ripple outside target
+- cost remains inside budget
+
+SELF_QA_REQUIRED:
+- inspect/watch final review export end-to-end when capability permits
+- verify first/last frame, crop, captions, line breaks, safe zones, protected facts, brand, end card, audio, duration, resolution
+- defects discovered during self-QA become new corrective beads
 
 PROOF_REQUIRED:
-- exact composition/clip name
+- exact composition/clip ID and name
+- checkpoint reference
 - screenshots of aspect ratio/captions/export settings when practical
 - before/after duration
+- per-bead status + before/after proof
 - caption QA status
 - protected-facts QA status
 - source/consent status
 - export filename/review URL
 - credits/minutes consumed if visible
-- change log
+- self-QA result
 - explicit confirmation: NOT PUBLISHED
 
 FINAL_GATE: HUMAN APPROVAL
@@ -75,16 +108,35 @@ FINAL_GATE: HUMAN APPROVAL
 ## Execution loop
 
 1. Refresh official docs.
-2. Inspect project state before editing.
-3. Duplicate or target only the named review asset.
-4. Perform one bounded class of edits at a time.
-5. Save/check after each bounded class.
-6. Compare result against the mission, not against the editor's suggestions.
-7. Export review artifact.
-8. Return proof.
-9. Human/reviewer checks result.
-10. Issue correction mission if needed.
-11. Only after approval may a separate publishing mission be created.
+2. Resolve `ASSET_ID`, `MISSION_ID`, `RUN_ID`, exact project, and exact target composition/clip.
+3. Inspect and record pre-edit state.
+4. Create a reversible checkpoint when required.
+5. Decompose the brief into atomic video change beads using `VIDEO-CHANGE-BEADS.md`.
+6. Apply exactly one bead at a time.
+7. Save, inspect, verify, and capture proof for that bead before continuing.
+8. Re-check invariants after every bead.
+9. Export a new immutable REVIEW version using `VIDEO-ASSET-NAMING.md`.
+10. Self-QA the exported review artifact end-to-end.
+11. Create corrective beads for any defect found; never silently patch.
+12. Return the complete bead ledger and proof packet.
+13. Human/reviewer may accept, reject, or request rollback per bead.
+14. Correction missions reference exact bead IDs and preserve all accepted beads.
+15. Only after human approval may a FINAL version be created.
+16. Publishing remains a separate approval-gated mission.
+
+## Rollback command pattern
+
+Reviewer can issue a compact command such as:
+
+`KEEP VB-...-001,002,004,005; ROLLBACK VB-...-003.`
+
+The browser agent must:
+- load the asset manifest and last verified checkpoint;
+- preserve accepted neighboring beads;
+- restore only the target bead to its recorded before-state;
+- verify dependent invariants;
+- mark the bead `rolled_back`;
+- create a new corrective bead if a replacement is requested.
 
 ## Product routing
 
@@ -96,3 +148,9 @@ Use when the source is long and candidate-moment discovery/reframing is the prob
 
 ### Hybrid
 Use OpusClip to discover candidates, then Descript to finish the selected cut. Do not pay twice for semantic analysis when the exact ranges are already known.
+
+## Required companion files
+- `VIDEO-CHANGE-BEADS.md`
+- `VIDEO-ASSET-NAMING.md`
+- `VIDEO-END-TO-END-LOOP.md`
+- `video-asset-manifest.schema.json`
