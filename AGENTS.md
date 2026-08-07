@@ -17,9 +17,10 @@ Before broad repository reading, edits, migrations, asset generation, publishing
 3. Run `npm run guard:repo` before build or deployment work.
 4. Use JCodeMunch MCP first: `plan_turn`, file outlines, symbol search, symbol source, importers, and blast radius. Do not load whole repositories when targeted retrieval is sufficient.
 5. For multi-step work, initialize/query Beads and work from the ready graph before editing. Read `.agents/skills/beads-observability/SKILL.md`.
-6. Record every claimed fact with a source path, URL, database query, transcript timestamp, or human approval.
-7. Work only inside the current stage's allowed outputs.
-8. Stop at approval gates. Silence is not approval.
+6. Read `.agents/skills/i-have-adhd/SKILL.md` for operator-facing responses and handoffs. In this repository its actionability rules are always-on unless the human explicitly requests normal mode.
+7. Record every claimed fact with a source path, URL, database query, transcript timestamp, or human approval.
+8. Work only inside the current stage's allowed outputs.
+9. Stop at approval gates. Silence is not approval.
 
 ## Product boundary
 
@@ -65,6 +66,22 @@ For multi-step client work:
 
 Client-facing UIs consume a safe projection of Beads state; they do not expose raw agent internals by default.
 
+## Operator-output law — i-have-adhd
+
+The upstream `i-have-adhd` skill is an **agent communication/output skill**, not a visual-design system. Use it exactly for the friction it solves: making work easy to start, resume, and finish.
+
+For every operator-facing status, task handoff, approval request, error report, or agent completion report:
+
+1. Lead with the next action or current decision, not a preamble.
+2. Number multi-step work, one bounded action per step.
+3. Restate the current state each turn (`step 3 of 5`, `2 approvals left`, etc.).
+4. Make completed work visible and give concrete time estimates when useful.
+5. Suppress tangents; if anything remains open, end with one concrete next action.
+
+Cap routine lists at five items by splitting `do now` from `later` when needed. Errors are matter-of-fact: location → cause → fix.
+
+Do **not** label or diagnose a client as having ADHD. Client-facing artifacts inherit the actionability principles (clear next action, bounded choices, visible progress, low working-memory burden) without medical labeling.
+
 ## Client delivery law
 
 Every substantial interactive client artifact, calendar, dashboard, review surface, or handoff must read `.agents/skills/client-delivery-polish/SKILL.md` and satisfy `docs/CLIENT-DELIVERY-APPROVAL-ARTIFACT.md` where applicable.
@@ -77,6 +94,8 @@ Primary client UI must make these states obvious:
 - Blocked — needs input
 
 The client should not need to understand GitHub, Vercel, Supabase, agent names, branch SHAs, JSON manifests, or Beads IDs to operate the engagement.
+
+The client-facing design layer uses the visual/interface skill. The `i-have-adhd` skill governs information architecture and actionability. Beads provides the underlying work/proof state. Do not collapse these responsibilities into one generic "polish" skill.
 
 ## Contract truth
 
