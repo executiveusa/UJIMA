@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "asc3nd-instagram-30-day-v01",
+  "timezone": "America/Los_Angeles",
+  "rules": {
+    "source_truth_required": true,
+    "invent_quotes": false,
+    "invent_claims": false,
+    "human_approval_required": true,
+    "consent_review_required": true,
+    "subtitle_qa_required": true,
+    "preferred_duration_seconds": [20, 35],
+    "primary_aspect_ratio": "9:16",
+    "end_card_asset": "IG-30"
+  },
+  "briefs": [
+    {
+      "id": "VA-01",
+      "publish_date": "2026-08-12",
+      "feed_asset_id": "IG-07",
+      "working_title": "Why We Started",
+      "objective": "Introduce the founder story and the reason ASC3ND exists before asking the audience to care about the event.",
+      "source_priority": ["approved founder interview long-form master", "corrected transcript"],
+      "editorial_prompt": "Find the strongest self-contained 20–35 second passage where the founder explains the origin, need, or reason ASC3ND was created. Prefer a human, specific moment over generic mission language. Preserve the speaker's actual meaning and wording; remove only dead air, repeated starts, and nonessential filler without changing the statement.",
+      "structure": [
+        "0–2s: strongest truthful hook from the speaker",
+        "2–25s: origin/problem/why ASC3ND exists",
+        "last 3–5s: clean close + ASC3ND brand end card"
+      ],
+      "caption_direction": "Who ASC3ND is and why the work began. CTA should invite the audience to follow, learn more, or join the community; do not force the event into the caption if the source does not naturally support it.",
+      "proof_required": ["source timestamps", "approved transcript excerpt", "subtitle QA", "consent review", "human approval"]
+    },
+    {
+      "id": "VA-02",
+      "publish_date": "2026-08-19",
+      "feed_asset_id": "IG-10",
+      "working_title": "What a Mentor Can Do",
+      "objective": "Show the human value of mentorship and connect ASC3ND's mission to a concrete youth/community need.",
+      "source_priority": ["approved founder interview long-form master", "corrected transcript"],
+      "editorial_prompt": "Find the strongest 20–35 second passage that explains what mentorship, guidance, support, presence, or positive adult influence can mean for a young person. Use only claims supported by the speaker. Do not add statistics or generalized impact claims that are not present in approved source material.",
+      "structure": [
+        "0–2s: mentor/youth insight hook",
+        "2–27s: concise explanation or story",
+        "last 3–5s: ASC3ND brand end card"
+      ],
+      "caption_direction": "Explain mentorship in plain language and connect it to ASC3ND's broader work. CTA may invite mentors, volunteers, families, or community supporters to learn more, subject to approved strategy language.",
+      "proof_required": ["source timestamps", "approved transcript excerpt", "subtitle QA", "consent review", "human approval"]
+    },
+    {
+      "id": "VA-03",
+      "publish_date": "2026-08-26",
+      "feed_asset_id": "IG-13",
+      "working_title": "Getting Ready for Community Cuts",
+      "objective": "Turn awareness into attendance by connecting ASC3ND's mission to the upcoming Community Cuts for Kids event four days before the event.",
+      "source_priority": ["approved founder interview passages about Community Cuts or families", "approved event footage/B-roll if available", "protected event facts"],
+      "editorial_prompt": "Build a 20–35 second event-focused Reel from verified interview material and approved B-roll. If the interview contains a direct passage about Community Cuts, lead with it. If not, use a verified mission/family quote and place protected event facts in on-screen text without fabricating spoken words. The final video must clearly communicate what the event is, when/where it happens, and that service is first come, first served while capacity and supplies last.",
+      "required_on_screen_facts": [
+        "Community Cuts for Kids — Fresh Fade, Fresh Grade",
+        "Sunday, August 30, 2026",
+        "12:00 PM–3:00 PM",
+        "Tangles & Locs",
+        "7425 Hardeson Rd, Everett, WA 98203",
+        "Boys & Girls K–12 Welcome",
+        "First come, first served while capacity and supplies last"
+      ],
+      "caption_direction": "Direct event invitation. Make the logistics easy to scan. State that RSVP helps ASC3ND prepare but does not reserve services, supplies, a place in line, or a specific arrival time.",
+      "proof_required": ["source timestamps", "protected-fact check", "subtitle QA", "consent review", "human approval"]
+    },
+    {
+      "id": "VA-04",
+      "publish_date": "2026-08-30",
+      "working_title": "Community in Action",
+      "objective": "Create event-day and post-event documentary material from real Community Cuts footage without disrupting the planned Instagram Feed grid.",
+      "source_priority": ["event-day footage captured August 30", "approved interviews/testimonials captured at event"],
+      "editorial_prompt": "Prepare a same-day Story/Reel template and shot checklist before the event, but do not render a factual event recap until real footage exists. Prioritize setup, volunteers, environment, services, details, hands-at-work, signage, supplies, and broad community atmosphere. Do not identify minors, show sensitive information, or use close-up youth footage without approved consent. Do not state turnout, impact totals, sponsor participation, or outcomes until verified after the event.",
+      "structure": [
+        "arrival/setup",
+        "event identity and location",
+        "community activity",
+        "service/detail moments",
+        "gratitude / what comes next after verified review"
+      ],
+      "proof_required": ["real event footage", "consent log", "fact check", "human approval", "post-publication verification"]
+    }
+  ]
+}
