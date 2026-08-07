@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0.0",
+  "client": "asc3nd",
+  "campaign": "community-cuts-2026",
+  "timezone": "America/Los_Angeles",
+  "cadence": {
+    "feed_days": ["Monday", "Wednesday", "Friday"],
+    "weekend_feed_posts": false,
+    "client_packet_delivery": "Sunday evening",
+    "production_buffer_target_days": 14
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "theme": "Who ASC3ND is",
+      "packet_due": "2026-08-09",
+      "posts": [
+        {"date":"2026-08-10","asset_id":"IG-06","type":"image","title":"Welcome to ASC3ND","status":"ready"},
+        {"date":"2026-08-12","asset_id":"IG-07","type":"reel","title":"Why We Started","video_brief":"VA-01","status":"in_production"},
+        {"date":"2026-08-14","asset_id":"IG-08","type":"image","title":"Mission","status":"ready"}
+      ]
+    },
+    {
+      "week": 2,
+      "theme": "What ASC3ND does",
+      "packet_due": "2026-08-16",
+      "posts": [
+        {"date":"2026-08-17","asset_id":"IG-09","type":"image","title":"Programs & Values","status":"planned"},
+        {"date":"2026-08-19","asset_id":"IG-10","type":"reel","title":"What a Mentor Can Do","video_brief":"VA-02","status":"planned"},
+        {"date":"2026-08-21","asset_id":"IG-11","type":"image","title":"Community Cuts Announcement","status":"planned"}
+      ]
+    },
+    {
+      "week": 3,
+      "theme": "Why the event matters",
+      "packet_due": "2026-08-23",
+      "posts": [
+        {"date":"2026-08-24","asset_id":"IG-12","type":"image","title":"Back-to-School Confidence","status":"planned"},
+        {"date":"2026-08-26","asset_id":"IG-13","type":"reel","title":"Getting Ready for Community Cuts","video_brief":"VA-03","status":"planned"},
+        {"date":"2026-08-28","asset_id":"IG-14","type":"image","title":"Final Event Reminder","status":"planned"}
+      ]
+    }
+  ],
+  "event_day": {
+    "date": "2026-08-30",
+    "feed_tile_allowed": false,
+    "formats": ["stories", "reel"],
+    "title": "Community in Action",
+    "video_brief": "VA-04",
+    "requires_real_event_footage": true
+  },
+  "grid_safety": {
+    "preflight_required": true,
+    "fail_closed": true,
+    "stop_reasons": [
+      "manual_post_detected",
+      "pin_changed",
+      "post_archived_or_deleted",
+      "missed_slot",
+      "grid_manifest_mismatch",
+      "approval_missing"
+    ],
+    "backup_content": [
+      {"id":"BACKUP-A","type":"image","name":"Mission card","rule":"approved evergreen mission language only"},
+      {"id":"BACKUP-B","type":"image","name":"Founder quote","rule":"verified transcript quote and approval required"},
+      {"id":"BACKUP-C","type":"image","name":"Community value card","rule":"approved values/program language only"}
+    ]
+  },
+  "weekly_factory": [
+    {"day":"Friday","action":"freeze next two weeks of strategy, claims, media, and dependencies"},
+    {"day":"Saturday","action":"design, edit video, caption QA, grid simulation, backup generation"},
+    {"day":"Sunday evening","action":"deliver one client approval packet for Monday/Wednesday/Friday"},
+    {"day":"Monday/Wednesday/Friday","action":"publish only approved content, then verify live URL and grid position"}
+  ],
+  "publisher_experiment": {
+    "provider":"zernio",
+    "role":"adapter_experiment",
+    "source_of_truth":false,
+    "pilot_order":[
+      "test on a non-client profile first",
+      "schedule one static post",
+      "schedule one reel",
+      "verify webhook delivery and deduplication",
+      "connect ASC3ND only after the pilot passes"
+    ]
+  }
+}
