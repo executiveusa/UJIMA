@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "asc3nd-instagram-30-day-v01",
+  "window": {"start": "2026-08-10", "end": "2026-08-30"},
+  "timezone": "America/Los_Angeles",
+  "file_naming_law": "YYYY-MM-DD_IG_<FORMAT>_<SHORT-TITLE>_<PIXELS>_vNN.ext",
+  "rules": {
+    "date_is_filename_metadata_only": true,
+    "do_not_print_post_date_on_artwork": true,
+    "feed_static_size_px": "1080x1350",
+    "reel_video_size_px": "1080x1920",
+    "reel_cover_master_size_px": "1080x1920",
+    "reel_cover_profile_safe_area": "Keep essential text/logo/content centered within a 1080x1350 4:5 safe region so profile/feed cropping does not remove key information.",
+    "story_size_px": "1080x1920",
+    "grid_preflight_required": true,
+    "human_approval_required": true
+  },
+  "deliverables": [
+    {
+      "date": "2026-08-10",
+      "asset_id": "IG-06",
+      "title": "Welcome to ASC3ND",
+      "format": "feed_static",
+      "filename": "2026-08-10_IG_FEED_Welcome-to-ASC3ND_1080x1350_v01.png",
+      "size_px": "1080x1350"
+    },
+    {
+      "date": "2026-08-12",
+      "asset_id": "IG-07",
+      "title": "Why We Started",
+      "format": "reel",
+      "cover_filename": "2026-08-12_IG_REEL-COVER_Why-We-Started_1080x1920_v01.png",
+      "video_filename": "2026-08-12_IG_REEL_Why-We-Started_1080x1920_v01.mp4",
+      "size_px": "1080x1920"
+    },
+    {
+      "date": "2026-08-14",
+      "asset_id": "IG-08",
+      "title": "Mission",
+      "format": "feed_static",
+      "filename": "2026-08-14_IG_FEED_Mission_1080x1350_v01.png",
+      "size_px": "1080x1350"
+    },
+    {
+      "date": "2026-08-17",
+      "asset_id": "IG-09",
+      "title": "Programs & Values",
+      "format": "feed_static",
+      "filename": "2026-08-17_IG_FEED_Programs-and-Values_1080x1350_v01.png",
+      "size_px": "1080x1350"
+    },
+    {
+      "date": "2026-08-19",
+      "asset_id": "IG-10",
+      "title": "What a Mentor Can Do",
+      "format": "reel",
+      "cover_filename": "2026-08-19_IG_REEL-COVER_What-a-Mentor-Can-Do_1080x1920_v01.png",
+      "video_filename": "2026-08-19_IG_REEL_What-a-Mentor-Can-Do_1080x1920_v01.mp4",
+      "size_px": "1080x1920"
+    },
+    {
+      "date": "2026-08-21",
+      "asset_id": "IG-11",
+      "title": "Community Cuts Announcement",
+      "format": "feed_static",
+      "filename": "2026-08-21_IG_FEED_Community-Cuts-Announcement_1080x1350_v01.png",
+      "size_px": "1080x1350"
+    },
+    {
+      "date": "2026-08-24",
+      "asset_id": "IG-12",
+      "title": "Back-to-School Confidence",
+      "format": "feed_static",
+      "filename": "2026-08-24_IG_FEED_Back-to-School-Confidence_1080x1350_v01.png",
+      "size_px": "1080x1350"
+    },
+    {
+      "date": "2026-08-26",
+      "asset_id": "IG-13",
+      "title": "Getting Ready for Community Cuts",
+      "format": "reel",
+      "cover_filename": "2026-08-26_IG_REEL-COVER_Getting-Ready-for-Community-Cuts_1080x1920_v01.png",
+      "video_filename": "2026-08-26_IG_REEL_Getting-Ready-for-Community-Cuts_1080x1920_v01.mp4",
+      "size_px": "1080x1920"
+    },
+    {
+      "date": "2026-08-28",
+      "asset_id": "IG-14",
+      "title": "Final Event Reminder",
+      "format": "feed_static",
+      "filename": "2026-08-28_IG_FEED_Final-Event-Reminder_1080x1350_v01.png",
+      "size_px": "1080x1350"
+    },
+    {
+      "date": "2026-08-30",
+      "title": "Community in Action",
+      "format": "event_day_reel_and_stories",
+      "reel_cover_filename": "2026-08-30_IG_REEL-COVER_Community-in-Action_1080x1920_v01.png",
+      "reel_video_filename": "2026-08-30_IG_REEL_Community-in-Action_1080x1920_v01.mp4",
+      "story_prefix": "2026-08-30_IG_STORY_Community-Cuts_1080x1920_",
+      "size_px": "1080x1920",
+      "feed_tile_allowed": false,
+      "requires_real_event_footage": true
+    }
+  ]
+}
