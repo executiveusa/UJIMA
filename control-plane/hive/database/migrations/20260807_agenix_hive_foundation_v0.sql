@@ -1,6 +1,7 @@
 -- Agenix Hive foundation v0
 -- Applied to Botanic Creations Supabase on 2026-08-07.
--- Portable PostgreSQL/Supabase schema. Product-private state remains in the owning service.
+-- Portable Supabase/PostgreSQL schema. Product-private state remains in the owning service.
+-- Optional host-platform registration is guarded and contains no environment-specific project reference.
 
 create schema agenix_hive;
 create schema agenix_hive_private;
@@ -360,27 +361,33 @@ begin
   end loop;
 end $$;
 
-insert into platform.app_registry (
-  app_slug, app_name, schema_name, repository, owner, database_provider,
-  storage_namespace, tenancy_model, status, migration_status, metadata
-) values (
-  'agenix-hive','Agenix Hive','agenix_hive',
-  'https://github.com/executiveusa/ascend-social-purpose-agentic-systems-',
-  'The Pauli Effect','supabase','agenix-hive','organization','active','managed_supabase',
-  jsonb_build_object(
-    'purpose','federated agent control plane',
-    'portable_to_self_host',true,
-    'project_ref','cyxdevcjycmffhmwxojh',
-    'cross_repo_writes','lease_required',
-    'direct_client_writes','deny_by_default'
-  )
-)
-on conflict (app_slug) do update set
-  app_name=excluded.app_name, schema_name=excluded.schema_name, repository=excluded.repository,
-  owner=excluded.owner, database_provider=excluded.database_provider,
-  storage_namespace=excluded.storage_namespace, tenancy_model=excluded.tenancy_model,
-  status=excluded.status, migration_status=excluded.migration_status,
-  metadata=platform.app_registry.metadata || excluded.metadata, updated_at=now();
+-- Host-platform registration is optional. A clean self-hosted Hive database may not
+-- include the parent platform registry at all; in that case the foundation still installs.
+do $$
+begin
+  if to_regclass('platform.app_registry') is not null then
+    insert into platform.app_registry (
+      app_slug, app_name, schema_name, repository, owner, database_provider,
+      storage_namespace, tenancy_model, status, migration_status, metadata
+    ) values (
+      'agenix-hive','Agenix Hive','agenix_hive',
+      'https://github.com/executiveusa/ascend-social-purpose-agentic-systems-',
+      'The Pauli Effect','supabase','agenix-hive','organization','active','managed_supabase',
+      jsonb_build_object(
+        'purpose','federated agent control plane',
+        'portable_to_self_host',true,
+        'cross_repo_writes','lease_required',
+        'direct_client_writes','deny_by_default'
+      )
+    )
+    on conflict (app_slug) do update set
+      app_name=excluded.app_name, schema_name=excluded.schema_name, repository=excluded.repository,
+      owner=excluded.owner, database_provider=excluded.database_provider,
+      storage_namespace=excluded.storage_namespace, tenancy_model=excluded.tenancy_model,
+      status=excluded.status, migration_status=excluded.migration_status,
+      metadata=platform.app_registry.metadata || excluded.metadata, updated_at=now();
+  end if;
+end $$;
 
 insert into agenix_hive.providers (provider_key, app_slug, display_name, role, interfaces, owns, requires_approval, manifest)
 values
