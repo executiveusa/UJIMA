@@ -1,6 +1,8 @@
 # Agenix Hive Phase 1 Receipt — Foundation
 
-**Status:** PENDING — database verification is green; blocked on final PR review and merge
+**Status:** PASS
+
+**Merged foundation SHA:** `6c4716ce0f9b7b58fc54e1c8a4bd7a5e1580c593`
 
 ## Scope completed
 
@@ -40,9 +42,11 @@ Canonical owner verification:
 - `computer_execution_sessions` -> `open-interpreter`
 - `federation_record` -> `agenix-governor`
 
-## Repository CI proof
+## Repository CI/review proof
 
-The first PR run exposed one test-discovery error: the new Hive test was placed outside this repository's permitted Vitest include tree. It was moved to `packages/core/tests/hive-foundation.test.js` without weakening the discovery audit. A subsequent PR head passed:
+The initial PR exposed one test-discovery error: the new Hive test was placed outside this repository's permitted Vitest include tree. It was moved to `packages/core/tests/hive-foundation.test.js` without weakening the discovery audit.
+
+The final reviewed PR head passed:
 
 - Repository Boundary Guard
 - full `npm test`
@@ -55,8 +59,9 @@ The first PR run exposed one test-discovery error: the new Hive test was placed 
 - bundle smoke dry-run
 - AdamsReview gate
 - Vercel preview deployment
+- CodeRabbit review
 
-The final reviewed head must re-pass the same gates before merge.
+All valid CodeRabbit findings were fixed and all review threads were resolved before merge. PR #37 was squash-merged to `main`, and the Hive Constitution was re-read from `main` after merge to verify the deployed repository state.
 
 ## Supabase advisor proof
 
@@ -80,6 +85,6 @@ The first performance advisor pass identified missing FK indexes and an auth RLS
 
 Migration SQL is committed under `control-plane/hive/database/migrations/` and contains no application secrets or environment-specific Supabase project reference. Optional host `platform.app_registry` registration is guarded so the Hive schema can install into a clean self-hosted Supabase instance without that parent table.
 
-## Remaining Phase 1 gate
+## Phase gate
 
-Final PR review must contain no unresolved valid findings; then merge PR #37 and verify `main` before Phase 2 mutates provider repositories.
+Phase 1 is complete. Phase 2 may add provider capability manifests and health registration through separate owner-repository branches/PRs using the Hive cross-repository guardrails.
