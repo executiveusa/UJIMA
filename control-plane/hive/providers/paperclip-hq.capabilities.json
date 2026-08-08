@@ -1,0 +1,38 @@
+{
+  "id": "paperclip-hq",
+  "role": "management",
+  "version": "0.1.0",
+  "repository": "executiveusa/paperclip-pauli-clip",
+  "capabilities": [
+    "work.assign"
+  ],
+  "interfaces": {
+    "api": true,
+    "mcp": false,
+    "cli": true,
+    "browser": false,
+    "gui": false
+  },
+  "owns": [
+    "organization_work_state"
+  ],
+  "requires_approval": [
+    "agent.hire",
+    "budget.override"
+  ],
+  "health": {
+    "mode": "heartbeat",
+    "interval_seconds": 60
+  },
+  "events": {
+    "emits": ["work.assigned", "work.started", "work.blocked", "approval.requested", "work.completed"],
+    "consumes": ["artifact.created", "review.required", "verification.failed", "deployment.failed", "video.render.ready"]
+  },
+  "evidence": {
+    "receipt_version": "v0"
+  },
+  "metadata": {
+    "integration_boundary": "Do not modify upstream-owned server/packages/cli for Hive bootstrap; use fork-owned extension/config surfaces.",
+    "default_branch": "master"
+  }
+}
