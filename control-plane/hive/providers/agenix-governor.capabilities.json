@@ -1,0 +1,39 @@
+{
+  "id": "agenix-governor",
+  "role": "governance",
+  "version": "0.1.0",
+  "repository": "executiveusa/ascend-social-purpose-agentic-systems-",
+  "capabilities": [
+    "project.context.load"
+  ],
+  "interfaces": {
+    "api": true,
+    "mcp": false,
+    "cli": false,
+    "browser": false,
+    "gui": false
+  },
+  "owns": [
+    "project_policy",
+    "federation_record"
+  ],
+  "requires_approval": [
+    "external.publish",
+    "destructive.production.change"
+  ],
+  "health": {
+    "mode": "heartbeat",
+    "interval_seconds": 60
+  },
+  "events": {
+    "emits": ["work.assigned", "approval.requested", "review.required", "verification.failed", "work.completed"],
+    "consumes": ["artifact.created", "work.blocked", "video.render.ready", "deployment.failed"]
+  },
+  "evidence": {
+    "receipt_version": "v0"
+  },
+  "metadata": {
+    "control_surface": "Agenix Command",
+    "phase": "provider-registry-v0"
+  }
+}
