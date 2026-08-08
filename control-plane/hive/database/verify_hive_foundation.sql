@@ -1,7 +1,7 @@
 -- Agenix Hive foundation verification.
--- Expected on a clean v0 installation:
+-- Expected on a clean v0 installation after all three foundation migrations:
 -- 22 tables, 22 RLS-enabled tables, 22 read policies, 5 seeded providers,
--- 17 seeded capabilities, 5 canonical state domains and one app-registry row.
+-- 17 seeded capabilities, 6 canonical state domains and one app-registry row.
 
 select
   (select count(*) from information_schema.tables where table_schema='agenix_hive') as table_count,
