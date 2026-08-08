@@ -113,6 +113,7 @@ describe('Agenix Hive provider registry', () => {
 
   it('ships one central manifest for each initial provider', () => {
     const contract = readJson('contracts/capability-manifest.schema.json');
+    const allowedHealthModes = new Set(['http', 'mcp', 'cli', 'heartbeat', 'none']);
     for (const name of manifestNames) {
       const manifest = readJson(`providers/${name}.capabilities.json`);
       expect(manifest.id).toBe(name);
@@ -120,7 +121,7 @@ describe('Agenix Hive provider registry', () => {
       for (const field of contract.required) {
         expect(manifest[field], `${name}.${field}`).not.toBeUndefined();
       }
-      expect(manifest.health.mode).toBe('heartbeat');
+      expect(allowedHealthModes.has(manifest.health.mode), `${name}.health.mode`).toBe(true);
       expect(manifest.evidence.receipt_version).toBe('v0');
     }
   });
@@ -153,9 +154,34 @@ describe('Agenix Hive provider registry', () => {
     expect(migration).not.toContain("select id, 'healthy'");
   });
 
-  it('keeps Darya repo bootstrap explicitly blocked until its local AGENTS precondition can be satisfied', () => {
+  it('keeps disabled interfaces out of provider routing priority', () => {
+    const montage = readJson('providers/montage.capabilities.json');
+    expect(montage.metadata.enabled_interface_order).toEqual(['api']);
+    expect(montage.interfaces.mcp).toBe(false);
+    expect(montage.interfaces.cli).toBe(false);
+    expect(montage.capabilities).not.toContain('video.edit.propose');
+
+    const interpreter = readJson('providers/open-interpreter.capabilities.json');
+    expect(interpreter.metadata.enabled_interface_order).toEqual(['cli']);
+    expect(interpreter.interfaces.browser).toBe(false);
+    expect(interpreter.interfaces.gui).toBe(false);
+  });
+
+  it('keeps Darya routing disabled until its repo AGENTS precondition is satisfied', () => {
     const manifest = readJson('providers/darya-openhands.capabilities.json');
-    expect(manifest.metadata.repo_local_manifest_status).toBe('pending');
+    expect(manifest.metadata.repo_local_manifest_status).toBe('deferred');
+    expect(manifest.metadata.routing_enabled).toBe(false);
     expect(manifest.metadata.reason).toMatch(/pre-commit/i);
+  });
+
+  it('records the live Phase 2 provider reconciliation migration', () => {
+    const migration = fs.readFileSync(
+      path.join(hive, 'database/migrations/20260807_agenix_hive_phase2_provider_reconcile_v0.sql'),
+      'utf8',
+    );
+    expect(migration).toContain("where provider_key='montage'");
+    expect(migration).toContain("where provider_key='open-interpreter'");
+    expect(migration).toContain("where pc.provider_id=p.id and p.provider_key='darya-openhands'");
+    expect(migration).toContain('enabled=false');
   });
 });

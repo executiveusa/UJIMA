@@ -35,8 +35,10 @@
     "receipt_version": "v0"
   },
   "metadata": {
-    "repo_local_manifest_status": "pending",
-    "reason": "Repository AGENTS requires pre-commit hook installation before changes; bootstrap must be performed by a compliant engineering runtime rather than bypassing that instruction.",
+    "repo_local_manifest_status": "deferred",
+    "routing_enabled": false,
+    "target_phase": "phase6-openhands-worker",
+    "reason": "Repository AGENTS requires make install-pre-commit-hooks before changes; bootstrap must be performed by a compliant engineering runtime rather than bypassing that instruction.",
     "specialist": "Darya design/product review"
   }
 }
