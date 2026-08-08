@@ -101,3 +101,61 @@ describe('Agenix Hive foundation', () => {
     expect(reviewHardening).toContain("metadata = metadata - 'project_ref'");
   });
 });
+
+describe('Agenix Hive provider registry', () => {
+  const manifestNames = [
+    'agenix-governor',
+    'paperclip-hq',
+    'darya-openhands',
+    'montage',
+    'open-interpreter',
+  ];
+
+  it('ships one central manifest for each initial provider', () => {
+    const contract = readJson('contracts/capability-manifest.schema.json');
+    for (const name of manifestNames) {
+      const manifest = readJson(`providers/${name}.capabilities.json`);
+      expect(manifest.id).toBe(name);
+      expect(new Set(manifest.capabilities).size).toBe(manifest.capabilities.length);
+      for (const field of contract.required) {
+        expect(manifest[field], `${name}.${field}`).not.toBeUndefined();
+      }
+      expect(manifest.health.mode).toBe('heartbeat');
+      expect(manifest.evidence.receipt_version).toBe('v0');
+    }
+  });
+
+  it('keeps canonical domain ownership aligned with provider manifests', () => {
+    const ownership = readJson('contracts/state-ownership.v0.json');
+    const manifestOwners = new Map();
+    for (const name of manifestNames) {
+      const manifest = readJson(`providers/${name}.capabilities.json`);
+      for (const domain of manifest.owns) {
+        manifestOwners.set(domain, name);
+      }
+    }
+
+    for (const item of ownership.domains) {
+      if (item.domain === 'federation_record') {
+        expect(item.owner).toBe('agenix-governor');
+        continue;
+      }
+      expect(manifestOwners.get(item.domain), item.domain).toBe(item.owner);
+    }
+  });
+
+  it('does not claim runtime health before a probe', () => {
+    const migration = fs.readFileSync(
+      path.join(hive, 'database/migrations/20260807_agenix_hive_provider_registry_v0.sql'),
+      'utf8',
+    );
+    expect(migration).toContain("select id, 'unknown', version");
+    expect(migration).not.toContain("select id, 'healthy'");
+  });
+
+  it('keeps Darya repo bootstrap explicitly blocked until its local AGENTS precondition can be satisfied', () => {
+    const manifest = readJson('providers/darya-openhands.capabilities.json');
+    expect(manifest.metadata.repo_local_manifest_status).toBe('pending');
+    expect(manifest.metadata.reason).toMatch(/pre-commit/i);
+  });
+});
