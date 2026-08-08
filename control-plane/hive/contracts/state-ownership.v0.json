@@ -34,9 +34,9 @@
     },
     {
       "domain": "federation_record",
-      "owner": "agenix-hive-db",
-      "write_policy": "service_workers_only",
-      "description": "Commands, correlation, leases, events, receipts, artifacts and approvals"
+      "owner": "agenix-governor",
+      "write_policy": "service_contract_only",
+      "description": "Cross-provider commands, correlation, leases, events, receipts, artifacts and approvals; never a copy of provider-private state"
     }
   ]
 }
