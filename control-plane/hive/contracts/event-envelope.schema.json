@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenix.local/contracts/event-envelope.schema.json",
+  "title": "Agenix Hive Event Envelope v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "correlation_id", "organization_id", "source", "event_type", "idempotency_key", "occurred_at", "payload"],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "correlation_id": {"type": "string", "format": "uuid"},
+    "causation_id": {"type": ["string", "null"], "format": "uuid"},
+    "organization_id": {"type": "string", "format": "uuid"},
+    "project_id": {"type": ["string", "null"], "format": "uuid"},
+    "run_id": {"type": ["string", "null"], "format": "uuid"},
+    "source": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "event_type": {"type": "string", "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)+$"},
+    "idempotency_key": {"type": "string", "minLength": 1, "maxLength": 256},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "payload": {"type": "object"}
+  }
+}

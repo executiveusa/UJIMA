@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenix.local/contracts/work-order.schema.json",
+  "title": "Agenix Hive Work Order v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["work_order_id", "correlation_id", "organization_id", "objective", "capability", "owner_provider", "approval_mode", "budget", "inputs", "acceptance", "evidence_required"],
+  "properties": {
+    "work_order_id": {"type": "string", "format": "uuid"},
+    "correlation_id": {"type": "string", "format": "uuid"},
+    "parent_work_order_id": {"type": ["string", "null"], "format": "uuid"},
+    "organization_id": {"type": "string", "format": "uuid"},
+    "project_id": {"type": ["string", "null"], "format": "uuid"},
+    "objective": {"type": "string", "minLength": 1},
+    "capability": {"type": "string"},
+    "owner_provider": {"type": "string"},
+    "resource_leases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["resource_key", "resource_type", "mode"],
+        "properties": {
+          "resource_key": {"type": "string"},
+          "resource_type": {"type": "string"},
+          "mode": {"enum": ["read", "write", "execute"]}
+        }
+      }
+    },
+    "approval_mode": {"enum": ["automatic", "supervised", "human_required", "denied"]},
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["currency", "max_amount"],
+      "properties": {
+        "currency": {"const": "USD"},
+        "max_amount": {"type": "number", "minimum": 0}
+      }
+    },
+    "inputs": {"type": "object"},
+    "policy_snapshot_ref": {"type": ["string", "null"]},
+    "acceptance": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "evidence_required": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "deadline": {"type": ["string", "null"], "format": "date-time"},
+    "metadata": {"type": "object"}
+  }
+}

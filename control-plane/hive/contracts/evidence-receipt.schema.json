@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenix.local/contracts/evidence-receipt.schema.json",
+  "title": "Agenix Hive Evidence Receipt v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["receipt_version", "receipt_id", "correlation_id", "run_id", "provider", "status", "summary", "tests", "artifacts", "cost", "verification", "signed_at"],
+  "properties": {
+    "receipt_version": {"const": "v0"},
+    "receipt_id": {"type": "string", "format": "uuid"},
+    "correlation_id": {"type": "string", "format": "uuid"},
+    "run_id": {"type": "string", "format": "uuid"},
+    "step_key": {"type": ["string", "null"]},
+    "provider": {"type": "string"},
+    "status": {"enum": ["pass", "fail", "partial", "blocked"]},
+    "summary": {"type": "string", "minLength": 1},
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": {"type": "string"},
+          "status": {"enum": ["pass", "fail", "skip"]},
+          "evidence": {}
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "uri"],
+        "properties": {
+          "type": {"type": "string"},
+          "uri": {"type": "string"},
+          "sha256": {"type": ["string", "null"]},
+          "media_type": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "required": ["currency", "amount"],
+      "properties": {
+        "currency": {"const": "USD"},
+        "amount": {"type": "number", "minimum": 0},
+        "details": {"type": "object"}
+      }
+    },
+    "verification": {"type": "object"},
+    "signed_at": {"type": "string", "format": "date-time"}
+  }
+}
