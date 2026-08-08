@@ -1,18 +1,19 @@
 # Agenix Hive Phase 1 Receipt — Foundation
 
-**Status:** PASS pending repository CI/PR review
+**Status:** PASS pending final PR review/merge
 
 ## Scope completed
 
 - Locked `HIVE-CONSTITUTION.md` with canonical ownership and cross-repository rules.
 - Added v0 capability, event, work-order and evidence contracts.
-- Added state-ownership map.
+- Added state-ownership map and Hive-local `AGENTS.md` guardrails.
 - Applied isolated `agenix_hive` and `agenix_hive_private` schemas to Botanic Creations Supabase.
 - Registered the Hive in existing `platform.app_registry` instead of creating a duplicate app registry.
 - Seeded five initial providers and seventeen initial capabilities.
 - Added resource leases, event correlation/idempotency, evidence receipts and approvals.
 - Enabled organization-scoped RLS on every Hive table.
 - Added FK/query indexes and optimized auth lookups after Supabase performance review.
+- Explicitly assigned the cross-provider `federation_record` state domain to Agenix Governor; provider-private state remains excluded.
 
 ## Database proof — 2026-08-07
 
@@ -25,7 +26,7 @@ Verification query result:
 | Hive read policies | 22 |
 | seeded providers | 5 |
 | seeded capabilities | 17 |
-| canonical state domains | 5 |
+| canonical state domains | 6 |
 | `platform.app_registry` Hive rows | 1 |
 
 Canonical owner verification:
@@ -35,6 +36,23 @@ Canonical owner verification:
 - `engineering_execution_state` -> `darya-openhands`
 - `video_project_state` -> `montage`
 - `computer_execution_sessions` -> `open-interpreter`
+- `federation_record` -> `agenix-governor`
+
+## Repository CI proof
+
+The first PR run exposed one test-discovery error: the new Hive test was placed outside this repository's permitted Vitest include tree. It was moved to `packages/core/tests/hive-foundation.test.js` without weakening the discovery audit. The subsequent PR head passed:
+
+- Repository Boundary Guard
+- full `npm test`
+- build
+- `missionctl doctor`
+- secret audit
+- generated-file audit
+- test-discovery audit
+- OpenSpec task audit
+- bundle smoke dry-run
+- AdamsReview gate
+- Vercel preview deployment
 
 ## Supabase advisor proof
 
@@ -58,4 +76,4 @@ Migration SQL is committed under `control-plane/hive/database/migrations/` and c
 
 ## Remaining Phase 1 gate
 
-Repository tests, CI and independent PR review must pass before this receipt becomes final and Phase 2 begins.
+Final PR review must contain no unresolved valid findings; then merge PR #37 and verify `main` before Phase 2 mutates provider repositories.
