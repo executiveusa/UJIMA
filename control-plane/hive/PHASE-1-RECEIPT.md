@@ -1,6 +1,6 @@
 # Agenix Hive Phase 1 Receipt — Foundation
 
-**Status:** PASS pending final PR review/merge
+**Status:** PENDING — database verification is green; blocked on final PR review and merge
 
 ## Scope completed
 
@@ -14,6 +14,8 @@
 - Enabled organization-scoped RLS on every Hive table.
 - Added FK/query indexes and optimized auth lookups after Supabase performance review.
 - Explicitly assigned the cross-provider `federation_record` state domain to Agenix Governor; provider-private state remains excluded.
+- Preserved federation history with restrictive run foreign keys and immutable event provider keys.
+- Removed environment-specific Supabase project identifiers from reusable migration metadata and guarded the optional `platform.app_registry` integration for portable self-host installation.
 
 ## Database proof — 2026-08-07
 
@@ -40,7 +42,7 @@ Canonical owner verification:
 
 ## Repository CI proof
 
-The first PR run exposed one test-discovery error: the new Hive test was placed outside this repository's permitted Vitest include tree. It was moved to `packages/core/tests/hive-foundation.test.js` without weakening the discovery audit. The subsequent PR head passed:
+The first PR run exposed one test-discovery error: the new Hive test was placed outside this repository's permitted Vitest include tree. It was moved to `packages/core/tests/hive-foundation.test.js` without weakening the discovery audit. A subsequent PR head passed:
 
 - Repository Boundary Guard
 - full `npm test`
@@ -53,6 +55,8 @@ The first PR run exposed one test-discovery error: the new Hive test was placed 
 - bundle smoke dry-run
 - AdamsReview gate
 - Vercel preview deployment
+
+The final reviewed head must re-pass the same gates before merge.
 
 ## Supabase advisor proof
 
@@ -69,10 +73,12 @@ The first performance advisor pass identified missing FK indexes and an auth RLS
 - External publishing remains `human_required` in the capability seed.
 - Computer desktop control is `high` risk and `human_required` by default.
 - Resource leases enforce one active write lease per resource.
+- Historical events/evidence/approvals/context cannot be cascade-deleted by removing a run.
+- Event idempotency is keyed by immutable `source_provider_key`, not a deletable provider UUID link.
 
 ## Portability
 
-Migration SQL is committed under `control-plane/hive/database/migrations/` and contains no application secrets. The isolated schemas can be exported/restored to a self-hosted PostgreSQL/Supabase target later.
+Migration SQL is committed under `control-plane/hive/database/migrations/` and contains no application secrets or environment-specific Supabase project reference. Optional host `platform.app_registry` registration is guarded so the Hive schema can install into a clean self-hosted Supabase instance without that parent table.
 
 ## Remaining Phase 1 gate
 
