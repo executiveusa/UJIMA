@@ -29,6 +29,7 @@ describe('Agenix Hive foundation', () => {
     expect(ownership.version).toBe('v0');
     const domains = ownership.domains.map((item) => item.domain);
     expect(new Set(domains).size).toBe(domains.length);
+    expect(domains).toContain('federation_record');
     for (const item of ownership.domains) {
       expect(item.owner).toBeTruthy();
       expect(item.write_policy).toBeTruthy();
@@ -58,7 +59,7 @@ describe('Agenix Hive foundation', () => {
     expect(schema.properties.status.enum).toEqual(['pass', 'fail', 'partial', 'blocked']);
   });
 
-  it('records both portable foundation migrations', () => {
+  it('records all portable foundation migrations', () => {
     const foundation = fs.readFileSync(
       path.join(hive, 'database/migrations/20260807_agenix_hive_foundation_v0.sql'),
       'utf8',
@@ -67,11 +68,17 @@ describe('Agenix Hive foundation', () => {
       path.join(hive, 'database/migrations/20260807_agenix_hive_foundation_v0_indexes.sql'),
       'utf8',
     );
+    const federationOwnership = fs.readFileSync(
+      path.join(hive, 'database/migrations/20260807_agenix_hive_federation_state_domain_v0.sql'),
+      'utf8',
+    );
     expect(foundation).toContain('create schema agenix_hive;');
     expect(foundation).toContain('create table agenix_hive.resource_leases');
     expect(foundation).toContain('create table agenix_hive.evidence_receipts');
     expect(foundation).toContain('alter table agenix_hive.events enable row level security;');
     expect(indexes).toContain('agenix_hive_runs_correlation_idx');
     expect(indexes).toContain('(select auth.uid())');
+    expect(federationOwnership).toContain("'federation_record'");
+    expect(federationOwnership).toContain("'agenix-governor'");
   });
 });
