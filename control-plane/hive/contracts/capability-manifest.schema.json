@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenix.local/contracts/capability-manifest.schema.json",
+  "title": "Agenix Hive Capability Manifest v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "role", "version", "capabilities", "interfaces", "owns", "requires_approval", "health", "events", "evidence"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "role": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "repository": {"type": "string"},
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)+$"}
+    },
+    "interfaces": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "api": {"oneOf": [{"type": "boolean"}, {"type": "string"}]},
+        "mcp": {"oneOf": [{"type": "boolean"}, {"type": "string"}]},
+        "cli": {"oneOf": [{"type": "boolean"}, {"type": "string"}]},
+        "browser": {"type": "boolean"},
+        "gui": {"type": "boolean"}
+      }
+    },
+    "owns": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "requires_approval": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {"enum": ["http", "mcp", "cli", "heartbeat", "none"]},
+        "target": {"type": "string"},
+        "interval_seconds": {"type": "integer", "minimum": 10}
+      }
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["emits", "consumes"],
+      "properties": {
+        "emits": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "consumes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["receipt_version"],
+      "properties": {"receipt_version": {"const": "v0"}}
+    },
+    "metadata": {"type": "object"}
+  }
+}
