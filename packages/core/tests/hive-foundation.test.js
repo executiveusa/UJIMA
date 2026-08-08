@@ -72,6 +72,10 @@ describe('Agenix Hive foundation', () => {
       path.join(hive, 'database/migrations/20260807_agenix_hive_federation_state_domain_v0.sql'),
       'utf8',
     );
+    const eventSourceHardening = fs.readFileSync(
+      path.join(hive, 'database/migrations/20260807_agenix_hive_event_source_hardening_v0.sql'),
+      'utf8',
+    );
     expect(foundation).toContain('create schema agenix_hive;');
     expect(foundation).toContain('create table agenix_hive.resource_leases');
     expect(foundation).toContain('create table agenix_hive.evidence_receipts');
@@ -80,5 +84,6 @@ describe('Agenix Hive foundation', () => {
     expect(indexes).toContain('(select auth.uid())');
     expect(federationOwnership).toContain("'federation_record'");
     expect(federationOwnership).toContain("'agenix-governor'");
+    expect(eventSourceHardening).toContain('alter column source_provider_id set not null');
   });
 });
