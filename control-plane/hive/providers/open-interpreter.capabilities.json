@@ -13,8 +13,8 @@
     "api": false,
     "mcp": false,
     "cli": true,
-    "browser": true,
-    "gui": true
+    "browser": false,
+    "gui": false
   },
   "owns": [
     "computer_execution_sessions"
@@ -36,10 +36,16 @@
     "receipt_version": "v0"
   },
   "metadata": {
+    "repo_manifest_path": ".agenix/capabilities.json",
+    "merged_sha": "b22311637cf11888f2cc0975617867483dc25ed1",
     "execution_role": "last-mile local computer actuator",
     "network_policy": "outbound-worker-default",
     "filesystem_policy": "approved-roots-only",
+    "enabled_interface_order": ["cli"],
+    "browser_status": "disabled until bounded Hive worker enforces routing policy",
+    "gui_status": "disabled until bounded Hive worker enforces fallback policy",
     "gui_policy": "fallback-after-api-mcp-cli-structured-browser",
-    "mcp_status": "not_marked_available_for_this_legacy_fork_until_runtime_probe"
+    "mcp_status": "not marked available for this legacy fork until runtime probe",
+    "vercel_status": "legacy project configuration failure deferred because this provider is a local worker"
   }
 }
