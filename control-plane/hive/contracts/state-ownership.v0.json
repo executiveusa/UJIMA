@@ -1,0 +1,42 @@
+{
+  "version": "v0",
+  "law": "One canonical owner per state domain. Cross-provider mutation requires a versioned contract or typed operation; direct private-state writes are denied.",
+  "domains": [
+    {
+      "domain": "project_policy",
+      "owner": "agenix-governor",
+      "write_policy": "deny_cross_provider",
+      "description": "Client/project context, policy, scope and acceptance truth"
+    },
+    {
+      "domain": "organization_work_state",
+      "owner": "paperclip-hq",
+      "write_policy": "contract_only",
+      "description": "Goals, work assignments, budgets, delegation and agent lifecycle"
+    },
+    {
+      "domain": "engineering_execution_state",
+      "owner": "darya-openhands",
+      "write_policy": "deny_cross_provider",
+      "description": "Engineering agent sessions and software execution state"
+    },
+    {
+      "domain": "video_project_state",
+      "owner": "montage",
+      "write_policy": "typed_operations_only",
+      "description": "StudioProject, timeline and editorial state"
+    },
+    {
+      "domain": "computer_execution_sessions",
+      "owner": "open-interpreter",
+      "write_policy": "deny_cross_provider",
+      "description": "Bounded local computer/browser/files/shell execution sessions"
+    },
+    {
+      "domain": "federation_record",
+      "owner": "agenix-hive-db",
+      "write_policy": "service_workers_only",
+      "description": "Commands, correlation, leases, events, receipts, artifacts and approvals"
+    }
+  ]
+}
