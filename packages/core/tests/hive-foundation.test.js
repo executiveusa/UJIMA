@@ -24,7 +24,7 @@ describe('Agenix Hive foundation', () => {
     }
   });
 
-  it('locks one owner for every declared state domain', () => {
+  it('locks one owner and database-aligned write policy for every declared state domain', () => {
     const ownership = readJson('contracts/state-ownership.v0.json');
     expect(ownership.version).toBe('v0');
     const domains = ownership.domains.map((item) => item.domain);
@@ -32,8 +32,11 @@ describe('Agenix Hive foundation', () => {
     expect(domains).toContain('federation_record');
     for (const item of ownership.domains) {
       expect(item.owner).toBeTruthy();
-      expect(item.write_policy).toBeTruthy();
+      expect(item.write_policy).toBeTypeOf('object');
+      expect(item.write_policy.cross_provider_write).toBeTruthy();
     }
+    expect(ownership.domains.find((item) => item.domain === 'video_project_state').write_policy)
+      .toEqual({ cross_provider_write: 'operations_only' });
   });
 
   it('requires correlation and idempotency on cross-provider events', () => {
@@ -59,7 +62,7 @@ describe('Agenix Hive foundation', () => {
     expect(schema.properties.status.enum).toEqual(['pass', 'fail', 'partial', 'blocked']);
   });
 
-  it('records all portable foundation migrations', () => {
+  it('records portable and history-preserving foundation migrations', () => {
     const foundation = fs.readFileSync(
       path.join(hive, 'database/migrations/20260807_agenix_hive_foundation_v0.sql'),
       'utf8',
@@ -76,14 +79,25 @@ describe('Agenix Hive foundation', () => {
       path.join(hive, 'database/migrations/20260807_agenix_hive_event_source_hardening_v0.sql'),
       'utf8',
     );
+    const reviewHardening = fs.readFileSync(
+      path.join(hive, 'database/migrations/20260807_agenix_hive_review_hardening_v0.sql'),
+      'utf8',
+    );
+
     expect(foundation).toContain('create schema agenix_hive;');
     expect(foundation).toContain('create table agenix_hive.resource_leases');
     expect(foundation).toContain('create table agenix_hive.evidence_receipts');
     expect(foundation).toContain('alter table agenix_hive.events enable row level security;');
+    expect(foundation).toContain("to_regclass('platform.app_registry') is not null");
+    expect(foundation).not.toContain("'project_ref','cyxdevcjycmffhmwxojh'");
     expect(indexes).toContain('agenix_hive_runs_correlation_idx');
     expect(indexes).toContain('(select auth.uid())');
     expect(federationOwnership).toContain("'federation_record'");
     expect(federationOwnership).toContain("'agenix-governor'");
     expect(eventSourceHardening).toContain('alter column source_provider_id set not null');
+    expect(reviewHardening).toContain('on delete restrict');
+    expect(reviewHardening).toContain('source_provider_key text');
+    expect(reviewHardening).toContain('events_source_provider_key_idempotency_key_key');
+    expect(reviewHardening).toContain("metadata = metadata - 'project_ref'");
   });
 });
