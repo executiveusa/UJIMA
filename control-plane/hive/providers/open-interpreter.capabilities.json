@@ -1,0 +1,45 @@
+{
+  "id": "open-interpreter",
+  "role": "computer_operations",
+  "version": "0.1.0",
+  "repository": "executiveusa/open-interpreter-fork",
+  "capabilities": [
+    "computer.shell.execute",
+    "computer.browser.control",
+    "computer.desktop.control",
+    "computer.files.write"
+  ],
+  "interfaces": {
+    "api": false,
+    "mcp": false,
+    "cli": true,
+    "browser": true,
+    "gui": true
+  },
+  "owns": [
+    "computer_execution_sessions"
+  ],
+  "requires_approval": [
+    "destructive.file.operation",
+    "production.infrastructure.change",
+    "external.publish"
+  ],
+  "health": {
+    "mode": "heartbeat",
+    "interval_seconds": 60
+  },
+  "events": {
+    "emits": ["work.started", "work.blocked", "artifact.created", "verification.failed", "work.completed"],
+    "consumes": ["work.assigned", "approval.requested"]
+  },
+  "evidence": {
+    "receipt_version": "v0"
+  },
+  "metadata": {
+    "execution_role": "last-mile local computer actuator",
+    "network_policy": "outbound-worker-default",
+    "filesystem_policy": "approved-roots-only",
+    "gui_policy": "fallback-after-api-mcp-cli-structured-browser",
+    "mcp_status": "not_marked_available_for_this_legacy_fork_until_runtime_probe"
+  }
+}
