@@ -1,0 +1,46 @@
+{
+  "id": "montage",
+  "role": "film_studio",
+  "version": "0.1.0",
+  "repository": "executiveusa/pauli-montage-video-agent",
+  "capabilities": [
+    "video.ingest",
+    "video.transcribe",
+    "video.edit.propose",
+    "video.edit.apply",
+    "video.render",
+    "video.verify"
+  ],
+  "interfaces": {
+    "api": true,
+    "mcp": false,
+    "cli": true,
+    "browser": false,
+    "gui": false
+  },
+  "owns": [
+    "video_project_state"
+  ],
+  "requires_approval": [
+    "external.publish",
+    "source.delete",
+    "major.production.path.change"
+  ],
+  "health": {
+    "mode": "heartbeat",
+    "interval_seconds": 60
+  },
+  "events": {
+    "emits": ["work.started", "work.blocked", "artifact.created", "review.required", "video.render.ready", "work.completed"],
+    "consumes": ["work.assigned", "approval.requested"]
+  },
+  "evidence": {
+    "receipt_version": "v0"
+  },
+  "metadata": {
+    "canonical_project_contract": "StudioProject v1",
+    "mcp_status": "required_by_repo_contract_but_not_marked_available_until_runtime_probe",
+    "tool_priority": ["native", "mcp", "cli", "structured_browser", "gui"],
+    "source_media_immutable": true
+  }
+}

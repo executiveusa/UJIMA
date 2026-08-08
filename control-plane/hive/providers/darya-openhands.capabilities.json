@@ -1,0 +1,42 @@
+{
+  "id": "darya-openhands",
+  "role": "software_factory",
+  "version": "0.1.0",
+  "repository": "executiveusa/Darya-designs",
+  "capabilities": [
+    "software.inspect",
+    "software.implement",
+    "software.test",
+    "software.pull_request"
+  ],
+  "interfaces": {
+    "api": true,
+    "mcp": false,
+    "cli": true,
+    "browser": false,
+    "gui": false
+  },
+  "owns": [
+    "engineering_execution_state"
+  ],
+  "requires_approval": [
+    "merge.protected.branch",
+    "production.deploy"
+  ],
+  "health": {
+    "mode": "heartbeat",
+    "interval_seconds": 60
+  },
+  "events": {
+    "emits": ["work.started", "work.blocked", "artifact.created", "review.required", "deployment.failed", "work.completed"],
+    "consumes": ["work.assigned", "approval.requested"]
+  },
+  "evidence": {
+    "receipt_version": "v0"
+  },
+  "metadata": {
+    "repo_local_manifest_status": "pending",
+    "reason": "Repository AGENTS requires pre-commit hook installation before changes; bootstrap must be performed by a compliant engineering runtime rather than bypassing that instruction.",
+    "specialist": "Darya design/product review"
+  }
+}
