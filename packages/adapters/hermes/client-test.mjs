@@ -42,13 +42,16 @@ try {
   await client.stopRun('run_test');
   assert.equal(calls.at(-1).url, 'http://hermes.test:8642/v1/runs/run_test/stop');
 
-  await client.resolveApproval('run_test', { approved: false, requestId: 'approval_1', reason: 'Human denied.' });
-  const approvalBody = JSON.parse(calls.at(-1).options.body);
-  assert.deepEqual(approvalBody, { approved: false, request_id: 'approval_1', reason: 'Human denied.' });
+  await client.resolveApproval('run_test', { choice: 'deny', resolveAll: true });
+  const approvalCall = calls.at(-1);
+  assert.equal(approvalCall.url, 'http://hermes.test:8642/v1/runs/run_test/approval');
+  const approvalBody = JSON.parse(approvalCall.options.body);
+  assert.deepEqual(approvalBody, { choice: 'deny', resolve_all: true });
 
   await assert.rejects(() => new HermesClient({ baseUrl: 'http://hermes.test', apiKey: '' }).health(), /MISSING_HERMES_API_SERVER_KEY/);
   await assert.rejects(() => client.startRun({ input: '' }), /HERMES_RUN_INPUT_REQUIRED/);
-  await assert.rejects(() => client.resolveApproval('run_test', {}), /HERMES_APPROVAL_DECISION_REQUIRED/);
+  await assert.rejects(() => client.resolveApproval('run_test', {}), /HERMES_APPROVAL_CHOICE_REQUIRED/);
+  await assert.rejects(() => client.resolveApproval('run_test', { choice: 'maybe' }), /HERMES_APPROVAL_CHOICE_REQUIRED/);
 
   console.log('PASS HermesClient contract tests');
 } finally {
