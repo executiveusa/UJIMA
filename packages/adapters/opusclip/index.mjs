@@ -1,35 +1,17 @@
 /**
  * OpusClip Official API Client for Agenix Studio OS
- * Base URL: https://api.opus.pro/api
+ * Base URL: https://api.opus.pro
  *
  * Implements official endpoints per https://help.opus.pro/llms.txt
+ * Production client accepts environment/injected credentials ONLY.
  */
 
 import https from 'https';
-import fs from 'fs';
 
 export class OpusClipClient {
   constructor(options = {}) {
     this.baseUrl = options.baseUrl || 'https://api.opus.pro';
-    this.apiKey = options.apiKey || process.env.OPUS_CLIP_API || process.env.OPUS_CLIP_API_KEY || this._loadVaultKey();
-  }
-
-  _loadVaultKey() {
-    try {
-      const vaultPath = 'E:\\THE PAULI FILES\\Cosmos_Vault.env';
-      if (fs.existsSync(vaultPath)) {
-        const content = fs.readFileSync(vaultPath, 'utf8');
-        for (const line of content.split('\n')) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('OPUS_CLIP_API=')) {
-            return trimmed.split('=')[1].trim();
-          }
-        }
-      }
-    } catch (_) {
-      // Fail silently without leaking errors or credentials
-    }
-    return '';
+    this.apiKey = options.apiKey || process.env.OPUS_CLIP_API || process.env.OPUS_CLIP_API_KEY || '';
   }
 
   _request(path, method = 'GET', data = null) {

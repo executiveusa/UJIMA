@@ -54,5 +54,8 @@
   },
   "overrides": {
     "postcss": "8.5.15"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0"
   }
 }
