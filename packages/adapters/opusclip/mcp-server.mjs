@@ -53,7 +53,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'opusclip.get_clips',
-        description: 'Retrieve list of generated clips for a given project ID',
+        description: 'Retrieve list of exportable clips for a given project ID via /api/exportable-clips',
         inputSchema: {
           type: 'object',
           properties: {

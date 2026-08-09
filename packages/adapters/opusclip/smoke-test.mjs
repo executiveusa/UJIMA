@@ -6,7 +6,6 @@
 import fs from 'fs';
 import { OpusClipClient } from './index.mjs';
 
-// Load credential into process memory for local smoke testing ONLY
 function loadLocalVaultKey() {
   if (process.env.OPUS_CLIP_API || process.env.OPUS_CLIP_API_KEY) return;
   try {
@@ -42,6 +41,18 @@ async function runSmokeTest() {
   const social = await client.getSocialAccounts();
   console.log('4. Social accounts:', social.statusCode === 200 ? 'PASS (200 OK)' : `FAIL (${social.statusCode})`);
 
+  // Project-scoped tests (conditional on OPUS_CLIP_TEST_PROJECT_ID)
+  const testProjectId = process.env.OPUS_CLIP_TEST_PROJECT_ID;
+  if (testProjectId) {
+    console.log(`5. Project-scoped tests for projectId="${testProjectId}"...`);
+    const transcript = await client.getTranscript(testProjectId);
+    console.log('   - Transcript:', transcript.statusCode === 200 ? 'PASS (200 OK)' : `FAIL (${transcript.statusCode})`);
+    const clips = await client.getClips(testProjectId);
+    console.log('   - Exportable Clips:', clips.statusCode === 200 ? 'PASS (200 OK)' : `FAIL (${clips.statusCode})`);
+  } else {
+    console.log('5. Project-scoped tests (transcript / exportable-clips): SKIPPED_NO_PROJECT_ID (supply OPUS_CLIP_TEST_PROJECT_ID to verify)');
+  }
+
   // Verify write policy guard
   let writeBlocked = false;
   try {
@@ -49,10 +60,10 @@ async function runSmokeTest() {
   } catch (err) {
     writeBlocked = err.message.includes('WRITE_POLICY_GUARD');
   }
-  console.log('5. Write tool policy guard:', writeBlocked ? 'PASS (WRITE_POLICY_GUARD ACTIVE)' : 'FAIL');
+  console.log('6. Write tool policy guard:', writeBlocked ? 'PASS (WRITE_POLICY_GUARD ACTIVE)' : 'FAIL');
 
   const allPassed = health.ok && templates.statusCode === 200 && collections.statusCode === 200 && social.statusCode === 200 && writeBlocked;
-  console.log('=== Smoke Test Result:', allPassed ? 'ALL TESTS PASSED (100%)' : 'SOME TESTS FAILED', '===');
+  console.log('=== Smoke Test Result:', allPassed ? 'ALL BASE TESTS PASSED (100%)' : 'SOME TESTS FAILED', '===');
   
   if (!allPassed) {
     process.exit(1);

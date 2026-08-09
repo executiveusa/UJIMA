@@ -12,7 +12,6 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load vault key into process environment for local smoke test ONLY
 function loadLocalVaultKey() {
   if (process.env.OPUS_CLIP_API || process.env.OPUS_CLIP_API_KEY) return;
   try {
@@ -71,7 +70,21 @@ async function runMcpSmokeTest() {
   const collectionsText = collectionsRes.content[0].text;
   console.log('   Result status:', JSON.parse(collectionsText).statusCode === 200 ? '200 OK' : 'FAILED');
 
-  console.log('6. Testing write tool policy guard (opusclip.create_project) ...');
+  // Conditional project-scoped tests
+  const testProjectId = process.env.OPUS_CLIP_TEST_PROJECT_ID;
+  if (testProjectId) {
+    console.log(`6. Calling project-scoped tool opusclip.get_transcript for projectId="${testProjectId}"...`);
+    const transcriptRes = await client.callTool({ name: 'opusclip.get_transcript', arguments: { projectId: testProjectId } });
+    console.log('   Result status:', JSON.parse(transcriptRes.content[0].text).statusCode === 200 ? '200 OK' : 'FAILED');
+
+    console.log(`   Calling project-scoped tool opusclip.get_clips for projectId="${testProjectId}"...`);
+    const clipsRes = await client.callTool({ name: 'opusclip.get_clips', arguments: { projectId: testProjectId } });
+    console.log('   Result status:', JSON.parse(clipsRes.content[0].text).statusCode === 200 ? '200 OK' : 'FAILED');
+  } else {
+    console.log('6. Project-scoped tool tests (opusclip.get_transcript, opusclip.get_clips): SKIPPED_NO_PROJECT_ID');
+  }
+
+  console.log('7. Testing write tool policy guard (opusclip.create_project) ...');
   const writeRes = await client.callTool({ name: 'opusclip.create_project', arguments: { url: 'https://example.com/video.mp4' } });
   const writeBlocked = writeRes.isError && writeRes.content[0].text.includes('WRITE_POLICY_GUARD');
   console.log('   Policy guard test:', writeBlocked ? 'PASS (WRITE_POLICY_GUARD BLOCKED)' : 'FAIL');
@@ -82,7 +95,7 @@ async function runMcpSmokeTest() {
                     JSON.parse(collectionsText).statusCode === 200 &&
                     writeBlocked;
 
-  console.log('=== MCP End-to-End Smoke Test Result:', allPassed ? 'ALL TESTS PASSED (100%)' : 'SOME TESTS FAILED', '===');
+  console.log('=== MCP End-to-End Smoke Test Result:', allPassed ? 'ALL BASE TESTS PASSED (100%)' : 'SOME TESTS FAILED', '===');
 
   await transport.close();
   if (!allPassed) {

@@ -12,6 +12,7 @@ export class OpusClipClient {
   constructor(options = {}) {
     this.baseUrl = options.baseUrl || 'https://api.opus.pro';
     this.apiKey = options.apiKey || process.env.OPUS_CLIP_API || process.env.OPUS_CLIP_API_KEY || '';
+    this.timeoutMs = options.timeoutMs || 30000; // 30s timeout guard
   }
 
   _request(path, method = 'GET', data = null) {
@@ -46,6 +47,11 @@ export class OpusClipClient {
             resolve({ statusCode: res.statusCode, error: parsed });
           }
         });
+      });
+
+      // Finite HTTPS request timeout (30s guard)
+      req.setTimeout(this.timeoutMs, () => {
+        req.destroy(new Error(`REQUEST_TIMEOUT: OpusClip API call to ${path} timed out after ${this.timeoutMs}ms`));
       });
 
       req.on('error', err => reject(err));
@@ -84,7 +90,8 @@ export class OpusClipClient {
 
   async getClips(projectId) {
     if (!projectId) throw new Error('PROJECT_ID_REQUIRED');
-    return this._request(`/api/clips?q=findByProjectId&projectId=${encodeURIComponent(projectId)}`);
+    // Verified official endpoint per docs and live test: /api/exportable-clips
+    return this._request(`/api/exportable-clips?q=findByProjectId&projectId=${encodeURIComponent(projectId)}`);
   }
 
   // ── Guarded Write Stubs (Disabled by Policy) ──────────────────────────────
