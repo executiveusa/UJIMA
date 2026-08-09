@@ -1,4 +1,5 @@
 const DEFAULT_BASE_URL = 'http://127.0.0.1:8642';
+const HERMES_APPROVAL_CHOICES = new Set(['once', 'session', 'always', 'deny']);
 
 export class HermesClient {
   constructor(options = {}) {
@@ -85,15 +86,16 @@ export class HermesClient {
     return this._request(`/v1/runs/${encodeURIComponent(runId)}/stop`, { method: 'POST', body: {} });
   }
 
-  resolveApproval(runId, { approved, requestId, reason } = {}) {
+  resolveApproval(runId, { choice, resolveAll = false } = {}) {
     if (!runId) throw new Error('HERMES_RUN_ID_REQUIRED');
-    if (typeof approved !== 'boolean') throw new Error('HERMES_APPROVAL_DECISION_REQUIRED');
+    if (!HERMES_APPROVAL_CHOICES.has(choice)) {
+      throw new Error('HERMES_APPROVAL_CHOICE_REQUIRED: expected once, session, always, or deny');
+    }
     return this._request(`/v1/runs/${encodeURIComponent(runId)}/approval`, {
       method: 'POST',
       body: {
-        approved,
-        ...(requestId ? { request_id: requestId } : {}),
-        ...(reason ? { reason } : {})
+        choice,
+        ...(resolveAll ? { resolve_all: true } : {})
       }
     });
   }
