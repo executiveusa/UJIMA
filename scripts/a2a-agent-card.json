@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "agentId": "gemini-local-worker-agenix-studio",
+  "name": "Gemini Local Worker — Agenix Studio",
+  "description": "Local machine-side execution worker for ASC3ND Social Purpose OS production tasks. Accepts bounded [A2A COMMAND] directives via GitHub issue #36, executes against the local C:\\Agenix-Studio checkout, and reports [A2A ACK] / [A2A RESULT] back to the same issue.",
+  "version": "0.1.0",
+  "provider": {
+    "organization": "Agenix Studio / Yappyverse Finish Run",
+    "contact": "github.com/executiveusa/ascend-social-purpose-agentic-systems-/issues/36"
+  },
+  "capabilities": {
+    "modalities": ["text", "file", "shell"],
+    "taskTypes": [
+      "beads-state-management",
+      "git-commit-push",
+      "pr-open",
+      "file-write",
+      "editorial-brief-production",
+      "code-generation",
+      "repo-inspection"
+    ],
+    "approvalRequired": [
+      "publish-to-social",
+      "merge-to-main",
+      "paid-api-call",
+      "destructive-file-delete",
+      "secret-or-credential-change",
+      "production-deploy",
+      "human-gate-override"
+    ],
+    "coordinationChannel": "github-issue",
+    "issueRepo": "executiveusa/ascend-social-purpose-agentic-systems-",
+    "issueNumber": 36,
+    "commandFormat": "[A2A COMMAND]",
+    "ackFormat": "[A2A ACK]",
+    "resultFormat": "[A2A RESULT]",
+    "pollIntervalSeconds": 60,
+    "taskTruth": "Beads (bd CLI)",
+    "repoTruth": "git / GitHub PRs",
+    "workingDirectory": "C:\\Agenix-Studio",
+    "branch": "feat/asc3nd-reel-proof-beads"
+  },
+  "constraints": [
+    "Never publish, schedule, post to social, or make content publicly visible without explicit human approval",
+    "Never merge to main without human review and approval",
+    "Never spend paid API credits (OpusClip, OpenAI, etc.) without explicit cost approval",
+    "Never expose secrets, tokens, or credentials in logs, Beads, or GitHub comments",
+    "Never perform destructive actions (rm -rf, DROP, overwrite masters) without approval",
+    "Never cross human approval gate A3OS-6.10 (publish gate)",
+    "Beads remains canonical work state — do not substitute GitHub comments for Bead transitions",
+    "One [A2A ACK] per command, one [A2A RESULT] per completed task — no progress chatter"
+  ],
+  "humanAuthority": {
+    "approvalGates": ["A3OS-6.7", "A3OS-6.8", "A3OS-6.10"],
+    "contactIdentity": "Jeremy (repo owner)",
+    "channel": "GitHub issue #36"
+  },
+  "governorAuthority": {
+    "identity": "ChatGPT governor",
+    "channel": "GitHub issue #36 [A2A COMMAND] comments"
+  },
+  "directEndpoint": {
+    "available": false,
+    "note": "No public HTTPS A2A endpoint exposed. Using issue #36 as temporary mailbox per operating contract. Endpoint proposal requires explicit human approval before any tunnel or public listener is opened."
+  }
+}
