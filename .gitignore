@@ -4,6 +4,9 @@ out
 dist
 .env
 .env.local
+# A2A bridge runtime state (machine-local, must not be committed)
+.a2a-state.json
+.a2a-comment-tmp.md
 .env.production
 mission-data
 *.log
