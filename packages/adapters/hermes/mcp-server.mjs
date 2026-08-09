@@ -91,17 +91,17 @@ function createHermesMcpServer() {
       },
       {
         name: 'hermes.resolve_approval',
-        description: '[HUMAN GATE] Allow or deny a pending Hermes approval request. Caller must provide the explicit human decision and reason.',
+        description: '[HUMAN GATE] Resolve a pending Hermes approval using an official choice: once, session, always, or deny. Caller must provide the explicit human decision and reason.',
         inputSchema: {
           type: 'object',
           properties: {
             runId: { type: 'string' },
-            requestId: { type: 'string' },
-            approved: { type: 'boolean' },
-            reason: { type: 'string' },
+            choice: { type: 'string', enum: ['once', 'session', 'always', 'deny'] },
+            resolveAll: { type: 'boolean', description: 'Resolve all pending approvals for this run/session using the same explicit human choice.' },
+            reason: { type: 'string', description: 'Human-readable audit basis retained at the Agenix boundary; not sent as a provider secret.' },
             humanConfirmed: { type: 'boolean', description: 'Must be true; represents an explicit human decision in the current interaction.' }
           },
-          required: ['runId', 'approved', 'reason', 'humanConfirmed']
+          required: ['runId', 'choice', 'reason', 'humanConfirmed']
         }
       }
     ]
@@ -129,9 +129,8 @@ function createHermesMcpServer() {
             throw new Error('HUMAN_CONFIRMATION_REQUIRED: approval resolution cannot be inferred or delegated.');
           }
           return toolResult(await client.resolveApproval(args.runId, {
-            approved: args.approved,
-            requestId: args.requestId,
-            reason: args.reason
+            choice: args.choice,
+            resolveAll: args.resolveAll === true
           }));
         }
         default: throw new Error(`UNKNOWN_TOOL:${name}`);
