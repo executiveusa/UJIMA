@@ -43,12 +43,19 @@ async function runSmokeTest() {
 
   // Project-scoped tests (conditional on OPUS_CLIP_TEST_PROJECT_ID)
   const testProjectId = process.env.OPUS_CLIP_TEST_PROJECT_ID;
+  let projectScopedPassed = true;
+
   if (testProjectId) {
-    console.log(`5. Project-scoped tests for projectId="${testProjectId}"...`);
+    console.log(`5. Project-scoped tests for supplied projectId...`);
     const transcript = await client.getTranscript(testProjectId);
-    console.log('   - Transcript:', transcript.statusCode === 200 ? 'PASS (200 OK)' : `FAIL (${transcript.statusCode})`);
+    const transcriptOk = transcript.statusCode === 200;
+    console.log('   - Transcript:', transcriptOk ? 'PASS (200 OK)' : `FAIL (${transcript.statusCode})`);
+
     const clips = await client.getClips(testProjectId);
-    console.log('   - Exportable Clips:', clips.statusCode === 200 ? 'PASS (200 OK)' : `FAIL (${clips.statusCode})`);
+    const clipsOk = clips.statusCode === 200;
+    console.log('   - Exportable Clips:', clipsOk ? 'PASS (200 OK)' : `FAIL (${clips.statusCode})`);
+
+    projectScopedPassed = transcriptOk && clipsOk;
   } else {
     console.log('5. Project-scoped tests (transcript / exportable-clips): SKIPPED_NO_PROJECT_ID (supply OPUS_CLIP_TEST_PROJECT_ID to verify)');
   }
@@ -62,9 +69,11 @@ async function runSmokeTest() {
   }
   console.log('6. Write tool policy guard:', writeBlocked ? 'PASS (WRITE_POLICY_GUARD ACTIVE)' : 'FAIL');
 
-  const allPassed = health.ok && templates.statusCode === 200 && collections.statusCode === 200 && social.statusCode === 200 && writeBlocked;
-  console.log('=== Smoke Test Result:', allPassed ? 'ALL BASE TESTS PASSED (100%)' : 'SOME TESTS FAILED', '===');
-  
+  const basePassed = health.ok && templates.statusCode === 200 && collections.statusCode === 200 && social.statusCode === 200 && writeBlocked;
+  const allPassed = basePassed && projectScopedPassed;
+
+  console.log('=== Smoke Test Result:', allPassed ? (testProjectId ? 'ALL TESTS PASSED (BASE + PROJECT-SCOPED)' : 'BASE TESTS PASSED (PROJECT-SCOPED SKIPPED)') : 'SOME TESTS FAILED', '===');
+
   if (!allPassed) {
     process.exit(1);
   }

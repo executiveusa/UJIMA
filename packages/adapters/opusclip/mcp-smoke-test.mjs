@@ -63,23 +63,30 @@ async function runMcpSmokeTest() {
   console.log('4. Calling tool: opusclip.get_brand_templates ...');
   const templatesRes = await client.callTool({ name: 'opusclip.get_brand_templates', arguments: {} });
   const templatesText = templatesRes.content[0].text;
-  console.log('   Result status:', JSON.parse(templatesText).statusCode === 200 ? '200 OK' : 'FAILED');
+  const templatesOk = JSON.parse(templatesText).statusCode === 200;
+  console.log('   Result status:', templatesOk ? '200 OK' : 'FAILED');
 
   console.log('5. Calling tool: opusclip.get_collections ...');
   const collectionsRes = await client.callTool({ name: 'opusclip.get_collections', arguments: {} });
   const collectionsText = collectionsRes.content[0].text;
-  console.log('   Result status:', JSON.parse(collectionsText).statusCode === 200 ? '200 OK' : 'FAILED');
+  const collectionsOk = JSON.parse(collectionsText).statusCode === 200;
+  console.log('   Result status:', collectionsOk ? '200 OK' : 'FAILED');
 
   // Conditional project-scoped tests
   const testProjectId = process.env.OPUS_CLIP_TEST_PROJECT_ID;
-  if (testProjectId) {
-    console.log(`6. Calling project-scoped tool opusclip.get_transcript for projectId="${testProjectId}"...`);
-    const transcriptRes = await client.callTool({ name: 'opusclip.get_transcript', arguments: { projectId: testProjectId } });
-    console.log('   Result status:', JSON.parse(transcriptRes.content[0].text).statusCode === 200 ? '200 OK' : 'FAILED');
+  let projectScopedPassed = true;
 
-    console.log(`   Calling project-scoped tool opusclip.get_clips for projectId="${testProjectId}"...`);
+  if (testProjectId) {
+    console.log(`6. Calling project-scoped tools for supplied testProjectId...`);
+    const transcriptRes = await client.callTool({ name: 'opusclip.get_transcript', arguments: { projectId: testProjectId } });
+    const transcriptOk = JSON.parse(transcriptRes.content[0].text).statusCode === 200;
+    console.log('   - Transcript:', transcriptOk ? '200 OK' : 'FAILED');
+
     const clipsRes = await client.callTool({ name: 'opusclip.get_clips', arguments: { projectId: testProjectId } });
-    console.log('   Result status:', JSON.parse(clipsRes.content[0].text).statusCode === 200 ? '200 OK' : 'FAILED');
+    const clipsOk = JSON.parse(clipsRes.content[0].text).statusCode === 200;
+    console.log('   - Exportable Clips:', clipsOk ? '200 OK' : 'FAILED');
+
+    projectScopedPassed = transcriptOk && clipsOk;
   } else {
     console.log('6. Project-scoped tool tests (opusclip.get_transcript, opusclip.get_clips): SKIPPED_NO_PROJECT_ID');
   }
@@ -89,13 +96,15 @@ async function runMcpSmokeTest() {
   const writeBlocked = writeRes.isError && writeRes.content[0].text.includes('WRITE_POLICY_GUARD');
   console.log('   Policy guard test:', writeBlocked ? 'PASS (WRITE_POLICY_GUARD BLOCKED)' : 'FAIL');
 
-  const allPassed = toolNames.includes('opusclip.health') &&
-                    healthText.includes('"ok":true') &&
-                    JSON.parse(templatesText).statusCode === 200 &&
-                    JSON.parse(collectionsText).statusCode === 200 &&
-                    writeBlocked;
+  const basePassed = toolNames.includes('opusclip.health') &&
+                     healthText.includes('"ok":true') &&
+                     templatesOk &&
+                     collectionsOk &&
+                     writeBlocked;
 
-  console.log('=== MCP End-to-End Smoke Test Result:', allPassed ? 'ALL BASE TESTS PASSED (100%)' : 'SOME TESTS FAILED', '===');
+  const allPassed = basePassed && projectScopedPassed;
+
+  console.log('=== MCP End-to-End Smoke Test Result:', allPassed ? (testProjectId ? 'ALL TESTS PASSED (BASE + PROJECT-SCOPED)' : 'BASE TESTS PASSED (PROJECT-SCOPED SKIPPED)') : 'SOME TESTS FAILED', '===');
 
   await transport.close();
   if (!allPassed) {
