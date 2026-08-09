@@ -41,7 +41,10 @@
     "openspec:audit": "node scripts/openspec-task-audit.mjs",
     "verify:v06": "node scripts/verify-v06.mjs",
     "hostinger:handoff": "node missionctl/missionctl.mjs hostinger handoff",
-    "db:migrate": "node packages/db/scripts/migrate.mjs"
+    "db:migrate": "node packages/db/scripts/migrate.mjs",
+    "hermes:mcp": "node packages/adapters/hermes/mcp-server.mjs",
+    "hermes:smoke": "node packages/adapters/hermes/smoke-test.mjs",
+    "hermes:test": "node packages/adapters/hermes/client-test.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",
