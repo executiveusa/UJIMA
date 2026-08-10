@@ -11,9 +11,20 @@ const contractPath = path.join(
   'contracts',
   'video-edit-intent.schema.json',
 );
+const roundTripFixturePath = path.join(
+  root,
+  'control-plane',
+  'hive',
+  'examples',
+  'montage-workspace-roundtrip.fixture.json',
+);
 
 function readContract() {
   return JSON.parse(fs.readFileSync(contractPath, 'utf8'));
+}
+
+function readRoundTripFixture() {
+  return JSON.parse(fs.readFileSync(roundTripFixturePath, 'utf8'));
 }
 
 function validIntent() {
@@ -171,6 +182,18 @@ describe('Agenix video edit intent contract', () => {
     expect(capcutGuard).toBeTruthy();
     expect(capcutGuard.then.properties.mode.enum).toEqual(['round_trip', 'fallback']);
     expect(capcutGuard.then.properties.mode.enum).not.toContain('export');
+  });
+
+  it('ships a non-client synthetic fixture for the Montage workspace round-trip proof', () => {
+    expect(fs.existsSync(roundTripFixturePath)).toBe(true);
+    const fixture = readRoundTripFixture();
+    expect(fixture.tenant_id).toBe('fixture-tenant');
+    expect(fixture.owner_provider).toBe('montage');
+    expect(fixture.timeline.reopen_required).toBe(true);
+    expect(fixture.review.publish_allowed).toBe(false);
+    expect(fixture.series.display_marker).toBe('01 / 04');
+    expect(fixture.source_assets.every((asset) => asset.uri.startsWith('fixture://'))).toBe(true);
+    expect(validateVideoEditIntentSemantics(fixture)).toEqual({ valid: true, errors: [] });
   });
 });
 
