@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenix.local/contracts/video-edit-intent.schema.json",
+  "title": "Agenix Video Edit Intent v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "tenant_id",
+    "project_id",
+    "owner_provider",
+    "source_assets",
+    "story",
+    "timeline",
+    "presentation",
+    "review",
+    "storage"
+  ],
+  "properties": {
+    "version": {"const": "v0"},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "project_id": {"type": "string", "minLength": 1},
+    "owner_provider": {"const": "montage"},
+    "source_assets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asset_id", "uri", "immutable"],
+        "properties": {
+          "asset_id": {"type": "string", "minLength": 1},
+          "uri": {"type": "string", "minLength": 1},
+          "fingerprint": {"type": ["string", "null"]},
+          "transcript_ref": {"type": ["string", "null"]},
+          "immutable": {"const": true}
+        }
+      }
+    },
+    "series": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["title", "episode_index", "episode_total", "display_marker"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "episode_index": {"type": "integer", "minimum": 1},
+        "episode_total": {"type": "integer", "minimum": 1},
+        "display_marker": {"type": "string", "pattern": "^\\d{2} / \\d{2}$"},
+        "source_session_id": {"type": ["string", "null"]},
+        "protected_story_bank_refs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "story": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objective", "beats", "protected_material"],
+      "properties": {
+        "objective": {"type": "string", "minLength": 1},
+        "beats": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["beat_id", "purpose", "source_ref"],
+            "properties": {
+              "beat_id": {"type": "string", "minLength": 1},
+              "speaker": {"type": ["string", "null"]},
+              "purpose": {"type": "string", "minLength": 1},
+              "source_ref": {"type": "string", "minLength": 1},
+              "quote": {"type": ["string", "null"]}
+            }
+          }
+        },
+        "protected_material": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical_owner", "segments", "target_duration_seconds", "reopen_required"],
+      "properties": {
+        "canonical_owner": {"const": "montage"},
+        "target_duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+        "reopen_required": {"const": true},
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["segment_id", "asset_id", "source_start_seconds", "source_end_seconds", "order"],
+            "properties": {
+              "segment_id": {"type": "string", "minLength": 1},
+              "asset_id": {"type": "string", "minLength": 1},
+              "source_start_seconds": {"type": "number", "minimum": 0},
+              "source_end_seconds": {"type": "number", "exclusiveMinimum": 0},
+              "order": {"type": "integer", "minimum": 0},
+              "notes": {"type": ["string", "null"]}
+            }
+          }
+        }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["aspect_ratio", "captions", "layers"],
+      "properties": {
+        "aspect_ratio": {"enum": ["9:16", "16:9", "1:1", "4:5"]},
+        "captions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "source_faithful"],
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "source_faithful": {"const": true},
+            "language": {"type": ["string", "null"]}
+          }
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "text", "start_seconds", "end_seconds"],
+            "properties": {
+              "kind": {"enum": ["headline", "episode_marker", "lower_third", "caption", "graphic"]},
+              "text": {"type": "string"},
+              "start_seconds": {"type": "number", "minimum": 0},
+              "end_seconds": {"type": "number", "minimum": 0},
+              "style_ref": {"type": ["string", "null"]}
+            }
+          }
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["human_required", "publish_allowed", "independent_critic_required", "evidence_required"],
+      "properties": {
+        "human_required": {"const": true},
+        "publish_allowed": {"const": false},
+        "independent_critic_required": {"const": true},
+        "evidence_required": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_of_truth", "review_export_targets"],
+      "properties": {
+        "source_of_truth": {"const": "montage"},
+        "review_export_targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["provider", "mode"],
+            "properties": {
+              "provider": {"enum": ["google_drive", "local", "object_storage", "capcut"]},
+              "mode": {"enum": ["export", "round_trip", "fallback"]},
+              "external_file_id": {"type": ["string", "null"]}
+            }
+          }
+        }
+      }
+    }
+  }
+}
