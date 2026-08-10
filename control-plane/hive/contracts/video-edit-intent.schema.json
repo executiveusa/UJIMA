@@ -5,6 +5,8 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "correlation_id",
+    "idempotency_key",
     "version",
     "tenant_id",
     "project_id",
@@ -17,6 +19,8 @@
     "storage"
   ],
   "properties": {
+    "correlation_id": {"type": "string", "minLength": 1},
+    "idempotency_key": {"type": "string", "minLength": 1},
     "version": {"const": "v0"},
     "tenant_id": {"type": "string", "minLength": 1},
     "project_id": {"type": "string", "minLength": 1},
@@ -162,7 +166,13 @@
               "provider": {"enum": ["google_drive", "local", "object_storage", "capcut"]},
               "mode": {"enum": ["export", "round_trip", "fallback"]},
               "external_file_id": {"type": ["string", "null"]}
-            }
+            },
+            "allOf": [
+              {
+                "if": {"properties": {"provider": {"const": "capcut"}}, "required": ["provider"]},
+                "then": {"properties": {"mode": {"enum": ["round_trip", "fallback"]}}}
+              }
+            ]
           }
         }
       }
