@@ -20,6 +20,8 @@ describe('Agenix video edit intent contract', () => {
     expect(fs.existsSync(contractPath)).toBe(true);
     const schema = readContract();
     expect(schema.required).toEqual(expect.arrayContaining([
+      'correlation_id',
+      'idempotency_key',
       'tenant_id',
       'project_id',
       'owner_provider',
@@ -30,6 +32,8 @@ describe('Agenix video edit intent contract', () => {
       'review',
       'storage',
     ]));
+    expect(schema.properties.correlation_id.minLength).toBe(1);
+    expect(schema.properties.idempotency_key.minLength).toBe(1);
     expect(schema.properties.owner_provider.const).toBe('montage');
     expect(schema.properties.timeline.properties.canonical_owner.const).toBe('montage');
     expect(schema.properties.storage.properties.source_of_truth.const).toBe('montage');
@@ -89,5 +93,12 @@ describe('Agenix video edit intent contract', () => {
       'round_trip',
       'fallback',
     ]));
+
+    const capcutGuard = target.allOf.find((rule) =>
+      rule.if?.properties?.provider?.const === 'capcut'
+    );
+    expect(capcutGuard).toBeTruthy();
+    expect(capcutGuard.then.properties.mode.enum).toEqual(['round_trip', 'fallback']);
+    expect(capcutGuard.then.properties.mode.enum).not.toContain('export');
   });
 });
