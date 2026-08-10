@@ -1,0 +1,131 @@
+{
+  "correlation_id": "fixture-montage-roundtrip-001",
+  "idempotency_key": "fixture-montage-roundtrip-001-v1",
+  "version": "v0",
+  "tenant_id": "fixture-tenant",
+  "project_id": "fixture-project-video-001",
+  "owner_provider": "montage",
+  "source_assets": [
+    {
+      "asset_id": "fixture-source-a",
+      "uri": "fixture://media/interview-a.mp4",
+      "fingerprint": "fixture-sha256-not-production",
+      "transcript_ref": "fixture://transcripts/interview-a.srt",
+      "immutable": true
+    }
+  ],
+  "series": {
+    "title": "Workspace Round Trip",
+    "episode_index": 1,
+    "episode_total": 4,
+    "display_marker": "01 / 04",
+    "source_session_id": "fixture-session-a",
+    "protected_story_bank_refs": ["fixture-story-bank:reserved-beat"]
+  },
+  "story": {
+    "objective": "Prove the human-and-agent Montage workspace can open, edit, persist, reopen, and render one governed timeline without changing canonical ownership.",
+    "beats": [
+      {
+        "beat_id": "beat-01",
+        "speaker": "Speaker A",
+        "purpose": "Cold open",
+        "source_ref": "fixture://transcripts/interview-a.srt",
+        "quote": "Fixture dialogue for workspace verification only."
+      },
+      {
+        "beat_id": "beat-02",
+        "speaker": "Speaker B",
+        "purpose": "Contrast",
+        "source_ref": "fixture://transcripts/interview-a.srt",
+        "quote": "Second fixture dialogue line for timeline verification only."
+      }
+    ],
+    "protected_material": ["fixture-story-bank:reserved-beat"]
+  },
+  "timeline": {
+    "canonical_owner": "montage",
+    "target_duration_seconds": 12,
+    "reopen_required": true,
+    "segments": [
+      {
+        "segment_id": "segment-01",
+        "asset_id": "fixture-source-a",
+        "source_start_seconds": 2,
+        "source_end_seconds": 7,
+        "order": 0,
+        "notes": "Fixture-only deterministic cut."
+      },
+      {
+        "segment_id": "segment-02",
+        "asset_id": "fixture-source-a",
+        "source_start_seconds": 11,
+        "source_end_seconds": 18,
+        "order": 1,
+        "notes": "Fixture-only deterministic cut."
+      }
+    ]
+  },
+  "presentation": {
+    "aspect_ratio": "9:16",
+    "captions": {
+      "enabled": true,
+      "source_faithful": true,
+      "language": "en"
+    },
+    "layers": [
+      {
+        "kind": "headline",
+        "text": "WORKSPACE ROUND TRIP",
+        "start_seconds": 1,
+        "end_seconds": 4,
+        "style_ref": "fixture://brand/headline"
+      },
+      {
+        "kind": "episode_marker",
+        "text": "01 / 04",
+        "start_seconds": 1,
+        "end_seconds": 12,
+        "style_ref": "fixture://brand/episode-marker"
+      },
+      {
+        "kind": "lower_third",
+        "text": "Speaker A — Fixture",
+        "start_seconds": 2,
+        "end_seconds": 5,
+        "style_ref": "fixture://brand/lower-third"
+      }
+    ]
+  },
+  "review": {
+    "human_required": true,
+    "publish_allowed": false,
+    "independent_critic_required": true,
+    "evidence_required": [
+      "project_reopen_receipt",
+      "timeline_before_after",
+      "render_artifact_ref",
+      "ffprobe_or_equivalent_verification",
+      "critic_verdict"
+    ]
+  },
+  "storage": {
+    "source_of_truth": "montage",
+    "review_export_targets": [
+      {
+        "provider": "local",
+        "mode": "export",
+        "external_file_id": null
+      },
+      {
+        "provider": "google_drive",
+        "mode": "export",
+        "external_file_id": null
+      },
+      {
+        "provider": "capcut",
+        "mode": "round_trip",
+        "external_file_id": null
+      }
+    ]
+  }
+}
