@@ -37,6 +37,7 @@
     "./agent-service": "./src/agent-service.js",
     "./action-dispatcher": "./src/action-dispatcher.js",
     "./integration-adapters": "./src/integration-adapters.js",
-    "./storage-factory": "./src/storage-factory.js"
+    "./storage-factory": "./src/storage-factory.js",
+    "./video-edit-intent": "./src/video-edit-intent.js"
   }
 }
