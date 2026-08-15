@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "mode": "fail_closed",
+  "purpose": "Keep Vercel replaceable, prevent autonomous production deploys, and cap agent blast radius.",
+  "canonical_sources": {
+    "code": "github",
+    "database_schema": "git_migrations",
+    "media": "external_object_storage_or_designated_media_system",
+    "dns": "independently_controlled",
+    "vercel": "replaceable_runtime_target"
+  },
+  "vercel": {
+    "automatic_git_deployments": false,
+    "production_requires_human_approval": true,
+    "preview_requires_explicit_request": true,
+    "production_branch": "main",
+    "require_health_check": true,
+    "health_check_path": "/api/health",
+    "require_rollback_plan": true,
+    "require_evidence_receipt": true,
+    "forbid_agent_direct_production_deploy": true
+  },
+  "agent_economics": {
+    "default_max_estimated_action_usd": 1,
+    "human_approval_required_above_usd": 1,
+    "hard_deny_above_usd_without_approval": true,
+    "default_max_deployments_per_day": 3,
+    "default_max_production_deployments_per_day": 1
+  },
+  "required_request_fields": [
+    "repo",
+    "environment",
+    "action",
+    "actor",
+    "estimated_cost_usd",
+    "deployment_count_today",
+    "production_deployment_count_today"
+  ],
+  "production_required_fields": [
+    "approval_id",
+    "evidence_id",
+    "rollback_ref"
+  ]
+}

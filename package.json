@@ -11,7 +11,9 @@
   "scripts": {
     "guard:repo": "node scripts/repo-boundary-guard.mjs",
     "guard:policy": "node scripts/agenix-policy-guard.mjs",
+    "guard:deploy": "node scripts/sovereign-deployment-guard.mjs",
     "test:policy": "node scripts/test-agenix-policy-guard.mjs",
+    "test:deploy-guard": "node scripts/test-sovereign-deployment-guard.mjs",
     "prebuild": "npm run guard:repo",
     "dev": "concurrently -n api,web -c blue,green \"npm run dev --workspace @asc3nd/mission-api\" \"npm run dev --workspace @asc3nd/site\"",
     "dev:web": "npm run dev --workspace @asc3nd/site",
@@ -27,7 +29,7 @@
     "zip": "node scripts/make-release.mjs",
     "doctor": "node scripts/doctor.mjs",
     "audit:deps": "npm audit --audit-level=high",
-    "verify": "npm run test:policy && npm test && npm run build && npm run doctor && npm run adamsreview && node missionctl/missionctl.mjs doctor",
+    "verify": "npm run test:policy && npm run test:deploy-guard && npm test && npm run build && npm run doctor && npm run adamsreview && node missionctl/missionctl.mjs doctor",
     "missionctl": "node missionctl/missionctl.mjs",
     "tenant:create": "node missionctl/missionctl.mjs tenant create",
     "tenant:keys": "node missionctl/missionctl.mjs tenant keys",
