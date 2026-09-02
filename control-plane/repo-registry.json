@@ -1,26 +1,51 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "control_plane_repo": "executiveusa/ascend-social-purpose-agentic-systems-",
   "rules": {
     "one_repo_one_purpose": true,
     "cross_repo_edits_require_handoff": true,
     "production_deploy_requires_triple_identity_check": true,
-    "client_data_in_platform_defaults": false
+    "client_data_in_platform_defaults": false,
+    "one_boss_per_truth": true,
+    "execution_backends_are_not_truth_stores": true
   },
   "repositories": [
     {
       "name": "executiveusa/ascend-social-purpose-agentic-systems-",
-      "purpose": "Reusable ICM workflows, task routing, approvals, adapters, evidence, and agent instructions",
-      "allowed": ["control plane", "ICM stages", "reusable workflow code", "approval rules", "integration contracts"],
-      "forbidden": ["canonical public website", "raw client footage", "brand master assets", "hardcoded client records"],
+      "purpose": "Reusable Social Purpose OS control plane: ICM workflows, task routing, approvals, policies, adapters, evidence, audit, and cross-domain operating contracts",
+      "allowed": ["control plane", "ICM stages", "reusable workflow code", "approval rules", "integration contracts", "tenant-neutral analytics contracts", "executor adapters"],
+      "forbidden": ["canonical public website", "raw client footage", "brand master assets", "hardcoded client records", "domain-specific grant implementation that belongs in grant-agent"],
       "deployment_role": "platform only"
     },
     {
-      "name": "executiveusa/asc3nd-frontend-website-",
-      "purpose": "Canonical public website and Community Cuts event funnel",
-      "allowed": ["public frontend", "event funnel", "server API routes", "frontend tests"],
-      "forbidden": ["strategy source of truth", "raw media archive", "brand master ownership", "shared agent platform"],
+      "name": "executiveusa/grant-agent",
+      "purpose": "Canonical grant-domain engine for opportunity discovery, eligibility, grant scoring, requirement extraction, application assembly, grant-specific critique, submission packets, post-award obligations, and grant reporting workflows",
+      "allowed": ["grant source adapters", "grant normalization", "eligibility logic", "fit scoring", "application workflow", "grant evidence critique", "submission packet", "post-award obligations"],
+      "forbidden": ["second copy of client identity truth", "second CRM", "general consent authority", "public website", "silent grant submission", "cross-tenant memory"],
+      "deployment_role": "domain service",
+      "integration_contract": "control-plane/contracts/grant-agent.md"
+    },
+    {
+      "name": "OpenHands/OpenHands",
+      "purpose": "Upstream optional technical execution backend for coding agents and automations",
+      "allowed": ["reference integration", "sandboxed technical execution through adapter", "coding", "testing", "technical SEO remediation", "data transforms"],
+      "forbidden": ["canonical client memory", "consent truth", "relationship truth", "grant submission authority", "policy authority", "unrestricted production credentials"],
+      "deployment_role": "optional executor only",
+      "integration_contract": "control-plane/contracts/executor-openhands.md"
+    },
+    {
+      "name": "executiveusa/asc3nd-brand-site",
+      "purpose": "Current ASC3ND public brand site, participation intake, staff/admin surfaces, and canonical website-facing Supabase integration",
+      "allowed": ["public frontend", "take-part intake", "server API routes", "staff/admin UI", "frontend tests", "website relationship intake"],
+      "forbidden": ["studio control plane", "brand master ownership", "shared agent platform", "grant-domain implementation"],
       "deployment_role": "public frontend"
+    },
+    {
+      "name": "executiveusa/asc3nd-frontend-website-",
+      "purpose": "Legacy/canonical event-era frontend pending explicit archive or retained-event responsibility decision",
+      "allowed": ["protected legacy event functionality", "migration evidence", "event-specific assets not yet transferred"],
+      "forbidden": ["silent replacement of asc3nd-brand-site", "new shared platform logic", "second canonical public brand deployment"],
+      "deployment_role": "legacy/event rollback candidate"
     },
     {
       "name": "executiveusa/asce3nd-interactive-document",
@@ -46,7 +71,7 @@
     {
       "name": "executiveusa/asc3nd-events-page",
       "purpose": "Legacy event implementation pending audit",
-      "allowed": ["unique event assets or tests not present in canonical frontend"],
+      "allowed": ["unique event assets or tests not present in current frontend"],
       "forbidden": ["parallel production event deployment"],
       "deployment_role": "archive or merge candidate"
     },

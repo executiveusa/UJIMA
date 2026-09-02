@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "policy": "Inspect first. Select 3-7 high-leverage skills. Never install the entire library.",
+  "version": "2.0.0",
+  "policy": "Inspect first. Select the smallest justified skill set for the lane. Skills advise or verify; they do not override ICM truth, repository ownership, or human approval gates.",
   "mandatory": [
     {
       "skill": "jcodemunch-mcp",
@@ -16,25 +16,36 @@
       "skill": "claude-handoff",
       "purpose": "context compression and agent-to-agent transfer",
       "use": "at every stage boundary"
-    },
-    {
-      "skill": "no_ai_slop_writing_rules",
-      "purpose": "public copy quality gate",
-      "use": "calendar, captions, bios, handoff"
     }
   ],
+  "governance": {
+    "firstmate": "Human-facing liaison and bounded crew supervisor. It may dispatch work but may not become the canonical store for client truth, policy, consent, or audit state.",
+    "icm": "Canonical identity, context, memory, workflow truth, provenance, and durable handoff layer.",
+    "unlazy": "Required for substantial multi-step missions: define acceptance gates before execution, run approved checks, reverify returned work, and report only supported completion claims.",
+    "gauntlet-loop": "Independent release critic. Builder and final critic must be separate contexts. Use a named, fetchable, comparable quality bar; no fixed-round self-approval.",
+    "ponytail": "Engineering minimization rule: reuse before adding. Never remove validation, recovery, accessibility, privacy, security, audit, or approval controls to reduce code.",
+    "humanizer": "Late-stage public/client prose pass only after facts and provenance are locked. It may improve voice but may not invent or change claims.",
+    "ralphy": "Optional bounded coding worker. Use isolated worktrees/PRs and tests. Never give it direct authority over publishing, money, grant submission, production data, youth data, DNS, or secrets.",
+    "openhands": "Optional technical execution backend for coding, testing, technical SEO fixes, data transforms, and engineering automations. Never use as canonical client memory, consent, relationship, or policy authority.",
+    "claude-seo": "Visibility intelligence lane for technical SEO, content quality, schema, local search, GEO/AI visibility, and measurable search recommendations.",
+    "emilkowalski-skills": "Client-facing interaction quality for forms, portals, approval surfaces, mobile ergonomics, motion, and feedback. Not a backend architecture authority."
+  },
   "lanes": {
-    "workbook_and_contract": ["jcodemunch-mcp", "Understand-Anything", "files.md", "claude-handoff"],
-    "calendar_and_captions": ["content-ideas", "no_ai_slop_writing_rules", "humanizer", "postiz-app"],
-    "media": ["Descript connector", "agent-media", "no_ai_slop_writing_rules"],
-    "frontend": ["jcodemunch-mcp", "context7", "pauli-taste-skill", "impeccable", "e2e-test"],
-    "supabase": ["jcodemunch-mcp", "supabase-mcp", "context7", "stage-cli"],
-    "brand_and_visual": ["pauli-taste-skill", "popular-web-designs", "impeccable", "stage-cli"],
-    "delivery_and_training": ["codebase-to-course", "graphify", "claude-handoff", "no_ai_slop_writing_rules"]
+    "workbook_and_contract": ["jcodemunch-mcp", "Understand-Anything", "files.md", "claude-handoff", "humanizer"],
+    "grants": ["unlazy", "grant-agent", "humanizer", "gauntlet-loop"],
+    "calendar_and_captions": ["content-ideas", "no_ai_slop_writing_rules", "humanizer", "postiz-app", "gauntlet-loop"],
+    "seo_visibility": ["claude-seo", "unlazy", "humanizer", "gauntlet-loop"],
+    "media": ["Descript connector", "agent-media", "no_ai_slop_writing_rules", "gauntlet-loop"],
+    "frontend": ["jcodemunch-mcp", "context7", "emilkowalski-skills", "pauli-taste-skill", "ponytail", "unlazy", "e2e-test", "gauntlet-loop"],
+    "engineering_execution": ["ponytail", "unlazy", "ralphy", "openhands", "gauntlet-loop"],
+    "supabase": ["jcodemunch-mcp", "supabase-mcp", "context7", "unlazy", "stage-cli"],
+    "brand_and_visual": ["pauli-taste-skill", "popular-web-designs", "emilkowalski-skills", "humanizer", "gauntlet-loop"],
+    "delivery_and_training": ["codebase-to-course", "graphify", "claude-handoff", "humanizer"]
   },
   "risk_gate": {
-    "requires_human_approval": ["secrets", "auth", "production deploy", "DNS", "publishing", "external email", "payments", "production database migration", "deletion", "private youth data"],
+    "requires_human_approval": ["secrets", "auth", "production deploy", "DNS", "publishing", "external email", "payments", "grant submission", "legal attestation", "production database migration", "deletion", "private youth data"],
+    "executor_forbidden_without_explicit_policy": ["openhands", "ralphy"],
     "verify_first": ["ponytail", "humanizer", "low-confidence library sources"]
   },
-  "design_policy": "Use design references as vocabulary, not as permission to imitate brands or override ASC3ND's approved identity. Preserve the client logo and exact campaign facts."
+  "design_policy": "Use design references as vocabulary, not as permission to imitate brands or override an approved client identity. Preserve verified client facts and protected assets."
 }
