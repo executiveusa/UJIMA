@@ -1,0 +1,42 @@
+{
+  "version": "1.0.0",
+  "default": "hermes",
+  "selection_law": "Choose the least-authority executor that can satisfy the mission. Executors never own canonical ICM truth or approval policy.",
+  "executors": {
+    "hermes": {
+      "role": "first-mate reasoning and bounded orchestration",
+      "lanes": ["grants", "social", "seo_visibility", "crm", "analytics", "brand", "delivery"],
+      "max_risk_without_approval": 1,
+      "may_expand_risk": false
+    },
+    "grant-agent": {
+      "role": "canonical grant-domain engine",
+      "lanes": ["grants"],
+      "max_risk_without_approval": 1,
+      "may_expand_risk": false,
+      "contract": "control-plane/contracts/grant-agent.md"
+    },
+    "openhands": {
+      "role": "optional technical execution backend",
+      "lanes": ["engineering", "frontend", "seo_visibility"],
+      "max_risk_without_approval": 1,
+      "may_expand_risk": false,
+      "contract": "control-plane/contracts/executor-openhands.md",
+      "default_isolation": "container_or_worktree"
+    },
+    "ralphy": {
+      "role": "optional bounded coding loop",
+      "lanes": ["engineering", "frontend"],
+      "max_risk_without_approval": 1,
+      "may_expand_risk": false,
+      "default_mode": "create_pr",
+      "forbidden_modes": ["direct_production_mutation", "grant_submission", "public_publishing", "money_movement"]
+    },
+    "human": {
+      "role": "approval, judgment, relationship, legal attestation, and final authority",
+      "lanes": ["grants", "social", "seo_visibility", "frontend", "engineering", "crm", "analytics", "brand", "delivery"],
+      "max_risk_without_approval": 3,
+      "may_expand_risk": true
+    }
+  }
+}
