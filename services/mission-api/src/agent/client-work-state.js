@@ -73,11 +73,13 @@ function verifyProofRefs({ tenantId, missionId, refs, mode, read = readEvents, l
   if (!refs.length) throw new Error(mode === 'delivered' ? 'DELIVERY_PROOF_REQUIRED' : 'READY_PROOF_REQUIRED');
   const artifacts = listArtifacts({ tenantId }) || [];
   let verifiedDelivery = false;
+  let resultBearingProof = false;
   for (const ref of refs) {
     if (ref.startsWith('artifact:')) {
       const id = ref.slice('artifact:'.length);
       const artifact = artifacts.find((row) => row.id === id);
       if (!artifact || artifact.tenantId !== tenantId || artifact.approvalStatus !== 'approved') throw new Error('PROOF_ARTIFACT_UNVERIFIED');
+      resultBearingProof = true;
       continue;
     }
     if (ref.startsWith('event:')) {
@@ -86,11 +88,15 @@ function verifyProofRefs({ tenantId, missionId, refs, mode, read = readEvents, l
       if (!event || event.tenantId !== tenantId) throw new Error('PROOF_EVENT_NOT_FOUND');
       const linkedMission = event.subject === missionId || event.payload?.missionId === missionId || event.payload?.mission_id === missionId;
       if (!linkedMission) throw new Error('PROOF_EVENT_MISSION_MISMATCH');
-      if (VERIFIED_DELIVERY_TYPES.has(event.type)) verifiedDelivery = true;
+      if (VERIFIED_DELIVERY_TYPES.has(event.type)) {
+        verifiedDelivery = true;
+        resultBearingProof = true;
+      }
       continue;
     }
     throw new Error('UNSUPPORTED_PROOF_REF');
   }
+  if (mode === 'ready' && !resultBearingProof) throw new Error('READY_RESULT_PROOF_REQUIRED');
   if (mode === 'delivered' && !verifiedDelivery) throw new Error('VERIFIED_DELIVERY_EVENT_REQUIRED');
 }
 
@@ -104,20 +110,29 @@ export function getClientMissionWorkState({ tenantId, userId, conversationId, mi
 
 export function listConversationWorkStates({ tenantId, userId, conversationId, read = readEvents }) {
   if (!tenantId || !userId || !conversationId) throw new Error('WORK_STATE_SCOPE_REQUIRED');
+  const journal = read({ tenantId }) || [];
+  const journalOrder = new Map(journal.map((event, index) => [event.id, index]));
   const rows = missionEvents({ tenantId, read }).map((event) => ({ mission: event.payload?.handoff, event }))
     .filter(({ mission }) => mission && mission.tenant_id === tenantId && mission.user_id === userId && mission.conversation_id === conversationId)
     .map(({ mission, event }) => {
       const stateEvent = latestStateEvent({ tenantId, userId, conversationId, missionId: mission.mission_id, read });
+      const latestEvent = stateEvent || event;
       return {
-        projection: projection({ mission, state: stateEvent?.payload?.state || null, eventId: stateEvent?.id || event.id }),
-        createdAt: stateEvent?.createdAt || event.createdAt
+        projection: projection({ mission, state: stateEvent?.payload?.state || null, eventId: latestEvent.id }),
+        createdAt: latestEvent.createdAt,
+        journalOrder: journalOrder.get(latestEvent.id) ?? -1
       };
     });
   for (const event of failureEvents({ tenantId, read })) {
     const failure = event.payload?.failure;
-    if (failure?.tenant_id === tenantId && failure?.user_id === userId && failure?.conversation_id === conversationId) rows.push({ projection: routingFailureProjection(event), createdAt: event.createdAt });
+    if (failure?.tenant_id === tenantId && failure?.user_id === userId && failure?.conversation_id === conversationId) {
+      rows.push({ projection: routingFailureProjection(event), createdAt: event.createdAt, journalOrder: journalOrder.get(event.id) ?? -1 });
+    }
   }
-  return rows.sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || ''))).map((row) => row.projection).filter(Boolean);
+  return rows.sort((a, b) => {
+    const timestampOrder = String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
+    return timestampOrder || a.journalOrder - b.journalOrder;
+  }).map((row) => row.projection).filter(Boolean);
 }
 export function latestConversationWorkState(args) { return listConversationWorkStates(args).at(-1) || null; }
 
@@ -159,13 +174,17 @@ export function transitionClientMissionState({ tenantId, userId, conversationId,
   const refs = normalizeRefs(proofRefs);
   if (to === 'ready') verifyProofRefs({ tenantId, missionId, refs, mode: 'ready', read, listArtifacts });
   if (to === 'delivered') verifyProofRefs({ tenantId, missionId, refs, mode: 'delivered', read, listArtifacts });
-  if (current === 'needs_you' && found.mission.approval?.required && to !== 'failed') verifyApprovalRef({ tenantId, missionId, approvalRef, getApprovalRecord });
+  const inheritedApprovalRef = currentEvent?.payload?.state?.approval_ref || null;
+  const effectiveApprovalRef = approvalRef || inheritedApprovalRef;
+  if (found.mission.approval?.required && (to === 'working' || to === 'ready')) {
+    verifyApprovalRef({ tenantId, missionId, approvalRef: effectiveApprovalRef, getApprovalRecord });
+  }
   const requestedNextAction = String(nextAction || '').trim();
   if (to === 'needs_you' && !requestedNextAction) throw new Error('NEXT_ACTION_REQUIRED');
   const resolvedNextAction = requestedNextAction || (to === 'failed' ? DEFAULT_FAILED_NEXT_ACTION : null);
   const state = {
     version: '1.0.0', mission_id: missionId, tenant_id: tenantId, user_id: userId, conversation_id: conversationId,
-    from: current, status: to, proof_refs: refs, approval_ref: approvalRef || null,
+    from: current, status: to, proof_refs: refs, approval_ref: effectiveApprovalRef || null,
     next_action: resolvedNextAction, request_ref: keyRef, recovery: Boolean(isRecovery), changed_at: new Date().toISOString()
   };
   const event = append({ tenantId, type: CLIENT_MISSION_STATE_EVENT, version: '1', actor, subject: missionId, payload: { state } });
