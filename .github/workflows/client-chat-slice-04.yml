@@ -9,6 +9,7 @@ on:
       - 'apps/site/components/ClientChatShell.jsx'
       - 'apps/site/tests/firstmate-mission-router.test.js'
       - 'apps/site/tests/client-chat-store.test.js'
+      - 'apps/site/tests/client-chat-slice04-regressions.test.js'
       - 'icm/client-chat-loop/04-firstmate-mission-router/**'
       - '.github/workflows/client-chat-slice-04.yml'
 
@@ -29,6 +30,6 @@ jobs:
       - name: Repository boundary guard
         run: npm run guard:repo
       - name: Run Slice 04 and persistence regression tests
-        run: npx vitest run apps/site/tests/firstmate-mission-router.test.js apps/site/tests/client-chat-store.test.js
+        run: npx vitest run apps/site/tests/firstmate-mission-router.test.js apps/site/tests/client-chat-store.test.js apps/site/tests/client-chat-slice04-regressions.test.js
       - name: Build client surface
         run: npm run build --workspace @asc3nd/site
