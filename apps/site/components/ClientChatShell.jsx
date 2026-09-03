@@ -1,14 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styles from './ClientChatShell.module.css';
-
-const seed = [
-  { id: 'today', title: 'Today', preview: 'What needs attention now?' },
-  { id: 'funding', title: 'Grant opportunities', preview: 'Find the strongest funding options.' },
-  { id: 'october', title: 'October planning', preview: 'Prepare the next operating cycle.' },
-  { id: 'sponsors', title: 'Sponsors', preview: 'Partnership and follow-up work.' }
-];
 
 const initialAssistant = {
   id: 'welcome',
@@ -16,51 +9,121 @@ const initialAssistant = {
   text: 'What would you like to work on? I can help with funding, content, follow-up, planning, and results.',
 };
 
-export function ClientChatShell({ initialConversationId = 'today' }) {
+export function ClientChatShell({ initialConversationId = null }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeId, setActiveId] = useState(initialConversationId || 'today');
+  const [activeId, setActiveId] = useState(initialConversationId);
   const [input, setInput] = useState('');
-  const [messagesByConversation, setMessagesByConversation] = useState({
-    today: [initialAssistant],
-    funding: [{ id: 'f1', role: 'assistant', text: 'Tell me what needs funding, the timing, and any amount you have in mind.' }],
-    october: [{ id: 'o1', role: 'assistant', text: 'I can organize October around funding, participation, content, and the decisions that need you.' }],
-    sponsors: [{ id: 's1', role: 'assistant', text: 'I can help identify sponsor targets, prepare a brief, and keep follow-up organized.' }],
-  });
+  const [conversations, setConversations] = useState([]);
+  const [messagesByConversation, setMessagesByConversation] = useState({});
+  const [syncState, setSyncState] = useState('loading');
 
   const messages = useMemo(() => messagesByConversation[activeId] || [initialAssistant], [messagesByConversation, activeId]);
 
-  function selectConversation(id) {
-    setActiveId(id);
-    setSidebarOpen(false);
-    window.history.replaceState({}, '', id === 'today' ? '/app' : `/app/chat/${id}`);
-  }
+  useEffect(() => {
+    let cancelled = false;
+    async function boot() {
+      try {
+        const response = await fetch('/api/client-chat/conversations', { cache: 'no-store' });
+        const data = await response.json();
+        if (!data.ok) throw new Error(data.error || 'Unable to load conversations');
+        if (cancelled) return;
+        setConversations(data.conversations || []);
+        if (initialConversationId) {
+          setActiveId(initialConversationId);
+        } else if (data.conversations?.[0]?.conversationId) {
+          setActiveId(data.conversations[0].conversationId);
+        } else {
+          const created = await fetch('/api/client-chat/conversations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: 'Today' })
+          }).then((r) => r.json());
+          if (!created.ok) throw new Error(created.error || 'Unable to create conversation');
+          if (cancelled) return;
+          setConversations([created.conversation]);
+          setActiveId(created.conversation.conversationId);
+          window.history.replaceState({}, '', `/app/chat/${created.conversation.conversationId}`);
+        }
+        setSyncState('saved');
+      } catch {
+        if (!cancelled) setSyncState('offline');
+      }
+    }
+    boot();
+    return () => { cancelled = true; };
+  }, [initialConversationId]);
 
-  function newChat() {
-    const id = `new-${Date.now()}`;
-    setMessagesByConversation((current) => ({ ...current, [id]: [initialAssistant] }));
+  useEffect(() => {
+    if (!activeId) return;
+    let cancelled = false;
+    fetch(`/api/client-chat/conversations/${encodeURIComponent(activeId)}`, { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data.ok) return;
+        const mapped = (data.conversation.messages || []).map((message) => ({
+          id: message.messageId,
+          role: message.role,
+          text: message.text,
+          createdAt: message.createdAt,
+        }));
+        setMessagesByConversation((current) => ({ ...current, [activeId]: mapped.length ? mapped : [initialAssistant] }));
+      })
+      .catch(() => setSyncState('offline'));
+    return () => { cancelled = true; };
+  }, [activeId]);
+
+  async function selectConversation(id) {
     setActiveId(id);
     setSidebarOpen(false);
     window.history.replaceState({}, '', `/app/chat/${id}`);
   }
 
-  function submit(event) {
+  async function newChat() {
+    try {
+      const data = await fetch('/api/client-chat/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'New chat' })
+      }).then((r) => r.json());
+      if (!data.ok) throw new Error(data.error);
+      setConversations((current) => [data.conversation, ...current]);
+      setMessagesByConversation((current) => ({ ...current, [data.conversation.conversationId]: [initialAssistant] }));
+      setActiveId(data.conversation.conversationId);
+      setSidebarOpen(false);
+      setSyncState('saved');
+      window.history.replaceState({}, '', `/app/chat/${data.conversation.conversationId}`);
+    } catch {
+      setSyncState('offline');
+    }
+  }
+
+  async function submit(event) {
     event.preventDefault();
     const text = input.trim();
-    if (!text) return;
+    if (!text || !activeId) return;
     setInput('');
+    const optimistic = { id: `u-${Date.now()}`, role: 'user', text };
     setMessagesByConversation((current) => ({
       ...current,
-      [activeId]: [
-        ...(current[activeId] || [initialAssistant]),
-        { id: `u-${Date.now()}`, role: 'user', text },
-        {
-          id: `a-${Date.now()}`,
-          role: 'assistant',
-          text: 'Preview mode is active. The chat shell is working; mission execution is connected in the next slices.',
-          preview: true,
-        },
-      ],
+      [activeId]: [...(current[activeId]?.filter((message) => message.id !== 'welcome') || []), optimistic],
     }));
+    setSyncState('saving');
+    try {
+      const data = await fetch(`/api/client-chat/conversations/${encodeURIComponent(activeId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'user', text })
+      }).then((r) => r.json());
+      if (!data.ok) throw new Error(data.error);
+      setMessagesByConversation((current) => ({
+        ...current,
+        [activeId]: (current[activeId] || []).map((message) => message.id === optimistic.id ? { ...message, id: data.message.messageId } : message)
+      }));
+      setConversations((current) => current.map((conversation) => conversation.conversationId === activeId ? { ...conversation, updatedAt: data.message.createdAt, messageCount: (conversation.messageCount || 0) + 1 } : conversation));
+      setSyncState('saved');
+    } catch {
+      setSyncState('offline');
+    }
   }
 
   function usePrompt(text) {
@@ -79,18 +142,19 @@ export function ClientChatShell({ initialConversationId = 'today' }) {
         </div>
         <button className={styles.newChat} onClick={newChat}>+ New chat</button>
         <nav className={styles.conversationList}>
-          {seed.map((item) => (
+          {conversations.map((item) => (
             <button
-              key={item.id}
-              className={`${styles.conversation} ${activeId === item.id ? styles.active : ''}`}
-              onClick={() => selectConversation(item.id)}
+              key={item.conversationId}
+              className={`${styles.conversation} ${activeId === item.conversationId ? styles.active : ''}`}
+              onClick={() => selectConversation(item.conversationId)}
             >
-              <strong>{item.title}</strong>
-              <span>{item.preview}</span>
+              <strong>{item.title || 'Conversation'}</strong>
+              <span>{item.messageCount ? `${item.messageCount} message${item.messageCount === 1 ? '' : 's'}` : 'Ready when you are'}</span>
             </button>
           ))}
         </nav>
         <div className={styles.sidebarFooter}>
+          <a href={activeId ? `/api/client-chat/conversations/${encodeURIComponent(activeId)}/export` : '#'}>Export conversation</a>
           <a href="/ops">Staff control room</a>
           <a href="/login">Switch account</a>
         </div>
@@ -105,7 +169,7 @@ export function ClientChatShell({ initialConversationId = 'today' }) {
             <strong>ASC3ND</strong>
             <span>Ask for an outcome. The system handles the route.</span>
           </div>
-          <span className={styles.previewBadge}>Preview</span>
+          <span className={styles.previewBadge}>{syncState === 'offline' ? 'Offline' : syncState === 'saving' ? 'Saving' : syncState === 'loading' ? 'Loading' : 'Saved'}</span>
         </header>
 
         <div className={styles.messages} aria-live="polite">
@@ -124,10 +188,7 @@ export function ClientChatShell({ initialConversationId = 'today' }) {
             {messages.map((message) => (
               <article key={message.id} className={`${styles.message} ${message.role === 'user' ? styles.user : styles.assistant}`}>
                 <div className={styles.avatar}>{message.role === 'user' ? 'You' : 'A3'}</div>
-                <div>
-                  <p>{message.text}</p>
-                  {message.preview && <small>Execution is intentionally disabled in this visual slice.</small>}
-                </div>
+                <div><p>{message.text}</p></div>
               </article>
             ))}
           </div>
@@ -142,9 +203,9 @@ export function ClientChatShell({ initialConversationId = 'today' }) {
               rows={1}
               aria-label="Message ASC3ND"
             />
-            <button type="submit" disabled={!input.trim()} aria-label="Send message">↑</button>
+            <button type="submit" disabled={!input.trim() || !activeId} aria-label="Send message">↑</button>
           </form>
-          <small>Important actions will always stop for review when they need you.</small>
+          <small>Conversation history is saved. Important actions will stop for review when they need you.</small>
         </div>
       </section>
     </main>
