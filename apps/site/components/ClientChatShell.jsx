@@ -29,6 +29,16 @@ function createRequestKey() {
   return `chat-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
+function clientWorkLabel(work) {
+  if (!work) return null;
+  if (work.status === 'needs_you') return 'Needs your approval';
+  if (work.status === 'failed') return 'Blocked — needs input';
+  if (work.status === 'ready') return 'Ready';
+  if (work.status === 'delivered') return 'Delivered';
+  if (work.phase === 'routed') return 'Working — routed';
+  return 'In production / scheduled';
+}
+
 export function ClientChatShell({ initialConversationId = null }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeId, setActiveId] = useState(initialConversationId);
@@ -36,9 +46,12 @@ export function ClientChatShell({ initialConversationId = null }) {
   const [retryRequest, setRetryRequest] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [messagesByConversation, setMessagesByConversation] = useState({});
+  const [workByConversation, setWorkByConversation] = useState({});
   const [syncState, setSyncState] = useState('loading');
 
   const messages = useMemo(() => messagesByConversation[activeId] || [initialAssistant], [messagesByConversation, activeId]);
+  const activeWork = workByConversation[activeId] || null;
+  const activeWorkLabel = clientWorkLabel(activeWork);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,6 +176,9 @@ export function ClientChatShell({ initialConversationId = null }) {
         body: JSON.stringify({ text, idempotencyKey: requestKey })
       });
       setRetryRequest(null);
+      if (data.work) {
+        setWorkByConversation((current) => ({ ...current, [activeId]: data.work }));
+      }
       setMessagesByConversation((current) => {
         const persisted = (current[activeId] || []).map((message) => message.id === optimistic.id
           ? { ...message, id: data.message.messageId, createdAt: data.message.createdAt }
@@ -243,6 +259,7 @@ export function ClientChatShell({ initialConversationId = null }) {
             <span>Ask for an outcome. The system handles the route.</span>
           </div>
           <span className={styles.previewBadge}>{syncState === 'offline' ? 'Offline' : syncState === 'saving' ? 'Saving' : syncState === 'loading' ? 'Loading' : 'Saved'}</span>
+          {activeWorkLabel && <span className={styles.workBadge} role="status" aria-label="Current work status">{activeWorkLabel}</span>}
         </header>
 
         <div className={styles.messages} aria-live="polite">
