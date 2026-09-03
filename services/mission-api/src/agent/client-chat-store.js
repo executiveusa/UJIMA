@@ -19,7 +19,7 @@ function cleanTitle(value) {
 function cleanIdempotencyKey(value) {
   if (value === null || value === undefined || value === '') return null;
   const key = String(value).trim();
-  if (!/^[A-Za-z0-9._:-]{8,160}$/.test(key)) throw new Error('INVALID_IDEMPOTENCY_KEY');
+  if (!/^[A-Za-z0-9._:-]{8,120}$/.test(key)) throw new Error('INVALID_IDEMPOTENCY_KEY');
   return key;
 }
 
@@ -133,7 +133,10 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
       role,
       idempotencyKey: requestKey
     });
-    if (existing) return messageFromEvent(existing, true);
+    if (existing) {
+      if (String(existing.payload.text || '').trim() !== normalizedText) throw new Error('IDEMPOTENCY_CONFLICT');
+      return messageFromEvent(existing, true);
+    }
 
     const messageId = id('msg');
     const uniqueProvenance = [...new Set((provenanceRefs || []).filter(Boolean).map(String))];
