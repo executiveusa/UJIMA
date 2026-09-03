@@ -3,76 +3,81 @@ import { emitEvent, readEvents } from '@asc3nd/core/events';
 
 export const CLIENT_MISSION_EVENT = 'client_mission';
 
+// Capability names use the same snake_case convention as the federated Grant
+// Agent contract so later handoffs can compare allow/deny sets deterministically.
 const ALWAYS_DENIED = [
-  'external.email',
-  'external.message',
-  'public.publish',
-  'grant.submit',
-  'payment.execute',
-  'legal.attest',
-  'production.deploy',
-  'dns.change',
-  'database.production_migrate',
-  'delete.execute',
-  'cross_tenant.access',
-  'unrestricted.execution'
+  'external_email',
+  'external_message',
+  'public_publishing',
+  'grant_submission',
+  'portal_acceptance',
+  'money_movement',
+  'legal_attestation',
+  'production_deploy',
+  'dns_change',
+  'production_database_migration',
+  'production_mutation',
+  'destructive_deletion',
+  'cross_tenant_access',
+  'unrestricted_execution'
 ];
 
 const ROUTES = [
   {
     domain: 'grants',
     pattern: /\b(grant|grants|funding|funder|funders|foundation|foundations|rfp|proposal)\b/i,
-    capabilities: ['context.read', 'grant.discover', 'grant.eligibility', 'grant.fit', 'grant.draft.prepare'],
+    capabilities: ['context_read', 'grant_discovery', 'grant_eligibility', 'grant_fit', 'grant_draft_prepare'],
     gate: 'Grant recommendations require source provenance and eligibility checks before they can be marked ready.',
     label: 'funding'
   },
   {
     domain: 'content',
     pattern: /\b(content|post|posts|reel|reels|caption|captions|social|campaign|calendar|story|stories)\b/i,
-    capabilities: ['context.read', 'content.plan', 'content.draft.prepare'],
+    capabilities: ['context_read', 'content_plan', 'content_draft_prepare'],
     gate: 'Public-facing facts and claims must remain tied to approved organizational context before publishing.',
     label: 'content'
   },
   {
     domain: 'crm',
     pattern: /\b(follow[- ]?up|contact|contacts|family|families|mentor|mentors|volunteer|volunteers|sponsor|sponsors|partner|partners|donor|donors|relationship|relationships)\b/i,
-    capabilities: ['context.read', 'crm.followup.analyze', 'crm.draft.prepare'],
+    capabilities: ['context_read', 'crm_followup_analysis', 'crm_draft_prepare'],
     gate: 'Consent and relationship context must be checked before any future outreach can be approved.',
     label: 'follow-up'
   },
   {
     domain: 'seo',
     pattern: /\b(seo|search|google|schema|visibility|ranking|rankings|discoverability)\b/i,
-    capabilities: ['context.read', 'seo.audit', 'seo.recommend'],
+    capabilities: ['context_read', 'seo_audit', 'seo_recommend'],
     gate: 'Visibility recommendations must distinguish observed evidence from proposed changes.',
     label: 'search visibility'
   },
   {
     domain: 'analytics',
     pattern: /\b(analytics|metric|metrics|results|performance|conversion|conversions|report|reporting|outcome|outcomes)\b/i,
-    capabilities: ['context.read', 'analytics.read', 'analytics.summarize'],
+    capabilities: ['context_read', 'analytics_read', 'analytics_summarize'],
     gate: 'Results must be reported from available evidence without inventing missing measurements.',
     label: 'results'
   },
   {
     domain: 'engineering',
     pattern: /\b(website|web site|app|application|code|bug|bugs|technical|engineering|api|integration)\b/i,
-    capabilities: ['context.read', 'engineering.inspect', 'engineering.plan'],
+    capabilities: ['context_read', 'engineering_inspect', 'engineering_plan'],
     gate: 'Engineering work remains inspect/plan only until a separately governed implementation mission is authorized.',
     label: 'technical planning'
   }
 ];
 
+// These patterns deliberately favor false-positive review gates over a false
+// negative that could imply external authority. Draft/prepare verbs are not on
+// this list, but direct execution verbs are.
 const CONSEQUENTIAL_PATTERNS = [
-  /\b(submit|file)\b[^.]{0,80}\b(grant|application|proposal)\b/i,
-  /\b(send|email|message|text|call)\b[^.]{0,120}\b(donor|partner|sponsor|mentor|volunteer|family|families|contact|contacts|them|everyone|people)\b/i,
-  /\b(publish|schedule|post)\b[^.]{0,80}\b(now|today|live|public|facebook|instagram|linkedin|social|website|site|this|it)\b/i,
-  /\b(pay|purchase|charge|transfer|refund)\b/i,
-  /\b(sign|attest|accept)\b[^.]{0,100}\b(agreement|terms|legal|form|filing|application)\b/i,
-  /\bdeploy\b/i,
+  /\b(submit|publish|schedule|deploy|pay|purchase|charge|transfer|refund|delete|destroy|purge|erase|attest)\b/i,
+  /\bsend\s+(?!me\b)/i,
+  /\b(email|message|text|call)\b[^.]{0,120}\b(donor|partner|sponsor|mentor|volunteer|family|families|contact|contacts|them|everyone|people|him|her)\b/i,
+  /\bpost\b[^.]{0,80}\b(now|today|live|public|facebook|instagram|linkedin|social|website|site|this|it|that)\b/i,
+  /\b(sign|accept)\b[^.]{0,100}\b(agreement|terms|legal|form|filing|application)\b/i,
   /\b(dns|domain)\b[^.]{0,80}\b(change|update|point|switch|move)\b/i,
-  /\b(migrate|migration)\b[^.]{0,80}\b(database|production|data)\b/i,
-  /\b(delete|destroy|purge|erase)\b/i
+  /\b(migrate|migration)\b[^.]{0,80}\b(database|production|data)\b/i
 ];
 
 function id(prefix) {
@@ -90,7 +95,7 @@ export function classifyClientIntent(text) {
   const objective = normalizeObjective(text);
   return ROUTES.find((route) => route.pattern.test(objective)) || {
     domain: 'general',
-    capabilities: ['context.read', 'planning.prepare'],
+    capabilities: ['context_read', 'planning_prepare'],
     gate: 'The next step must stay bounded to internal planning until a specific governed domain route is selected.',
     label: 'planning'
   };
@@ -215,5 +220,5 @@ export function missionAcknowledgement({ mission, route }) {
   if (mission.status === 'needs_you') {
     return `Needs you — I can prepare the ${route.label} work, but the final action you asked for requires approval. Nothing has been sent, submitted, published, paid, deployed, migrated, deleted, or changed externally.`;
   }
-  return `Working — I routed this into ${route.label}. I’m preparing the next bounded step from approved organizational context; nothing has been sent, submitted, published, or changed externally.`;
+  return `Working — I routed this into ${route.label}. This route is limited to internal preparation from approved organizational context; nothing has been sent, submitted, published, or changed externally.`;
 }
