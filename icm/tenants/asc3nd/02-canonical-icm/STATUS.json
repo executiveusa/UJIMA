@@ -1,0 +1,10 @@
+{
+  "slice": "02-canonical-asc3nd-icm",
+  "state": "MERGE_READY",
+  "public_frontend_touched": false,
+  "sensitive_records_committed": false,
+  "cold_agent_core_context_present": true,
+  "provenance_present": true,
+  "unknowns_explicit": true,
+  "next_slice": "03-portable-data-model"
+}
