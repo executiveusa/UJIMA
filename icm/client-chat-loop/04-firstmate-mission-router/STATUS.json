@@ -1,0 +1,16 @@
+{
+  "slice_id": "04",
+  "stage": "first-mate-mission-router",
+  "status": "working",
+  "base_main_sha": "e7913398935026bd6eaf5d09eac8b0e23644f49b",
+  "branch": "client-chat-loop/04-firstmate-mission-router",
+  "owner_repository": "executiveusa/ascend-social-purpose-agentic-systems-",
+  "writing_role": "control-plane/orchestration implementation",
+  "approval_required_for_slice_build": false,
+  "external_actions_enabled": false,
+  "public_frontend_frozen": true,
+  "acceptance_ledger": "icm/client-chat-loop/04-firstmate-mission-router/OUTPUTS.md",
+  "evidence": [],
+  "blockers": [],
+  "next_action": "Implement the minimum event-backed authenticated First Mate mission route, then run targeted and full verification before independent review."
+}
