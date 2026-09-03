@@ -1,0 +1,17 @@
+name: Cold Agent Recovery Gauntlet
+on:
+  pull_request:
+    paths: ['recovery/**','control-plane/domain-federation.json','control-plane/automation-fabric.json','scripts/verify-cold-agent-recovery.mjs','REPO_SCOPE.md','repo-boundary.json','AGENTS.md','.github/workflows/cold-agent-recovery.yml']
+  push:
+    branches: [main]
+    paths: ['recovery/**','control-plane/domain-federation.json','control-plane/automation-fabric.json','scripts/verify-cold-agent-recovery.mjs','REPO_SCOPE.md','repo-boundary.json','AGENTS.md','.github/workflows/cold-agent-recovery.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  cold-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: node scripts/verify-cold-agent-recovery.mjs
