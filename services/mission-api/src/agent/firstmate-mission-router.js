@@ -71,11 +71,13 @@ const ROUTES = [
 // negative that could imply external authority. Draft/prepare verbs are not on
 // this list, but direct execution verbs are.
 const CONSEQUENTIAL_PATTERNS = [
-  /\b(submit|publish|schedule|deploy|pay|purchase|charge|transfer|refund|delete|destroy|purge|erase|attest)\b/i,
+  /\b(submit|publish|schedule|deploy|pay|purchase|charge|transfer|refund|delete|destroy|purge|erase|attest|upload|launch|approve|authorize|invite|distribute|archive|disconnect)\b/i,
+  /\b(dm|direct message)\b/i,
   /\bsend\s+(?!me\b)/i,
   /\b(email|message|text|call)\b[^.]{0,120}\b(donor|partner|sponsor|mentor|volunteer|family|families|contact|contacts|them|everyone|people|him|her)\b/i,
-  /\bpost\b[^.]{0,80}\b(now|today|live|public|facebook|instagram|linkedin|social|website|site|this|it|that)\b/i,
-  /\b(sign|accept)\b[^.]{0,100}\b(agreement|terms|legal|form|filing|application)\b/i,
+  /\bpost\b[^.]{0,80}\b(now|today|live|public|facebook|instagram|linkedin|youtube|tiktok|social|website|site|this|it|that)\b/i,
+  /\b(sign|accept|file)\b[^.]{0,100}\b(agreement|terms|legal|form|filing|application|proposal)\b/i,
+  /\b(share|connect|remove)\b[^.]{0,100}\b(public|live|account|integration|donor|partner|sponsor|mentor|volunteer|family|contact|everyone|people|youtube|instagram|facebook|linkedin|tiktok|portal)\b/i,
   /\b(dns|domain)\b[^.]{0,80}\b(change|update|point|switch|move)\b/i,
   /\b(migrate|migration)\b[^.]{0,80}\b(database|production|data)\b/i
 ];
@@ -208,7 +210,8 @@ export function routeFirstMateMission({
     payload: {
       handoff,
       source_message_event_ref: `event:${sourceMessage.eventId}`,
-      execution_mode: 'route-only'
+      execution_mode: 'route-only',
+      execution_state: 'routed'
     }
   });
 
@@ -220,5 +223,5 @@ export function missionAcknowledgement({ mission, route }) {
   if (mission.status === 'needs_you') {
     return `Needs you — I can prepare the ${route.label} work, but the final action you asked for requires approval. Nothing has been sent, submitted, published, paid, deployed, migrated, deleted, or changed externally.`;
   }
-  return `Working — I routed this into ${route.label}. This route is limited to internal preparation from approved organizational context; nothing has been sent, submitted, published, or changed externally.`;
+  return `Working — your request is saved and routed into ${route.label}. Execution has not started yet; nothing has been sent, submitted, published, or changed externally.`;
 }
