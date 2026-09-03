@@ -16,6 +16,7 @@ function clientWorkProjection(mission) {
   return {
     id: mission.mission_id,
     status: mission.status,
+    phase: mission.status === 'needs_you' ? 'approval_required' : 'routed',
     area: mission.domain,
     approvalRequired: mission.approval.required
   };
@@ -24,6 +25,12 @@ function clientWorkProjection(mission) {
 function safeRoutingCode(error) {
   const message = String(error?.message || '');
   return /^[A-Z0-9_]+$/.test(message) ? message : 'ROUTING_FAILED';
+}
+
+function idempotencyKeyFrom(req) {
+  const key = String(req.body?.idempotencyKey || '').trim();
+  if (!key) throw new Error('IDEMPOTENCY_KEY_REQUIRED');
+  return key;
 }
 
 router.get('/conversations', async (req, res) => {
@@ -69,36 +76,24 @@ router.post('/conversations/:conversationId', async (req, res) => {
   try {
     const { tenantId, userId } = identity(req);
     const conversationId = req.params.conversationId;
+    const requestKey = idempotencyKeyFrom(req);
     const message = await store.appendMessage({
       tenantId,
       userId,
       conversationId,
       role: 'user',
       text: req.body?.text,
-      provenanceRefs: []
+      provenanceRefs: [],
+      idempotencyKey: requestKey
     });
 
+    let routed;
     try {
-      const routed = routeFirstMateMission({
+      routed = routeFirstMateMission({
         tenantId,
         userId,
         conversationId,
         sourceMessage: message
-      });
-      const assistant = await store.appendMessage({
-        tenantId,
-        userId,
-        actor: 'firstmate',
-        conversationId,
-        role: 'assistant',
-        text: missionAcknowledgement(routed),
-        provenanceRefs: [`event:${routed.eventId}`, `mission:${routed.mission.mission_id}`]
-      });
-      return res.status(201).json({
-        ok: true,
-        message,
-        assistant,
-        work: clientWorkProjection(routed.mission)
       });
     } catch (routingError) {
       let assistant = null;
@@ -110,14 +105,46 @@ router.post('/conversations/:conversationId', async (req, res) => {
           conversationId,
           role: 'assistant',
           text: 'Failed — I saved your message, but I could not safely route the next step. Nothing was sent, submitted, published, or changed externally.',
-          provenanceRefs: [`routing-error:${safeRoutingCode(routingError)}`]
+          provenanceRefs: [`routing-error:${safeRoutingCode(routingError)}`],
+          idempotencyKey: `${requestKey}:routing-failed`
         });
       } catch {}
       return res.status(202).json({
         ok: true,
         message,
         assistant,
-        work: { status: 'failed', area: 'planning', approvalRequired: false }
+        work: { status: 'failed', phase: 'routing_failed', area: 'planning', approvalRequired: false }
+      });
+    }
+
+    const work = clientWorkProjection(routed.mission);
+    try {
+      const assistant = await store.appendMessage({
+        tenantId,
+        userId,
+        actor: 'firstmate',
+        conversationId,
+        role: 'assistant',
+        text: missionAcknowledgement(routed),
+        provenanceRefs: [`event:${routed.eventId}`, `mission:${routed.mission.mission_id}`],
+        idempotencyKey: `${requestKey}:assistant`
+      });
+      return res.status(message.reused && assistant.reused ? 200 : 201).json({
+        ok: true,
+        message,
+        assistant,
+        work
+      });
+    } catch {
+      // Mission creation already succeeded. Do not rewrite that durable truth as
+      // a routing failure just because the client acknowledgement could not be
+      // persisted. A retry with the same request key can safely fill this gap.
+      return res.status(202).json({
+        ok: true,
+        message,
+        assistant: null,
+        work,
+        warning: 'ACKNOWLEDGEMENT_PENDING'
       });
     }
   } catch (error) {
