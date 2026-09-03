@@ -22,23 +22,28 @@ function makeEvent({ tenantId, actor, kind, payload }) {
 }
 
 export function createClientChatStore(repos = createRepositories()) {
+  if (!repos?.events?.list || !repos?.events?.append) throw new Error('EVENT_REPOSITORY_REQUIRED');
+
   async function readEvents(tenantId) {
-    return await repos.listEvents(tenantId, EVENT_TYPE, 2000);
+    return await repos.events.list(tenantId, EVENT_TYPE, 2000);
   }
 
   async function append(tenantId, actor, kind, payload) {
     const event = makeEvent({ tenantId, actor, kind, payload });
-    await repos.appendEvent(tenantId, event);
+    await repos.events.append(tenantId, event);
     return event;
   }
 
   async function createConversation({ tenantId, userId = 'client-web', title = 'New chat' }) {
+    if (!tenantId) throw new Error('TENANT_REQUIRED');
     const conversationId = id('chat');
     const event = await append(tenantId, userId, 'conversation.created', { conversationId, userId, title });
     return { conversationId, title, createdAt: event.createdAt, updatedAt: event.createdAt };
   }
 
   async function appendMessage({ tenantId, conversationId, role, text, userId = 'client-web', provenanceRefs = [] }) {
+    if (!tenantId) throw new Error('TENANT_REQUIRED');
+    if (!conversationId) throw new Error('CONVERSATION_REQUIRED');
     if (!['user', 'assistant', 'system'].includes(role)) throw new Error('INVALID_ROLE');
     if (!String(text || '').trim()) throw new Error('MESSAGE_REQUIRED');
     const messageId = id('msg');
@@ -60,6 +65,7 @@ export function createClientChatStore(repos = createRepositories()) {
   }
 
   async function listConversations({ tenantId }) {
+    if (!tenantId) throw new Error('TENANT_REQUIRED');
     const events = await readEvents(tenantId);
     const map = new Map();
     for (const event of events) {
@@ -91,6 +97,8 @@ export function createClientChatStore(repos = createRepositories()) {
   }
 
   async function getConversation({ tenantId, conversationId }) {
+    if (!tenantId) throw new Error('TENANT_REQUIRED');
+    if (!conversationId) throw new Error('CONVERSATION_REQUIRED');
     const events = await readEvents(tenantId);
     let meta = null;
     const messages = [];
