@@ -1,0 +1,17 @@
+name: Domain Federation Contract
+on:
+  pull_request:
+    paths: ['control-plane/domain-federation.json','scripts/verify-domain-federation.mjs','.github/workflows/domain-federation.yml']
+  push:
+    branches: [main]
+    paths: ['control-plane/domain-federation.json','scripts/verify-domain-federation.mjs','.github/workflows/domain-federation.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: node scripts/verify-domain-federation.mjs
