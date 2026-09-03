@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function ClientAppPage() {
-  return <ClientChatShell initialConversationId="today" />;
+  return <ClientChatShell />;
 }
