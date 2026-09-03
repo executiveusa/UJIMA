@@ -56,7 +56,7 @@ describe('First Mate intent routing', () => {
     expect(route.capabilities).toEqual(['context_read', 'planning_prepare']);
   });
 
-  it('marks direct consequential requests as approval-required risk tier 3', async () => {
+  it('marks direct and broader consequential requests as approval-required risk tier 3', async () => {
     const source = await createSourceMessage({ text: 'Submit the strongest grant application today.' });
     const routed = routeFirstMateMission({
       tenantId: source.tenantId,
@@ -71,6 +71,10 @@ describe('First Mate intent routing', () => {
     expect(classifyRequestedRisk('Submit it now.')).toBe(3);
     expect(classifyRequestedRisk('Send it to them.')).toBe(3);
     expect(classifyRequestedRisk('Publish it today.')).toBe(3);
+    expect(classifyRequestedRisk('Upload the reel to YouTube now.')).toBe(3);
+    expect(classifyRequestedRisk('DM every donor today.')).toBe(3);
+    expect(classifyRequestedRisk('Invite every volunteer to the portal.')).toBe(3);
+    expect(classifyRequestedRisk('Review our YouTube channel performance.')).toBe(1);
     expect(routed.mission.status).toBe('needs_you');
     expect(routed.mission.approval).toMatchObject({ required: true, class: 'red' });
     expect(routed.mission.denied_capabilities).toContain('grant_submission');
@@ -96,6 +100,7 @@ describe('First Mate intent routing', () => {
     expect(routed.mission.allowed_capabilities).toContain('grant_draft_prepare');
     expect(routed.mission.denied_capabilities).toContain('grant_submission');
     expect(missionAcknowledgement(routed)).toMatch(/^Working —/);
+    expect(missionAcknowledgement(routed)).toContain('Execution has not started yet');
   });
 });
 
@@ -118,6 +123,104 @@ describe('First Mate mission persistence and recovery', () => {
     expect(second.mission.mission_id).toBe(first.mission.mission_id);
     expect(missionEvents).toHaveLength(1);
     expect(missionEvents[0].payload.source_message_event_ref).toBe(`event:${source.message.eventId}`);
+    expect(missionEvents[0].payload.execution_state).toBe('routed');
+  });
+
+  it('reuses the same durable message and mission when a client retries with the same request key', async () => {
+    const harness = eventHarness();
+    const store = createClientChatStore({ read: harness.read, append: harness.append });
+    const tenantId = 'asc3nd';
+    const userId = 'u1';
+    const conversation = await store.createConversation({ tenantId, userId, title: 'Retry safety' });
+    const idempotencyKey = 'chat-request-12345678';
+
+    const firstMessage = await store.appendMessage({
+      tenantId,
+      userId,
+      conversationId: conversation.conversationId,
+      role: 'user',
+      text: 'Find three grants worth pursuing.',
+      idempotencyKey
+    });
+    const firstMission = routeFirstMateMission({
+      tenantId,
+      userId,
+      conversationId: conversation.conversationId,
+      sourceMessage: firstMessage,
+      read: harness.read,
+      append: harness.append
+    });
+
+    const retryMessage = await store.appendMessage({
+      tenantId,
+      userId,
+      conversationId: conversation.conversationId,
+      role: 'user',
+      text: 'Find three grants worth pursuing.',
+      idempotencyKey
+    });
+    const retryMission = routeFirstMateMission({
+      tenantId,
+      userId,
+      conversationId: conversation.conversationId,
+      sourceMessage: retryMessage,
+      read: harness.read,
+      append: harness.append
+    });
+
+    expect(retryMessage.reused).toBe(true);
+    expect(retryMessage.messageId).toBe(firstMessage.messageId);
+    expect(retryMission.reused).toBe(true);
+    expect(retryMission.mission.mission_id).toBe(firstMission.mission.mission_id);
+    expect(harness.events.filter((event) => event.type === 'client_chat' && event.payload?.kind === 'message.added')).toHaveLength(1);
+    expect(harness.events.filter((event) => event.type === CLIENT_MISSION_EVENT)).toHaveLength(1);
+
+    await expect(store.appendMessage({
+      tenantId,
+      userId,
+      conversationId: conversation.conversationId,
+      role: 'user',
+      text: 'A different instruction must not reuse the same key.',
+      idempotencyKey
+    })).rejects.toThrow('IDEMPOTENCY_CONFLICT');
+  });
+
+  it('reuses a persisted acknowledgement when the same request is replayed', async () => {
+    const source = await createSourceMessage({ text: 'Prepare next week’s content plan.' });
+    const routed = routeFirstMateMission({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      conversationId: source.conversation.conversationId,
+      sourceMessage: source.message,
+      read: source.read,
+      append: source.append
+    });
+    const text = missionAcknowledgement(routed);
+    const key = 'chat-ack-12345678:assistant';
+    const first = await source.store.appendMessage({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      actor: 'firstmate',
+      conversationId: source.conversation.conversationId,
+      role: 'assistant',
+      text,
+      provenanceRefs: [`event:${routed.eventId}`, `mission:${routed.mission.mission_id}`],
+      idempotencyKey: key
+    });
+    const retry = await source.store.appendMessage({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      actor: 'firstmate',
+      conversationId: source.conversation.conversationId,
+      role: 'assistant',
+      text,
+      provenanceRefs: [`event:${routed.eventId}`, `mission:${routed.mission.mission_id}`],
+      idempotencyKey: key
+    });
+
+    expect(retry.reused).toBe(true);
+    expect(retry.messageId).toBe(first.messageId);
+    expect(source.events.filter((event) => event.type === 'client_chat' && event.payload?.role === 'assistant')).toHaveLength(1);
   });
 
   it('records a contract-shaped handoff and returns it to portable chat recovery', async () => {
