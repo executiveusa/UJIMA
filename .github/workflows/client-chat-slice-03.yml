@@ -1,0 +1,23 @@
+name: Client Chat Slice 03 Persistence
+
+on:
+  pull_request:
+    paths:
+      - 'apps/site/lib/client-chat-store.js'
+      - 'apps/site/app/api/client-chat/**'
+      - 'apps/site/components/ClientChatShell.jsx'
+      - 'apps/site/tests/client-chat-store.test.js'
+      - 'icm/client-chat-loop/03-persistence/**'
+      - '.github/workflows/client-chat-slice-03.yml'
+
+jobs:
+  persistence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Run persistence contract tests
+        run: npx vitest run apps/site/tests/client-chat-store.test.js
