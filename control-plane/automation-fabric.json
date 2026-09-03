@@ -1,0 +1,11 @@
+{
+  "version":"1.0.0",
+  "execution_model":"github-native-first",
+  "sequence":["lock","produce","review","approve","publish","verify","reuse"],
+  "branch_law":{"direct_main":false,"one_slice_one_branch":true,"one_slice_one_pr":true,"merge_only_after_ci_and_conflict_check":true,"next_slice_starts_from_fresh_main":true},
+  "worker_policy":{"ralphy":{"allowed":["isolated engineering task","tests","worktree","branch","pull request"],"forbidden":["dangerously-skip-permissions","full-auto","yolo","auto-merge consequential changes","production secrets"]},"openhands":{"optional":true,"isolated_runtime_required":true,"canonical_memory":false,"consequential_authority":false},"firstmate":{"role":"liaison-supervisor","may_dispatch_bounded_missions":true,"may_approve_own_work":false}},
+  "mission_requirements":["tenant_id","owner_repo","acceptance_gates","allowed_capabilities","denied_capabilities","risk_tier","evidence_policy","rollback","approval_policy"],
+  "risk":{"tier0":"read","tier1":"internal reversible write","tier2":"reversible external action","tier3":"consequential explicit human approval"},
+  "scheduling":{"allowed_after_vertical_proof":true,"persistent_runtime_required_for_24x7":true,"github_actions_may_run_safe_deterministic_checks":true},
+  "proof":{"completion_requires_exit_zero":true,"completion_requires_expected_evidence":true,"builder_cannot_final_approve":true}
+}
