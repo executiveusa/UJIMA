@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asc3nd.local/contracts/chat-mission-handoff.schema.json",
+  "title": "Chat Mission Handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version","mission_id","tenant_id","user_id","conversation_id","originating_message_id","objective","domain","risk_tier","allowed_capabilities","denied_capabilities","acceptance_gates","evidence_requirements","approval","status","created_at"],
+  "properties": {
+    "version": {"const": "1.0.0"},
+    "mission_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "user_id": {"type": "string", "minLength": 1},
+    "conversation_id": {"type": "string", "minLength": 1},
+    "originating_message_id": {"type": "string", "minLength": 1},
+    "objective": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "domain": {"enum": ["grants","crm","content","seo","analytics","engineering","general"]},
+    "risk_tier": {"enum": [0,1,2,3]},
+    "allowed_capabilities": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "denied_capabilities": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "acceptance_gates": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "evidence_requirements": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required","class"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "class": {"enum": ["green","yellow","orange","red"]},
+        "approval_id": {"type": ["string","null"]},
+        "approved_by": {"type": ["string","null"]},
+        "approved_at": {"type": ["string","null"], "format": "date-time"}
+      }
+    },
+    "status": {"enum": ["working","needs_you","ready","failed","delivered"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "rollback_note": {"type": ["string","null"], "maxLength": 2000},
+    "icm_context_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "artifact_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"risk_tier": {"const": 3}}, "required": ["risk_tier"]},
+      "then": {"properties": {"approval": {"properties": {"required": {"const": true}}}}}
+    }
+  ]
+}

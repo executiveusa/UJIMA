@@ -1,0 +1,22 @@
+name: Client Chat Slice 01 Contracts
+
+on:
+  pull_request:
+    paths:
+      - 'docs/CLIENT-CHAT-ARCHITECTURE.md'
+      - 'control-plane/contracts/client-chat-session.schema.json'
+      - 'control-plane/contracts/chat-mission-handoff.schema.json'
+      - 'scripts/verify-client-chat-slice-01.mjs'
+      - 'icm/client-chat-loop/01-popebot-contracts/**'
+      - '.github/workflows/client-chat-slice-01.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify slice 01 contracts
+        run: node scripts/verify-client-chat-slice-01.mjs
