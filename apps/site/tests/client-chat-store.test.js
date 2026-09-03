@@ -98,6 +98,38 @@ describe('client chat persistence', () => {
     expect(loaded.messages[0].text).toBe('m-0');
     expect(loaded.messages.at(-1).text).toBe('m-2104');
   });
+
+  it('preserves append order when timestamps are identical', async () => {
+    const events = [];
+    const tiedAt = '2026-09-03T10:00:00.000Z';
+    const append = (event) => {
+      const row = {
+        ...event,
+        id: events.length === 0 ? 'z-created' : `a-message-${events.length}`,
+        createdAt: tiedAt
+      };
+      events.push(row);
+      return row;
+    };
+    const store = createClientChatStore({ read: () => events, append });
+    const created = await store.createConversation({ tenantId: 'asc3nd', userId: 'u1', title: 'Tied timestamps' });
+    await store.appendMessage({ tenantId: 'asc3nd', userId: 'u1', conversationId: created.conversationId, role: 'user', text: 'first' });
+    await store.appendMessage({ tenantId: 'asc3nd', userId: 'u1', conversationId: created.conversationId, role: 'user', text: 'second' });
+
+    const conversations = await store.listConversations({ tenantId: 'asc3nd', userId: 'u1' });
+    const loaded = await store.getConversation({ tenantId: 'asc3nd', userId: 'u1', conversationId: created.conversationId });
+
+    expect(conversations[0].messageCount).toBe(2);
+    expect(loaded.messages.map((message) => message.text)).toEqual(['first', 'second']);
+  });
+
+  it('keeps failed-send recovery behavior in the client shell', () => {
+    const shellPath = path.resolve(process.cwd(), 'apps/site/components/ClientChatShell.jsx');
+    const shell = fs.readFileSync(shellPath, 'utf8');
+    expect(shell).toContain("filter((message) => message.id !== optimistic.id)");
+    expect(shell).toContain('setInput((current) => current || text)');
+    expect(shell).toContain("setSyncState('offline')");
+  });
 });
 
 describe('browser session auth', () => {
