@@ -74,6 +74,11 @@ describe('First Mate intent routing', () => {
     expect(classifyRequestedRisk('Upload the reel to YouTube now.')).toBe(3);
     expect(classifyRequestedRisk('DM every donor today.')).toBe(3);
     expect(classifyRequestedRisk('Invite every volunteer to the portal.')).toBe(3);
+    expect(classifyRequestedRisk('Contact all donors today.')).toBe(3);
+    expect(classifyRequestedRisk('Reach out to our partners this afternoon.')).toBe(3);
+    expect(classifyRequestedRisk('Notify every volunteer.')).toBe(3);
+    expect(classifyRequestedRisk('Contact the families on the list.')).toBe(3);
+    expect(classifyRequestedRisk('Notify all contacts.')).toBe(3);
     expect(classifyRequestedRisk('Review our YouTube channel performance.')).toBe(1);
     expect(routed.mission.status).toBe('needs_you');
     expect(routed.mission.approval).toMatchObject({ required: true, class: 'red' });
