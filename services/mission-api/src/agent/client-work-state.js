@@ -7,18 +7,16 @@ import { CLIENT_MISSION_EVENT } from './firstmate-mission-router.js';
 export const CLIENT_MISSION_STATE_EVENT = 'client_mission_state';
 export const CLIENT_ROUTING_FAILURE_EVENT = 'client_routing_failure';
 
-const CLIENT_LABELS = Object.freeze({
-  working: 'Working', needs_you: 'Needs you', ready: 'Ready', failed: 'Failed', delivered: 'Delivered'
-});
+const CLIENT_LABELS = Object.freeze({ working: 'Working', needs_you: 'Needs you', ready: 'Ready', failed: 'Failed', delivered: 'Delivered' });
 const ALLOWED = Object.freeze({
   routed: new Set(['working', 'needs_you', 'failed']),
   working: new Set(['needs_you', 'ready', 'failed']),
   needs_you: new Set(['working', 'ready', 'failed']),
-  ready: new Set(['delivered', 'failed']),
-  failed: new Set([]), delivered: new Set([])
+  ready: new Set(['delivered', 'failed']), failed: new Set([]), delivered: new Set([])
 });
 const APPROVED_STATES = new Set([APPROVAL_STATES.APPROVED, APPROVAL_STATES.EXECUTED, APPROVAL_STATES.VERIFIED, APPROVAL_STATES.LOGGED]);
 const VERIFIED_DELIVERY_TYPES = new Set(['DELIVERY.VERIFIED', 'CLIENT.DELIVERY.VERIFIED', 'ARTIFACT.DELIVERED', 'AGENT.DELIVERY.VERIFIED']);
+const DEFAULT_FAILED_NEXT_ACTION = 'Review the failure details and retry or choose a smaller safe step.';
 
 function normalizeRefs(refs = []) { return [...new Set(refs.filter(Boolean).map(String))]; }
 function requestRef(value) { return value ? crypto.createHash('sha256').update(String(value)).digest('hex') : null; }
@@ -108,15 +106,16 @@ export function listConversationWorkStates({ tenantId, userId, conversationId, r
   if (!tenantId || !userId || !conversationId) throw new Error('WORK_STATE_SCOPE_REQUIRED');
   const rows = missionEvents({ tenantId, read }).map((event) => ({ mission: event.payload?.handoff, event }))
     .filter(({ mission }) => mission && mission.tenant_id === tenantId && mission.user_id === userId && mission.conversation_id === conversationId)
-    .map(({ mission, event }) => ({
-      projection: getClientMissionWorkState({ tenantId, userId, conversationId, missionId: mission.mission_id, read }),
-      createdAt: latestStateEvent({ tenantId, userId, conversationId, missionId: mission.mission_id, read })?.createdAt || event.createdAt
-    }));
+    .map(({ mission, event }) => {
+      const stateEvent = latestStateEvent({ tenantId, userId, conversationId, missionId: mission.mission_id, read });
+      return {
+        projection: projection({ mission, state: stateEvent?.payload?.state || null, eventId: stateEvent?.id || event.id }),
+        createdAt: stateEvent?.createdAt || event.createdAt
+      };
+    });
   for (const event of failureEvents({ tenantId, read })) {
     const failure = event.payload?.failure;
-    if (failure?.tenant_id === tenantId && failure?.user_id === userId && failure?.conversation_id === conversationId) {
-      rows.push({ projection: routingFailureProjection(event), createdAt: event.createdAt });
-    }
+    if (failure?.tenant_id === tenantId && failure?.user_id === userId && failure?.conversation_id === conversationId) rows.push({ projection: routingFailureProjection(event), createdAt: event.createdAt });
   }
   return rows.sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || ''))).map((row) => row.projection).filter(Boolean);
 }
@@ -161,11 +160,13 @@ export function transitionClientMissionState({ tenantId, userId, conversationId,
   if (to === 'ready') verifyProofRefs({ tenantId, missionId, refs, mode: 'ready', read, listArtifacts });
   if (to === 'delivered') verifyProofRefs({ tenantId, missionId, refs, mode: 'delivered', read, listArtifacts });
   if (current === 'needs_you' && found.mission.approval?.required && to !== 'failed') verifyApprovalRef({ tenantId, missionId, approvalRef, getApprovalRecord });
-  if (to === 'needs_you' && !String(nextAction || '').trim()) throw new Error('NEXT_ACTION_REQUIRED');
+  const requestedNextAction = String(nextAction || '').trim();
+  if (to === 'needs_you' && !requestedNextAction) throw new Error('NEXT_ACTION_REQUIRED');
+  const resolvedNextAction = requestedNextAction || (to === 'failed' ? DEFAULT_FAILED_NEXT_ACTION : null);
   const state = {
     version: '1.0.0', mission_id: missionId, tenant_id: tenantId, user_id: userId, conversation_id: conversationId,
     from: current, status: to, proof_refs: refs, approval_ref: approvalRef || null,
-    next_action: String(nextAction || '').trim() || null, request_ref: keyRef, recovery: Boolean(isRecovery), changed_at: new Date().toISOString()
+    next_action: resolvedNextAction, request_ref: keyRef, recovery: Boolean(isRecovery), changed_at: new Date().toISOString()
   };
   const event = append({ tenantId, type: CLIENT_MISSION_STATE_EVENT, version: '1', actor, subject: missionId, payload: { state } });
   return { projection: projection({ mission: found.mission, state, eventId: event.id }), eventId: event.id, reused: false };
