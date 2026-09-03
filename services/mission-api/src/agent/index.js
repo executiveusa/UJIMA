@@ -7,10 +7,16 @@ import { emitAgentEvent } from './events.js';
 import { createArtifact } from './artifacts.js';
 import { createAsset, getAsset } from './assets.js';
 import { requestApproval } from './approvals.js';
+import clientChatRouter from './client-chat-router.js';
 
 const router = Router();
 const auth = agentAuth();
 const tenantMatch = requireTenantMatch();
+
+// Browser-client chat uses the existing signed mission_token and derives
+// tenant/user identity from that validated session. It intentionally does not
+// accept an operator key, tenant id, or user id from browser-controlled input.
+router.use('/client-chat', clientChatRouter);
 
 router.get('/context/:tenantId', auth, tenantMatch, getAgentContext);
 router.get('/policy/:tenantId', auth, tenantMatch, getAgentPolicy);
