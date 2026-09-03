@@ -1,0 +1,23 @@
+name: ASC3ND Backend Final Release Packet
+on:
+  pull_request:
+    paths: ['release/**','handoffs/**','control-plane/domain-federation.json','control-plane/automation-fabric.json','recovery/cold-agent-manifest.json','scripts/verify-backend-release-packet.mjs','.github/workflows/backend-release-packet.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  release-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: node scripts/verify-backend-release-packet.mjs
+  fresh-gauntlet:
+    needs: release-contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - name: Fresh independent release critic
+        run: node scripts/verify-backend-release-packet.mjs
