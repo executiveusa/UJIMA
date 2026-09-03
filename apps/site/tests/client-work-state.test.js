@@ -73,12 +73,14 @@ describe('durable client work-state engine', () => {
     expect(fx.events.filter((event) => event.type === CLIENT_MISSION_STATE_EVENT)).toHaveLength(1);
   });
 
-  it('requires tenant-owned approved artifacts for Ready and a verified delivery event for Delivered', async () => {
+  it('requires tenant-owned approved mission-linked artifacts for Ready and a verified delivery event for Delivered', async () => {
     const fx = await missionFixture();
     const scope = { tenantId: fx.tenantId, userId: fx.userId, conversationId: fx.conversation.conversationId, missionId: fx.routed.mission.mission_id, read: fx.read, append: fx.append };
     transitionClientMissionState({ ...scope, to: 'working', idempotencyKey: 'state-start-22345678' });
     expect(() => transitionClientMissionState({ ...scope, to: 'ready', proofRefs: ['artifact:missing'], idempotencyKey: 'state-ready-22345678' })).toThrow('PROOF_ARTIFACT_UNVERIFIED');
-    const artifact = registerArtifact({ tenantId: fx.tenantId, runId: null, kind: 'grant-fit', title: 'Verified fit packet', storagePath: 'proof/grant-fit.json', approvalStatus: 'approved', createdBy: 'critic' });
+    const unrelated = registerArtifact({ tenantId: fx.tenantId, runId: null, kind: 'grant-fit', title: 'Unrelated approved packet', storagePath: 'proof/unrelated.json', approvalStatus: 'approved', sourceRefs: ['mission:msn_other'], createdBy: 'critic' });
+    expect(() => transitionClientMissionState({ ...scope, to: 'ready', proofRefs: [`artifact:${unrelated.id}`], idempotencyKey: 'state-ready-mismatch-22345678' })).toThrow('PROOF_ARTIFACT_MISSION_MISMATCH');
+    const artifact = registerArtifact({ tenantId: fx.tenantId, runId: null, kind: 'grant-fit', title: 'Verified fit packet', storagePath: 'proof/grant-fit.json', approvalStatus: 'approved', sourceRefs: [`mission:${fx.routed.mission.mission_id}`], createdBy: 'critic' });
     const ready = transitionClientMissionState({ ...scope, to: 'ready', proofRefs: [`artifact:${artifact.id}`], idempotencyKey: 'state-ready-32345678' });
     expect(ready.projection.status).toBe('ready');
     expect(() => transitionClientMissionState({ ...scope, to: 'delivered', proofRefs: [`artifact:${artifact.id}`], idempotencyKey: 'state-deliver-22345678' })).toThrow('VERIFIED_DELIVERY_EVENT_REQUIRED');
