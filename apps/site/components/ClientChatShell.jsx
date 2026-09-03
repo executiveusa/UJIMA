@@ -23,10 +23,17 @@ function handleAuthFailure(error) {
   return true;
 }
 
+function createRequestKey() {
+  const random = globalThis.crypto?.randomUUID?.();
+  if (random) return `chat-${random}`;
+  return `chat-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
 export function ClientChatShell({ initialConversationId = null }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeId, setActiveId] = useState(initialConversationId);
   const [input, setInput] = useState('');
+  const [retryRequest, setRetryRequest] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [messagesByConversation, setMessagesByConversation] = useState({});
   const [syncState, setSyncState] = useState('loading');
@@ -111,6 +118,7 @@ export function ClientChatShell({ initialConversationId = null }) {
       setConversations((current) => [data.conversation, ...current]);
       setMessagesByConversation((current) => ({ ...current, [data.conversation.conversationId]: [initialAssistant] }));
       setActiveId(data.conversation.conversationId);
+      setRetryRequest(null);
       setSidebarOpen(false);
       setSyncState('saved');
       routeToConversation(data.conversation.conversationId);
@@ -141,8 +149,9 @@ export function ClientChatShell({ initialConversationId = null }) {
     event.preventDefault();
     const text = input.trim();
     if (!text || !activeId) return;
+    const requestKey = retryRequest?.text === text ? retryRequest.key : createRequestKey();
     setInput('');
-    const optimistic = { id: `u-${Date.now()}`, role: 'user', text };
+    const optimistic = { id: `u-${requestKey}`, role: 'user', text };
     setMessagesByConversation((current) => ({
       ...current,
       [activeId]: [...(current[activeId]?.filter((message) => message.id !== 'welcome') || []), optimistic],
@@ -151,8 +160,9 @@ export function ClientChatShell({ initialConversationId = null }) {
     try {
       const data = await api(`${CHAT_API}/conversations/${encodeURIComponent(activeId)}`, {
         method: 'POST',
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ text, idempotencyKey: requestKey })
       });
+      setRetryRequest(null);
       setMessagesByConversation((current) => {
         const persisted = (current[activeId] || []).map((message) => message.id === optimistic.id
           ? { ...message, id: data.message.messageId, createdAt: data.message.createdAt }
@@ -165,28 +175,31 @@ export function ClientChatShell({ initialConversationId = null }) {
         } : null;
         return {
           ...current,
-          [activeId]: assistant ? [...persisted, assistant] : persisted
+          [activeId]: assistant ? [...persisted.filter((message) => message.id !== assistant.id), assistant] : persisted
         };
       });
       setConversations((current) => current.map((conversation) => conversation.conversationId === activeId ? {
         ...conversation,
         updatedAt: data.assistant?.createdAt || data.message.createdAt,
-        messageCount: (conversation.messageCount || 0) + (data.assistant ? 2 : 1)
+        messageCount: (conversation.messageCount || 0) + (data.message.reused ? 0 : 1) + (data.assistant && !data.assistant.reused ? 1 : 0)
       } : conversation));
-      setSyncState('saved');
+      setSyncState(data.warning ? 'offline' : 'saved');
     } catch (error) {
       // Never leave an optimistic row looking persisted. Put the text back in
-      // the composer so the user can retry after the connection recovers.
+      // the composer and retain the same request key so a retry cannot create a
+      // second durable message/mission when the original response was lost.
       setMessagesByConversation((current) => ({
         ...current,
         [activeId]: (current[activeId] || []).filter((message) => message.id !== optimistic.id)
       }));
+      setRetryRequest({ key: requestKey, text });
       setInput((current) => current || text);
       if (!handleAuthFailure(error)) setSyncState('offline');
     }
   }
 
   function usePrompt(text) {
+    setRetryRequest(null);
     setInput(text);
   }
 
