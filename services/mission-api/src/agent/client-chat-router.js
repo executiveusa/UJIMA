@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { Router } from 'express';
 import { browserSessionAuth } from './browser-session-auth.js';
 import { createClientChatStore } from './client-chat-store.js';
@@ -33,6 +34,11 @@ function idempotencyKeyFrom(req) {
   return key;
 }
 
+function derivedIdempotencyKey(base, purpose) {
+  const digest = crypto.createHash('sha256').update(`${base}\0${purpose}`).digest('hex');
+  return `derived:${digest}`;
+}
+
 router.get('/conversations', async (req, res) => {
   try {
     const { tenantId, userId } = identity(req);
@@ -46,11 +52,7 @@ router.get('/conversations', async (req, res) => {
 router.post('/conversations', async (req, res) => {
   try {
     const { tenantId, userId } = identity(req);
-    const conversation = await store.createConversation({
-      tenantId,
-      userId,
-      title: req.body?.title || 'New chat'
-    });
+    const conversation = await store.createConversation({ tenantId, userId, title: req.body?.title || 'New chat' });
     return res.status(201).json({ ok: true, conversation });
   } catch (error) {
     return res.status(400).json({ ok: false, error: error.message });
@@ -60,11 +62,7 @@ router.post('/conversations', async (req, res) => {
 router.get('/conversations/:conversationId', async (req, res) => {
   try {
     const { tenantId, userId } = identity(req);
-    const conversation = await store.getConversation({
-      tenantId,
-      userId,
-      conversationId: req.params.conversationId
-    });
+    const conversation = await store.getConversation({ tenantId, userId, conversationId: req.params.conversationId });
     if (!conversation) return res.status(404).json({ ok: false, error: 'NOT_FOUND' });
     return res.json({ ok: true, conversation });
   } catch (error) {
@@ -89,12 +87,7 @@ router.post('/conversations/:conversationId', async (req, res) => {
 
     let routed;
     try {
-      routed = routeFirstMateMission({
-        tenantId,
-        userId,
-        conversationId,
-        sourceMessage: message
-      });
+      routed = routeFirstMateMission({ tenantId, userId, conversationId, sourceMessage: message });
     } catch (routingError) {
       let assistant = null;
       try {
@@ -106,7 +99,7 @@ router.post('/conversations/:conversationId', async (req, res) => {
           role: 'assistant',
           text: 'Failed — I saved your message, but I could not safely route the next step. Nothing was sent, submitted, published, or changed externally.',
           provenanceRefs: [`routing-error:${safeRoutingCode(routingError)}`],
-          idempotencyKey: `${requestKey}:routing-failed`
+          idempotencyKey: derivedIdempotencyKey(requestKey, 'routing-failed')
         });
       } catch {}
       return res.status(202).json({
@@ -127,18 +120,10 @@ router.post('/conversations/:conversationId', async (req, res) => {
         role: 'assistant',
         text: missionAcknowledgement(routed),
         provenanceRefs: [`event:${routed.eventId}`, `mission:${routed.mission.mission_id}`],
-        idempotencyKey: `${requestKey}:assistant`
+        idempotencyKey: derivedIdempotencyKey(requestKey, 'assistant')
       });
-      return res.status(message.reused && assistant.reused ? 200 : 201).json({
-        ok: true,
-        message,
-        assistant,
-        work
-      });
+      return res.status(message.reused && assistant.reused ? 200 : 201).json({ ok: true, message, assistant, work });
     } catch {
-      // Mission creation already succeeded. Do not rewrite that durable truth as
-      // a routing failure just because the client acknowledgement could not be
-      // persisted. A retry with the same request key can safely fill this gap.
       return res.status(202).json({
         ok: true,
         message,
@@ -156,11 +141,7 @@ router.post('/conversations/:conversationId', async (req, res) => {
 router.get('/conversations/:conversationId/export', async (req, res) => {
   try {
     const { tenantId, userId } = identity(req);
-    const session = await store.exportPortableSession({
-      tenantId,
-      userId,
-      conversationId: req.params.conversationId
-    });
+    const session = await store.exportPortableSession({ tenantId, userId, conversationId: req.params.conversationId });
     if (!session) return res.status(404).json({ ok: false, error: 'NOT_FOUND' });
     return res.json({ ok: true, session });
   } catch (error) {
