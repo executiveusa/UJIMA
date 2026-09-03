@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { Router } from 'express';
 import { browserSessionAuth } from './browser-session-auth.js';
 import { createClientChatStore } from './client-chat-store.js';
-import { getClientMissionWorkState, latestConversationWorkState } from './client-work-state.js';
+import { getClientMissionWorkState, latestConversationWorkState, recordClientRoutingFailure } from './client-work-state.js';
 import { missionAcknowledgement, routeFirstMateMission } from './firstmate-mission-router.js';
 
 const router = Router();
@@ -10,21 +10,16 @@ const store = createClientChatStore();
 
 router.use(browserSessionAuth);
 
-function identity(req) {
-  return { tenantId: req.user.tenantId, userId: req.user.sub };
-}
-
+function identity(req) { return { tenantId: req.user.tenantId, userId: req.user.sub }; }
 function safeRoutingCode(error) {
   const message = String(error?.message || '');
   return /^[A-Z0-9_]+$/.test(message) ? message : 'ROUTING_FAILED';
 }
-
 function idempotencyKeyFrom(req) {
   const key = String(req.body?.idempotencyKey || '').trim();
   if (!key) throw new Error('IDEMPOTENCY_KEY_REQUIRED');
   return key;
 }
-
 function derivedIdempotencyKey(base, purpose) {
   const digest = crypto.createHash('sha256').update(`${base}\0${purpose}`).digest('hex');
   return `derived:${digest}`;
@@ -33,11 +28,8 @@ function derivedIdempotencyKey(base, purpose) {
 router.get('/conversations', async (req, res) => {
   try {
     const { tenantId, userId } = identity(req);
-    const conversations = await store.listConversations({ tenantId, userId });
-    return res.json({ ok: true, conversations });
-  } catch (error) {
-    return res.status(500).json({ ok: false, error: error.message });
-  }
+    return res.json({ ok: true, conversations: await store.listConversations({ tenantId, userId }) });
+  } catch (error) { return res.status(500).json({ ok: false, error: error.message }); }
 });
 
 router.post('/conversations', async (req, res) => {
@@ -45,9 +37,7 @@ router.post('/conversations', async (req, res) => {
     const { tenantId, userId } = identity(req);
     const conversation = await store.createConversation({ tenantId, userId, title: req.body?.title || 'New chat' });
     return res.status(201).json({ ok: true, conversation });
-  } catch (error) {
-    return res.status(400).json({ ok: false, error: error.message });
-  }
+  } catch (error) { return res.status(400).json({ ok: false, error: error.message }); }
 });
 
 router.get('/conversations/:conversationId', async (req, res) => {
@@ -56,11 +46,8 @@ router.get('/conversations/:conversationId', async (req, res) => {
     const conversationId = req.params.conversationId;
     const conversation = await store.getConversation({ tenantId, userId, conversationId });
     if (!conversation) return res.status(404).json({ ok: false, error: 'NOT_FOUND' });
-    const work = latestConversationWorkState({ tenantId, userId, conversationId });
-    return res.json({ ok: true, conversation, work });
-  } catch (error) {
-    return res.status(500).json({ ok: false, error: error.message });
-  }
+    return res.json({ ok: true, conversation, work: latestConversationWorkState({ tenantId, userId, conversationId }) });
+  } catch (error) { return res.status(500).json({ ok: false, error: error.message }); }
 });
 
 router.post('/conversations/:conversationId', async (req, res) => {
@@ -68,67 +55,37 @@ router.post('/conversations/:conversationId', async (req, res) => {
     const { tenantId, userId } = identity(req);
     const conversationId = req.params.conversationId;
     const requestKey = idempotencyKeyFrom(req);
-    const message = await store.appendMessage({
-      tenantId,
-      userId,
-      conversationId,
-      role: 'user',
-      text: req.body?.text,
-      provenanceRefs: [],
-      idempotencyKey: requestKey
-    });
+    const message = await store.appendMessage({ tenantId, userId, conversationId, role: 'user', text: req.body?.text, provenanceRefs: [], idempotencyKey: requestKey });
 
     let routed;
     try {
       routed = routeFirstMateMission({ tenantId, userId, conversationId, sourceMessage: message });
     } catch (routingError) {
+      const failure = recordClientRoutingFailure({
+        tenantId, userId, conversationId, sourceMessageId: message.messageId, code: safeRoutingCode(routingError)
+      });
       let assistant = null;
       try {
         assistant = await store.appendMessage({
-          tenantId,
-          userId,
-          actor: 'firstmate',
-          conversationId,
-          role: 'assistant',
+          tenantId, userId, actor: 'firstmate', conversationId, role: 'assistant',
           text: 'Failed — I saved your message, but I could not safely route the next step. Nothing was sent, submitted, published, or changed externally.',
-          provenanceRefs: [`routing-error:${safeRoutingCode(routingError)}`],
+          provenanceRefs: [`routing-error:${safeRoutingCode(routingError)}`, `event:${failure.eventId}`],
           idempotencyKey: derivedIdempotencyKey(requestKey, 'routing-failed')
         });
       } catch {}
-      return res.status(202).json({
-        ok: true,
-        message,
-        assistant,
-        work: { status: 'failed', label: 'Failed', phase: 'routing_failed', area: 'planning', approvalRequired: false, nextAction: 'Try again or ask for a smaller internal planning step.' }
-      });
+      return res.status(202).json({ ok: true, message, assistant, work: failure.projection });
     }
 
-    const work = getClientMissionWorkState({
-      tenantId,
-      userId,
-      conversationId,
-      missionId: routed.mission.mission_id
-    });
+    const work = getClientMissionWorkState({ tenantId, userId, conversationId, missionId: routed.mission.mission_id });
     try {
       const assistant = await store.appendMessage({
-        tenantId,
-        userId,
-        actor: 'firstmate',
-        conversationId,
-        role: 'assistant',
-        text: missionAcknowledgement(routed),
+        tenantId, userId, actor: 'firstmate', conversationId, role: 'assistant', text: missionAcknowledgement(routed),
         provenanceRefs: [`event:${routed.eventId}`, `mission:${routed.mission.mission_id}`],
         idempotencyKey: derivedIdempotencyKey(requestKey, 'assistant')
       });
       return res.status(message.reused && assistant.reused ? 200 : 201).json({ ok: true, message, assistant, work });
     } catch {
-      return res.status(202).json({
-        ok: true,
-        message,
-        assistant: null,
-        work,
-        warning: 'ACKNOWLEDGEMENT_PENDING'
-      });
+      return res.status(202).json({ ok: true, message, assistant: null, work, warning: 'ACKNOWLEDGEMENT_PENDING' });
     }
   } catch (error) {
     const status = error.message === 'CONVERSATION_NOT_FOUND' ? 404 : 400;
@@ -142,9 +99,7 @@ router.get('/conversations/:conversationId/export', async (req, res) => {
     const session = await store.exportPortableSession({ tenantId, userId, conversationId: req.params.conversationId });
     if (!session) return res.status(404).json({ ok: false, error: 'NOT_FOUND' });
     return res.json({ ok: true, session });
-  } catch (error) {
-    return res.status(500).json({ ok: false, error: error.message });
-  }
+  } catch (error) { return res.status(500).json({ ok: false, error: error.message }); }
 });
 
 export default router;
