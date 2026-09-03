@@ -1,0 +1,9 @@
+{
+  "slice":"03-portable-data-model",
+  "state":"MERGE_READY",
+  "public_frontend_touched":false,
+  "private_records_committed":false,
+  "schema_present":true,
+  "all_critical_domains_registered":true,
+  "next_slice":"04-supabase-schema-as-code"
+}
