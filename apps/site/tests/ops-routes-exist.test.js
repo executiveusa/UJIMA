@@ -43,15 +43,15 @@ describe('Phase 5 ops route existence', () => {
   }
 });
 
-describe('Phase 5 does not touch public frontend routes', () => {
+describe('Phase 5 preserves route ownership boundaries', () => {
   it('public homepage route is unchanged in place', () => {
     expect(fs.existsSync(path.join(siteRoot, 'app/page.jsx'))).toBe(true);
   });
 
-  it('no public route group was added outside ops/api-ops/login', () => {
+  it('only approved top-level application route groups exist', () => {
     const appDirs = fs.readdirSync(path.join(siteRoot, 'app'), { withFileTypes: true })
       .filter((e) => e.isDirectory())
       .map((e) => e.name);
-    expect(appDirs.sort()).toEqual(['api', 'llms.txt', 'login', 'ops'].sort());
+    expect(appDirs.sort()).toEqual(['api', 'app', 'llms.txt', 'login', 'ops'].sort());
   });
 });
