@@ -3,9 +3,13 @@ name: Client Chat Slice 03 Persistence
 on:
   pull_request:
     paths:
-      - 'apps/site/lib/client-chat-store.js'
-      - 'apps/site/app/api/client-chat/**'
+      - 'services/mission-api/src/agent/browser-session-auth.js'
+      - 'services/mission-api/src/agent/client-chat-store.js'
+      - 'services/mission-api/src/agent/client-chat-router.js'
+      - 'services/mission-api/src/agent/index.js'
       - 'apps/site/components/ClientChatShell.jsx'
+      - 'apps/site/lib/api.js'
+      - 'apps/site/app/app/**'
       - 'apps/site/tests/client-chat-store.test.js'
       - 'icm/client-chat-loop/03-persistence/**'
       - '.github/workflows/client-chat-slice-03.yml'
@@ -19,5 +23,7 @@ jobs:
         with:
           node-version: 24
       - run: npm ci
-      - name: Run persistence contract tests
+      - name: Run persistence and browser-session contract tests
         run: npx vitest run apps/site/tests/client-chat-store.test.js
+      - name: Build client surface
+        run: npm run build --workspace @asc3nd/site
