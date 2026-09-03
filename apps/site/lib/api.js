@@ -16,7 +16,13 @@ export async function api(path, options = {}) {
   if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(`${API_URL}${path}`, { ...options, headers, cache: 'no-store' });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error || `API error ${res.status}`);
+  if (!res.ok) {
+    const message = typeof body.error === 'string' ? body.error : body.error?.message || `API error ${res.status}`;
+    const error = new Error(message);
+    error.status = res.status;
+    error.body = body;
+    throw error;
+  }
   return body;
 }
 export async function login(email, password) {
