@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { api, clearToken, getToken } from '../lib/api';
 import styles from './ClientChatShell.module.css';
 
 const initialAssistant = {
@@ -8,6 +9,19 @@ const initialAssistant = {
   role: 'assistant',
   text: 'What would you like to work on? I can help with funding, content, follow-up, planning, and results.',
 };
+
+const CHAT_API = '/api/agent/client-chat';
+
+function routeToConversation(conversationId) {
+  window.history.replaceState({}, '', conversationId ? `/app/chat/${conversationId}` : '/app');
+}
+
+function handleAuthFailure(error) {
+  if (error?.status !== 401) return false;
+  clearToken();
+  window.location.href = '/login';
+  return true;
+}
 
 export function ClientChatShell({ initialConversationId = null }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -22,30 +36,37 @@ export function ClientChatShell({ initialConversationId = null }) {
   useEffect(() => {
     let cancelled = false;
     async function boot() {
+      if (!getToken()) {
+        window.location.href = '/login';
+        return;
+      }
       try {
-        const response = await fetch('/api/client-chat/conversations', { cache: 'no-store' });
-        const data = await response.json();
-        if (!data.ok) throw new Error(data.error || 'Unable to load conversations');
+        const data = await api(`${CHAT_API}/conversations`);
         if (cancelled) return;
-        setConversations(data.conversations || []);
-        if (initialConversationId) {
-          setActiveId(initialConversationId);
-        } else if (data.conversations?.[0]?.conversationId) {
-          setActiveId(data.conversations[0].conversationId);
+        const rows = data.conversations || [];
+        setConversations(rows);
+
+        const requested = initialConversationId
+          ? rows.find((conversation) => conversation.conversationId === initialConversationId)
+          : null;
+        const next = requested || rows[0] || null;
+
+        if (next) {
+          setActiveId(next.conversationId);
+          routeToConversation(next.conversationId);
         } else {
-          const created = await fetch('/api/client-chat/conversations', {
+          const created = await api(`${CHAT_API}/conversations`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: 'Today' })
-          }).then((r) => r.json());
-          if (!created.ok) throw new Error(created.error || 'Unable to create conversation');
+          });
           if (cancelled) return;
           setConversations([created.conversation]);
           setActiveId(created.conversation.conversationId);
-          window.history.replaceState({}, '', `/app/chat/${created.conversation.conversationId}`);
+          routeToConversation(created.conversation.conversationId);
         }
         setSyncState('saved');
-      } catch {
+      } catch (error) {
+        if (handleAuthFailure(error)) return;
         if (!cancelled) setSyncState('offline');
       }
     }
@@ -56,10 +77,9 @@ export function ClientChatShell({ initialConversationId = null }) {
   useEffect(() => {
     if (!activeId) return;
     let cancelled = false;
-    fetch(`/api/client-chat/conversations/${encodeURIComponent(activeId)}`, { cache: 'no-store' })
-      .then((r) => r.json())
+    api(`${CHAT_API}/conversations/${encodeURIComponent(activeId)}`)
       .then((data) => {
-        if (cancelled || !data.ok) return;
+        if (cancelled) return;
         const mapped = (data.conversation.messages || []).map((message) => ({
           id: message.messageId,
           role: message.role,
@@ -67,33 +87,53 @@ export function ClientChatShell({ initialConversationId = null }) {
           createdAt: message.createdAt,
         }));
         setMessagesByConversation((current) => ({ ...current, [activeId]: mapped.length ? mapped : [initialAssistant] }));
+        setSyncState('saved');
       })
-      .catch(() => setSyncState('offline'));
+      .catch((error) => {
+        if (!handleAuthFailure(error) && !cancelled) setSyncState('offline');
+      });
     return () => { cancelled = true; };
   }, [activeId]);
 
   async function selectConversation(id) {
     setActiveId(id);
     setSidebarOpen(false);
-    window.history.replaceState({}, '', `/app/chat/${id}`);
+    routeToConversation(id);
   }
 
   async function newChat() {
     try {
-      const data = await fetch('/api/client-chat/conversations', {
+      setSyncState('saving');
+      const data = await api(`${CHAT_API}/conversations`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: 'New chat' })
-      }).then((r) => r.json());
-      if (!data.ok) throw new Error(data.error);
+      });
       setConversations((current) => [data.conversation, ...current]);
       setMessagesByConversation((current) => ({ ...current, [data.conversation.conversationId]: [initialAssistant] }));
       setActiveId(data.conversation.conversationId);
       setSidebarOpen(false);
       setSyncState('saved');
-      window.history.replaceState({}, '', `/app/chat/${data.conversation.conversationId}`);
-    } catch {
-      setSyncState('offline');
+      routeToConversation(data.conversation.conversationId);
+    } catch (error) {
+      if (!handleAuthFailure(error)) setSyncState('offline');
+    }
+  }
+
+  async function exportConversation() {
+    if (!activeId) return;
+    try {
+      const data = await api(`${CHAT_API}/conversations/${encodeURIComponent(activeId)}/export`);
+      const blob = new Blob([JSON.stringify(data.session, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `asc3nd-chat-${activeId}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      if (!handleAuthFailure(error)) setSyncState('offline');
     }
   }
 
@@ -109,20 +149,22 @@ export function ClientChatShell({ initialConversationId = null }) {
     }));
     setSyncState('saving');
     try {
-      const data = await fetch(`/api/client-chat/conversations/${encodeURIComponent(activeId)}`, {
+      const data = await api(`${CHAT_API}/conversations/${encodeURIComponent(activeId)}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: 'user', text })
-      }).then((r) => r.json());
-      if (!data.ok) throw new Error(data.error);
+        body: JSON.stringify({ text })
+      });
       setMessagesByConversation((current) => ({
         ...current,
         [activeId]: (current[activeId] || []).map((message) => message.id === optimistic.id ? { ...message, id: data.message.messageId } : message)
       }));
-      setConversations((current) => current.map((conversation) => conversation.conversationId === activeId ? { ...conversation, updatedAt: data.message.createdAt, messageCount: (conversation.messageCount || 0) + 1 } : conversation));
+      setConversations((current) => current.map((conversation) => conversation.conversationId === activeId ? {
+        ...conversation,
+        updatedAt: data.message.createdAt,
+        messageCount: (conversation.messageCount || 0) + 1
+      } : conversation));
       setSyncState('saved');
-    } catch {
-      setSyncState('offline');
+    } catch (error) {
+      if (!handleAuthFailure(error)) setSyncState('offline');
     }
   }
 
@@ -154,7 +196,7 @@ export function ClientChatShell({ initialConversationId = null }) {
           ))}
         </nav>
         <div className={styles.sidebarFooter}>
-          <a href={activeId ? `/api/client-chat/conversations/${encodeURIComponent(activeId)}/export` : '#'}>Export conversation</a>
+          <button type="button" onClick={exportConversation} disabled={!activeId}>Export conversation</button>
           <a href="/ops">Staff control room</a>
           <a href="/login">Switch account</a>
         </div>
