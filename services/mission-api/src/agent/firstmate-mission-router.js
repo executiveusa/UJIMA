@@ -31,8 +31,6 @@ const CONSEQUENTIAL_PATTERNS = [
 
 const SAFE_INTERNAL_PREFIX = /^(review|analyze|analyse|summarize|summarise|plan|prepare|draft|find|check|audit|research|compare|inspect|report|explain|list|show|identify|recommend|outline|score|qualify|evaluate)\b/i;
 const EXTERNAL_CONTEXT = /\b(public|live|youtube|instagram|facebook|linkedin|tiktok|x|twitter|portal|donor|donors|partner|partners|sponsor|sponsors|mentor|mentors|volunteer|volunteers|family|families|contact|contacts|everyone|people|email|message|dm|domain|dns|production|payment|bank|grant portal)\b/i;
-// A safe-looking verb must never turn an explicit public destination into an
-// internal-only request. These phrases represent disclosure/publishing intent.
 const PUBLIC_DESTINATION = /\b(show|list|display|put|add|feature|place)\b[^.]{0,160}(\bpublicly\b|\b(on|to|onto)\s+(our\s+)?(facebook|instagram|linkedin|youtube|tiktok|x|twitter|website|site|portal)\b|\b(public|live)\s+(website|site|page|portal)\b)/i;
 
 function id(prefix) { return `${prefix}_${crypto.randomBytes(10).toString('hex')}`; }
@@ -95,7 +93,7 @@ export function routeFirstMateMission({ tenantId, userId, conversationId, source
     allowed_capabilities: [...route.capabilities], denied_capabilities: [...ALWAYS_DENIED],
     acceptance_gates: ['Use only approved tenant-scoped ICM context and source evidence.', route.gate, 'No external or consequential action may execute in Slice 04.'],
     evidence_requirements: [`event:${sourceMessage.eventId}`, `icm/tenants/${tenantId}`, 'client_mission routing event receipt'],
-    approval: approvalForRisk(riskTier), status: riskTier === 3 ? 'needs_you' : 'working', created_at: new Date().toISOString(),
+    approval: approvalForRisk(riskTier), status: riskTier === 3 ? 'needs_you' : 'routed', created_at: new Date().toISOString(),
     rollback_note: 'Slice 04 creates an internal route only; no consequential external action is executed.',
     icm_context_refs: [`icm/tenants/${tenantId}`], artifact_refs: []
   };
@@ -108,5 +106,5 @@ export function routeFirstMateMission({ tenantId, userId, conversationId, source
 export function missionAcknowledgement({ mission, route }) {
   if (!mission || !route) throw new Error('MISSION_ROUTE_REQUIRED');
   if (mission.status === 'needs_you') return `Needs you — I can prepare the ${route.label} work, but the final action you asked for requires approval. Nothing has been sent, submitted, published, paid, deployed, migrated, deleted, or changed externally.`;
-  return `Working — your request is saved and routed into ${route.label}. Execution has not started yet; nothing has been sent, submitted, published, or changed externally.`;
+  return `Saved — your request is routed into ${route.label}. Execution has not started yet; nothing has been sent, submitted, published, or changed externally.`;
 }
