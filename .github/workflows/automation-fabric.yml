@@ -1,0 +1,17 @@
+name: Automation Fabric Contract
+on:
+  pull_request:
+    paths: ['control-plane/automation-fabric.json','scripts/verify-automation-fabric.mjs','.github/workflows/automation-fabric.yml']
+  push:
+    branches: [main]
+    paths: ['control-plane/automation-fabric.json','scripts/verify-automation-fabric.mjs','.github/workflows/automation-fabric.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: node scripts/verify-automation-fabric.mjs
