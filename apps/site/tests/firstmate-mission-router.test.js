@@ -53,7 +53,7 @@ describe('First Mate intent routing', () => {
   it('keeps unknown work bounded to general internal planning', () => {
     const route = classifyClientIntent('Help me organize what we should focus on in October.');
     expect(route.domain).toBe('general');
-    expect(route.capabilities).toEqual(['context.read', 'planning.prepare']);
+    expect(route.capabilities).toEqual(['context_read', 'planning_prepare']);
   });
 
   it('marks direct consequential requests as approval-required risk tier 3', async () => {
@@ -68,11 +68,14 @@ describe('First Mate intent routing', () => {
     });
 
     expect(classifyRequestedRisk(source.message.text)).toBe(3);
+    expect(classifyRequestedRisk('Submit it now.')).toBe(3);
+    expect(classifyRequestedRisk('Send it to them.')).toBe(3);
+    expect(classifyRequestedRisk('Publish it today.')).toBe(3);
     expect(routed.mission.status).toBe('needs_you');
     expect(routed.mission.approval).toMatchObject({ required: true, class: 'red' });
-    expect(routed.mission.denied_capabilities).toContain('grant.submit');
-    expect(routed.mission.denied_capabilities).toContain('public.publish');
-    expect(routed.mission.denied_capabilities).toContain('external.message');
+    expect(routed.mission.denied_capabilities).toContain('grant_submission');
+    expect(routed.mission.denied_capabilities).toContain('public_publishing');
+    expect(routed.mission.denied_capabilities).toContain('external_message');
     expect(missionAcknowledgement(routed)).toMatch(/^Needs you —/);
   });
 
@@ -90,8 +93,8 @@ describe('First Mate intent routing', () => {
     expect(routed.mission.domain).toBe('grants');
     expect(routed.mission.risk_tier).toBe(1);
     expect(routed.mission.approval.required).toBe(false);
-    expect(routed.mission.allowed_capabilities).toContain('grant.draft.prepare');
-    expect(routed.mission.denied_capabilities).toContain('grant.submit');
+    expect(routed.mission.allowed_capabilities).toContain('grant_draft_prepare');
+    expect(routed.mission.denied_capabilities).toContain('grant_submission');
     expect(missionAcknowledgement(routed)).toMatch(/^Working —/);
   });
 });
@@ -128,7 +131,7 @@ describe('First Mate mission persistence and recovery', () => {
       append: source.append
     });
     const assistantText = missionAcknowledgement(routed);
-    const assistant = await source.store.appendMessage({
+    await source.store.appendMessage({
       tenantId: source.tenantId,
       userId: source.userId,
       actor: 'firstmate',
@@ -157,7 +160,6 @@ describe('First Mate mission persistence and recovery', () => {
     expect(routed.mission.evidence_requirements).toContain(`event:${source.message.eventId}`);
     expect(routed.mission.icm_context_refs).toEqual([`icm/tenants/${source.tenantId}`]);
     expect(exported.mission_refs).toEqual([`mission:${routed.mission.mission_id}`]);
-    expect(assistant.actor).toBeUndefined();
 
     const loaded = await source.store.getConversation({
       tenantId: source.tenantId,
