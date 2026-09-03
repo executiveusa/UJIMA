@@ -1,0 +1,25 @@
+{
+  "version":"1.0.0",
+  "goal":"A cold agent can recover architecture, ownership, safety, execution and current ASC3ND backend state without hidden chat context.",
+  "required_read_order":[
+    "REPO_SCOPE.md",
+    "repo-boundary.json",
+    "AGENTS.md",
+    "control-plane/domain-federation.json",
+    "control-plane/automation-fabric.json"
+  ],
+  "external_authorities":[
+    {"repo":"executiveusa/asc3nd-supabase-landing","role":"ASC3ND database migrations/RLS/recovery contract","required_main_sha":"d2bd7447cf42d0e0bd46533e3bc8ede08454d578"},
+    {"repo":"executiveusa/grant-agent","role":"grant-domain engine","required_merged_pr":6,"required_merge_sha":"0e57deb9086c6b3a94cb46d620fd9cfdc06d3bdf"}
+  ],
+  "must_recover":["one boss per truth","ICM is canonical tenant truth","public frontend frozen during backend loop","builder cannot final approve","consequential actions human-gated","no invented claims","no cross-tenant memory","no direct main","rollback required"],
+  "proof_questions":[
+    {"id":"truth-owner","answer":"ICM"},
+    {"id":"grant-engine","answer":"executiveusa/grant-agent"},
+    {"id":"database-owner","answer":"executiveusa/asc3nd-supabase-landing"},
+    {"id":"frontend-mutation-during-loop","answer":false},
+    {"id":"builder-final-approval","answer":false},
+    {"id":"tier3-human-approval","answer":true}
+  ],
+  "pass_condition":"all required files exist; all proof answers match locked contracts; external authority SHAs are recorded; no private data or secrets are required to recover the model"
+}
