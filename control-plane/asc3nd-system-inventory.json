@@ -1,0 +1,68 @@
+{
+  "version": "1.0.0",
+  "tenant_id": "asc3nd",
+  "public_frontend_freeze": true,
+  "systems": [
+    {
+      "name": "Social Purpose OS",
+      "owner": "executiveusa/ascend-social-purpose-agentic-systems-",
+      "canonical_for": ["ICM workflows", "cross-domain policy", "approvals", "audit", "typed handoffs", "automation contracts"],
+      "not_canonical_for": ["public website", "grant-domain implementation", "brand master assets"]
+    },
+    {
+      "name": "ASC3ND Brand Site",
+      "owner": "executiveusa/asc3nd-brand-site",
+      "canonical_for": ["current public brand frontend", "website participation intake", "staff/admin website surface"],
+      "state": "frozen_for_redesign_and_features"
+    },
+    {
+      "name": "ASC3ND legacy frontend",
+      "owner": "executiveusa/asc3nd-frontend-website-",
+      "canonical_for": [],
+      "state": "legacy_event_rollback_candidate"
+    },
+    {
+      "name": "Grant Agent",
+      "owner": "executiveusa/grant-agent",
+      "canonical_for": ["grant discovery", "eligibility", "fit", "requirements", "grant drafts", "grant obligations"],
+      "not_canonical_for": ["organization identity", "general CRM", "consent"]
+    },
+    {
+      "name": "Supabase operational data",
+      "owner": "ASC3ND data-contract owner repositories plus current Supabase project",
+      "canonical_for": ["live operational rows while hosted"],
+      "rule": "database is operational state, not the only portable copy of truth"
+    },
+    {
+      "name": "Vercel",
+      "owner": "deployment provider",
+      "canonical_for": ["runtime deployment metadata only"],
+      "rule": "never canonical for organization truth or recovery"
+    }
+  ],
+  "migration_priorities": [
+    "portable ICM tenant brain",
+    "file-based domain manifests",
+    "schema-as-code and RLS",
+    "backup/export/restore proof",
+    "identity-consent-participation contracts",
+    "federated domain-engine handoffs",
+    "GitHub-native automation",
+    "cold-agent recovery proof"
+  ],
+  "known_collision_risks": [
+    "multiple historical ASC3ND frontend repositories",
+    "website-facing intake and operational backend can drift",
+    "hosted database can become hidden sole copy if exports are not tested",
+    "domain agents can accidentally create duplicate organization truth",
+    "public-site changes can leak into backend work unless freeze is enforced"
+  ],
+  "owner_resolution": {
+    "organization_truth": "ICM tenant package in Social Purpose OS",
+    "live_database_rows": "Supabase operational store governed by versioned contracts",
+    "public_frontend": "executiveusa/asc3nd-brand-site",
+    "grant_domain": "executiveusa/grant-agent",
+    "deployment_runtime": "provider-specific and replaceable",
+    "source_code_and_migrations": "GitHub"
+  }
+}
