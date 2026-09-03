@@ -3,7 +3,7 @@ import { registerArtifact } from '@asc3nd/core/artifacts';
 import { requestApproval, updateApprovalStatus, APPROVAL_STATES } from '@asc3nd/core/approval-lifecycle';
 import { createClientChatStore } from '../../../services/mission-api/src/agent/client-chat-store.js';
 import { latestConversationWorkState, transitionClientMissionState } from '../../../services/mission-api/src/agent/client-work-state.js';
-import { routeFirstMateMission } from '../../../services/mission-api/src/agent/firstmate-mission-router.js';
+import { CLIENT_MISSION_EVENT, routeFirstMateMission } from '../../../services/mission-api/src/agent/firstmate-mission-router.js';
 
 function eventHarness({ sameTimestamp = false } = {}) {
   const events = [];
@@ -88,6 +88,42 @@ describe('Slice 05 critic regressions', () => {
     });
   });
 
+  it('preserves route-only truth for legacy Slice 04 working handoffs after reload', async () => {
+    const harness = eventHarness();
+    const store = createClientChatStore({ read: harness.read, append: harness.append });
+    const tenantId = 'asc3nd';
+    const userId = 'u1';
+    const conversation = await store.createConversation({ tenantId, userId, title: 'Legacy routed truth' });
+    const missionId = 'msn_legacy_route_only';
+    harness.append({
+      tenantId,
+      type: CLIENT_MISSION_EVENT,
+      actor: 'firstmate',
+      subject: missionId,
+      payload: {
+        execution_mode: 'route-only',
+        execution_state: 'routed',
+        handoff: {
+          version: '1.0.0',
+          mission_id: missionId,
+          tenant_id: tenantId,
+          user_id: userId,
+          conversation_id: conversation.conversationId,
+          domain: 'grants',
+          status: 'working',
+          approval: { required: false, class: 'green' }
+        }
+      }
+    });
+
+    expect(latestConversationWorkState({ tenantId, userId, conversationId: conversation.conversationId, read: harness.read })).toMatchObject({
+      id: missionId,
+      phase: 'routed',
+      status: null,
+      label: null
+    });
+  });
+
   it('rejects Ready when proof is only a routing or state event rather than a result-bearing proof', async () => {
     const harness = eventHarness();
     const store = createClientChatStore({ read: harness.read, append: harness.append });
@@ -118,7 +154,7 @@ describe('Slice 05 critic regressions', () => {
       append: harness.append
     })).toThrow('READY_RESULT_PROOF_REQUIRED');
 
-    const artifact = registerArtifact({ tenantId, runId: null, kind: 'grant-fit', title: 'Approved result packet', storagePath: 'proof/result.json', approvalStatus: 'approved', createdBy: 'critic' });
+    const artifact = registerArtifact({ tenantId, runId: null, kind: 'grant-fit', title: 'Approved result packet', storagePath: 'proof/result.json', approvalStatus: 'approved', sourceRefs: [`mission:${routed.mission.mission_id}`], createdBy: 'critic' });
     expect(transitionClientMissionState({
       tenantId,
       userId,
@@ -130,6 +166,30 @@ describe('Slice 05 critic regressions', () => {
       read: harness.read,
       append: harness.append
     }).projection.status).toBe('ready');
+  });
+
+  it('rejects an approved artifact that belongs to another mission', async () => {
+    const harness = eventHarness();
+    const store = createClientChatStore({ read: harness.read, append: harness.append });
+    const tenantId = 'asc3nd';
+    const userId = 'u1';
+    const conversation = await store.createConversation({ tenantId, userId, title: 'Mission proof scope' });
+    const first = await routeMessage({ store, ...harness, tenantId, userId, conversationId: conversation.conversationId, text: 'Prepare a grant research plan.' });
+    const second = await routeMessage({ store, ...harness, tenantId, userId, conversationId: conversation.conversationId, text: 'Prepare next week’s content plan.' });
+    transitionClientMissionState({ tenantId, userId, conversationId: conversation.conversationId, missionId: second.mission.mission_id, to: 'working', idempotencyKey: 'state-cross-proof-start-12345678', read: harness.read, append: harness.append });
+    const artifact = registerArtifact({ tenantId, runId: null, kind: 'grant-fit', title: 'First mission artifact', storagePath: 'proof/first-mission.json', approvalStatus: 'approved', sourceRefs: [`mission:${first.mission.mission_id}`], createdBy: 'critic' });
+
+    expect(() => transitionClientMissionState({
+      tenantId,
+      userId,
+      conversationId: conversation.conversationId,
+      missionId: second.mission.mission_id,
+      to: 'ready',
+      proofRefs: [`artifact:${artifact.id}`],
+      idempotencyKey: 'state-cross-proof-ready-12345678',
+      read: harness.read,
+      append: harness.append
+    })).toThrow('PROOF_ARTIFACT_MISSION_MISMATCH');
   });
 
   it('preserves approval gating across Needs you -> Failed -> recovery to Working', async () => {
