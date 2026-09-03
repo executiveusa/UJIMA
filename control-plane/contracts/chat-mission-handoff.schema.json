@@ -31,7 +31,7 @@
         "approved_at": {"type": ["string","null"], "format": "date-time"}
       }
     },
-    "status": {"enum": ["working","needs_you","ready","failed","delivered"]},
+    "status": {"enum": ["routed","working","needs_you","ready","failed","delivered"]},
     "created_at": {"type": "string", "format": "date-time"},
     "rollback_note": {"type": ["string","null"], "maxLength": 2000},
     "icm_context_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
