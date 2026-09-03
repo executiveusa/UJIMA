@@ -164,6 +164,13 @@ export function ClientChatShell({ initialConversationId = null }) {
       } : conversation));
       setSyncState('saved');
     } catch (error) {
+      // Never leave an optimistic row looking persisted. Put the text back in
+      // the composer so the user can retry after the connection recovers.
+      setMessagesByConversation((current) => ({
+        ...current,
+        [activeId]: (current[activeId] || []).filter((message) => message.id !== optimistic.id)
+      }));
+      setInput((current) => current || text);
       if (!handleAuthFailure(error)) setSyncState('offline');
     }
   }
