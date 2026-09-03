@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "tenant_id": "asc3nd",
+  "organization": {
+    "name": "ASC3ND Collective",
+    "location": "Everett, Washington",
+    "public_story": "Community Cuts for Kids brought young people, families, volunteers, and local supporters into the same space. ASC3ND is building from that day with more ways for young people to find guidance, practice life skills, and connect with opportunity.",
+    "public_thesis": "Community came through. Now we build forward."
+  },
+  "approved_routes": ["family", "updates", "volunteer", "mentor", "supplies", "sponsor", "partner"],
+  "truth_rules": {
+    "unknowns_remain_unknown": true,
+    "similar_names_do_not_auto_merge": true,
+    "event_identity_does_not_equal_marketing_consent": true,
+    "no_biometric_identity": true,
+    "no_sensitive_trait_inference": true,
+    "human_approval_for_consequential_external_actions": true
+  },
+  "known_unknowns": [
+    "legal_tax_status unless current approved evidence is attached",
+    "current operating budget unless approved evidence is attached",
+    "board roster unless approved evidence is attached",
+    "unverified impact metrics or participant counts",
+    "unverified partner commitments",
+    "unverified founder quotes",
+    "unverified donation destination"
+  ],
+  "provenance_policy": "Every material fact must reference an approved source path, URL, database query, transcript timestamp, or human approval record.",
+  "sensitive_data_policy": "Private youth/family data stays outside public Git and is referenced through governed operational identifiers and encrypted/private backups only."
+}

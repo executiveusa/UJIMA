@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "facts": [
+    {
+      "key": "organization.name",
+      "value": "ASC3ND Collective",
+      "source": "executiveusa/asc3nd-brand-site:lib/site-content.ts",
+      "status": "public_source"
+    },
+    {
+      "key": "organization.location",
+      "value": "Everett, Washington",
+      "source": "executiveusa/asc3nd-brand-site:lib/site-content.ts",
+      "status": "public_source"
+    },
+    {
+      "key": "organization.public_thesis",
+      "value": "Community came through. Now we build forward.",
+      "source": "executiveusa/asc3nd-brand-site:lib/site-content.ts",
+      "status": "public_source"
+    },
+    {
+      "key": "organization.public_story",
+      "source": "executiveusa/asc3nd-brand-site:lib/site-content.ts",
+      "status": "public_source"
+    },
+    {
+      "key": "consent_and_identity_rules",
+      "source": "ASC3ND Social Purpose OS approved architecture and database policy",
+      "status": "owner_policy"
+    }
+  ],
+  "rule": "No downstream engine may silently upgrade unknown or inferred values into canonical facts."
+}
