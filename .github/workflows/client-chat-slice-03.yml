@@ -14,11 +14,16 @@ on:
       - 'icm/client-chat-loop/03-persistence/**'
       - '.github/workflows/client-chat-slice-03.yml'
 
+permissions:
+  contents: read
+
 jobs:
   persistence:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
