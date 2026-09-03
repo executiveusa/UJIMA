@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const c=JSON.parse(fs.readFileSync('handoffs/asc3nd-backend-integration-freeze.json','utf8'));
+if(c.status!=='backend-integration-frozen'||c.tenant!=='asc3nd') throw Error('freeze status invalid');
+if(c.public_frontend.repo!=='executiveusa/asc3nd-brand-site'||!c.public_frontend.main_sha||c.public_frontend.mutation_allowed_in_backend_loop!==false) throw Error('frontend freeze violation');
+if(c.database_contract.repo!=='executiveusa/asc3nd-supabase-landing'||!c.database_contract.main_sha||c.database_contract.supabase_project_ref!=='cyxdevcjycmffhmwxojh') throw Error('database authority missing');
+for(const k of ['community_signup_rpc','participation_table','identity_table','routes_table','consent_table','followup_table','memory_table']) if(!c.canonical_interfaces[k]) throw Error(`canonical interface missing: ${k}`);
+if(c.canonical_interfaces.sheet_role!=='mirror only') throw Error('sheet promoted to truth');
+for(const k of ['phase10_production_verified','asc3nd_org_cutover_verified','automatic_sheet_sync_verified','outbound_email_verified']) if(c.deployment_truth[k]!==false) throw Error(`unverified deployment claim: ${k}`);
+if(c.frontend_contract.may_not_become_secondary_truth_store!==true||c.frontend_contract.may_not_infer_success_from_queued_or_intended_state!==true||c.frontend_contract.design_redesign_in_scope!==false) throw Error('frontend handoff boundary invalid');
+if(!c.rollback?.public_frontend||!c.rollback?.database_contract) throw Error('rollback contract missing');
+console.log('ASC3ND_BACKEND_INTEGRATION_FREEZE_OK');

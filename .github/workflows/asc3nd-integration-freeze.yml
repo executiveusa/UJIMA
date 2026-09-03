@@ -1,0 +1,17 @@
+name: ASC3ND Backend Integration Freeze
+on:
+  pull_request:
+    paths: ['handoffs/asc3nd-backend-integration-freeze.json','handoffs/ASC3ND-BACKEND-HANDOFF.md','scripts/verify-asc3nd-integration-freeze.mjs','.github/workflows/asc3nd-integration-freeze.yml']
+  push:
+    branches: [main]
+    paths: ['handoffs/asc3nd-backend-integration-freeze.json','handoffs/ASC3ND-BACKEND-HANDOFF.md','scripts/verify-asc3nd-integration-freeze.mjs','.github/workflows/asc3nd-integration-freeze.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: node scripts/verify-asc3nd-integration-freeze.mjs
