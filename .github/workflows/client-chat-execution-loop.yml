@@ -1,0 +1,41 @@
+name: Client Chat Execution Loop Guard
+
+on:
+  pull_request:
+    paths:
+      - 'control-plane/client-chat-execution-loop.json'
+      - 'scripts/verify-client-chat-loop.mjs'
+      - 'docs/CLIENT-CHAT-SLICE-CHECKPOINT.md'
+      - 'icm/client-chat-loop/**'
+      - '.github/workflows/client-chat-execution-loop.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'control-plane/client-chat-execution-loop.json'
+      - 'scripts/verify-client-chat-loop.mjs'
+      - 'docs/CLIENT-CHAT-SLICE-CHECKPOINT.md'
+      - 'icm/client-chat-loop/**'
+      - '.github/workflows/client-chat-execution-loop.yml'
+
+jobs:
+  loop-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify serialized client-chat loop
+        run: node scripts/verify-client-chat-loop.mjs
+      - name: Verify public frontend was not touched
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          files="$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD)"
+          if echo "$files" | grep -E '^apps/brand-site/|^asc3nd-brand-site/' >/dev/null; then
+            echo 'Public frontend mutation detected.' >&2
+            exit 1
+          fi

@@ -1,0 +1,94 @@
+{
+  "version": "1.0.0",
+  "decision": "chat_first_client_surface_public_frontend_frozen",
+  "references": {
+    "popebot": "https://github.com/stephengpope/thepopebot",
+    "netlify_site_id": "9ebe01e5-21cf-492d-a091-29dad057f91d",
+    "netlify_project": "asc3nd-social-purpose-os",
+    "public_frontend_repository": "executiveusa/asc3nd-brand-site",
+    "control_plane_repository": "executiveusa/ascend-social-purpose-agentic-systems-"
+  },
+  "boundaries": {
+    "client_surface": "/app/*",
+    "staff_admin_surface": "/ops/*",
+    "public_frontend": {
+      "state": "frozen",
+      "forbidden_without_explicit_owner_approval": ["redesign", "copy_change", "style_change", "layout_change", "feature_addition", "production_frontend_migration"]
+    },
+    "popebot_role": "reference_and_reuse_source_not_system_of_record",
+    "icm_role": "canonical_organizational_truth_and_recoverable_mission_memory"
+  },
+  "laws": {
+    "one_slice_one_branch_one_pr": true,
+    "no_direct_main": true,
+    "fresh_main_before_every_slice": true,
+    "builder_cannot_final_approve": true,
+    "completion_requires_evidence": true,
+    "no_false_ready_state": true,
+    "public_frontend_freeze_overrides_ui_work": true,
+    "one_boss_per_truth": true,
+    "consequential_actions_require_policy_approved_human_authorization": true
+  },
+  "quality_stack": {
+    "unlazy": ["acceptance_ledger_before_build", "runnable_gates", "reverify_after_work", "evidence_only_completion"],
+    "ponytail": ["inspect_before_add", "reuse_existing_components", "native_platform_before_new_dependency", "no_safety_removal_for_less_code"],
+    "ralphy": ["bounded_engineering_only", "isolated_branch_or_worktree", "tests_enabled", "no_direct_main", "no_dangerous_permission_modes"],
+    "humanizer": ["late_stage_client_prose_only", "facts_locked_first", "no_claim_invention"],
+    "claude_seo": ["visibility_lane_only", "not_required_for_shell_only_slices", "no_truth_ownership"],
+    "emilkowalski_skills": ["client_facing_interaction_review", "mobile_first", "motion_only_when_useful", "clarity_over_decoration"],
+    "gauntlet_loop": ["fresh_critic", "named_comparable_bar", "binary_pass_or_revise", "no_self_approval"]
+  },
+  "slice_cycle": {
+    "preflight": [
+      "read_repo_scope_agents_and_current_icm",
+      "refresh_main",
+      "check_open_pr_overlap_and_merge_conflicts",
+      "read_previous_slice_checkpoint",
+      "write_acceptance_ledger",
+      "run_ponytail_reuse_check"
+    ],
+    "build": [
+      "create_isolated_slice_branch",
+      "change_owned_paths_only",
+      "run_targeted_tests",
+      "run_full_required_ci",
+      "reverify_acceptance_ledger"
+    ],
+    "stop_and_review": [
+      "stop_after_slice_implementation",
+      "generate_checkpoint",
+      "run_emil_review_when_ui_changed",
+      "run_humanizer_when_client_prose_changed",
+      "run_claude_seo_only_when_visibility_changed",
+      "run_fresh_gauntlet",
+      "inspect_diff_for_scope_drift",
+      "inspect_public_frontend_freeze",
+      "inspect_secrets_and_private_data",
+      "inspect_mergeability_and_conflicts"
+    ],
+    "decision": {
+      "pass": ["open_or_update_slice_pr", "require_green_checks", "merge_exactly_one_slice_pr", "refresh_main", "write_merge_sha_to_checkpoint", "kick_next_slice"],
+      "fail": ["do_not_merge", "record_failure", "repair_same_slice", "rerun_checks", "repeat_stop_and_review"]
+    }
+  },
+  "slices": [
+    {"id":"01","name":"popebot-extraction-and-chat-contract","outcome":"documented reusable PopeBot patterns plus typed chat/session/mission boundaries"},
+    {"id":"02","name":"chat-shell-v1","outcome":"mobile-first /app chat shell with conversations, message stream and composer"},
+    {"id":"03","name":"conversation-and-icm-persistence","outcome":"tenant/user/thread/message/artifact/approval persistence with portable ICM recovery trail"},
+    {"id":"04","name":"first-mate-mission-router","outcome":"chat intent routes bounded missions across at least grants, content and CRM without exposing agent complexity"},
+    {"id":"05","name":"working-needs-you-ready","outcome":"truthful mission state model with evidence-backed Ready and explicit blockers"},
+    {"id":"06","name":"artifacts-and-approvals-in-chat","outcome":"inline artifact preview/download and shared approval state with /ops"},
+    {"id":"07","name":"netlify-preview-and-full-gauntlet","outcome":"working Netlify preview, mobile/accessibility proof, specialist reviews, fresh Gauntlet and clean final PR"}
+  ],
+  "required_checkpoint_fields": [
+    "slice_id", "base_main_sha", "branch", "acceptance_gates", "reuse_decision", "files_changed", "tests", "specialist_reviews", "gauntlet", "scope_drift", "public_frontend_freeze", "secrets_private_data", "merge_conflicts", "rollback", "result", "merge_sha", "next_slice"
+  ],
+  "hard_stop_conditions": [
+    "human_fact_required",
+    "credential_or_access_blocker_that_prevents_verification",
+    "policy_or_risk_ambiguity",
+    "public_frontend_unlock_required",
+    "consequential_external_action_requires_human_approval"
+  ],
+  "auto_continue_rule": "After each slice, the loop must stop internally for review. If every required gate passes and no hard-stop condition exists, it continues automatically to the next slice from freshly merged main."
+}

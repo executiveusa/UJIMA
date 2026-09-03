@@ -1,0 +1,9 @@
+{
+  "stage": "00-enforcement",
+  "state": "READY_FOR_REVIEW",
+  "public_frontend": "FROZEN",
+  "slices_defined": 7,
+  "auto_continue_after_verified_checkpoint": true,
+  "builder_final_approval": false,
+  "next": "01-popebot-extraction-and-chat-contract"
+}
