@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { emitEvent, readEvents } from '@asc3nd/core/events';
 
 const EVENT_TYPE = 'client_chat';
+const MISSION_EVENT_TYPE = 'client_mission';
 const id = (prefix) => `${prefix}_${crypto.randomBytes(10).toString('hex')}`;
 
 function normalizeEvents(events) {
@@ -30,16 +31,29 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
     }) || null;
   }
 
-  function appendChatEvent({ tenantId, userId, kind, conversationId, payload = {} }) {
+  function appendChatEvent({ tenantId, userId, actor = userId, kind, conversationId, payload = {} }) {
     return append({
       tenantId,
       type: EVENT_TYPE,
       version: '1',
       correlationId: id('corr'),
-      actor: userId,
+      actor,
       subject: conversationId || null,
       payload: { kind, conversationId, userId, ...payload }
     });
+  }
+
+  function missionRefsForConversation(tenantId, conversationId, userId) {
+    const events = read({ tenantId, type: MISSION_EVENT_TYPE }) || [];
+    const refs = events
+      .filter((event) => !event.type || event.type === MISSION_EVENT_TYPE)
+      .map((event) => event.payload?.handoff)
+      .filter((mission) => mission
+        && mission.tenant_id === tenantId
+        && mission.user_id === userId
+        && mission.conversation_id === conversationId)
+      .map((mission) => `mission:${mission.mission_id}`);
+    return [...new Set(refs)];
   }
 
   async function createConversation({ tenantId, userId, title = 'New chat' }) {
@@ -62,7 +76,7 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
     };
   }
 
-  async function appendMessage({ tenantId, conversationId, role, text, userId, provenanceRefs = [] }) {
+  async function appendMessage({ tenantId, conversationId, role, text, userId, actor = userId, provenanceRefs = [] }) {
     if (!['user', 'assistant', 'system'].includes(role)) throw new Error('INVALID_ROLE');
     const normalizedText = String(text || '').trim();
     if (!normalizedText) throw new Error('MESSAGE_REQUIRED');
@@ -77,6 +91,7 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
     const event = appendChatEvent({
       tenantId,
       userId,
+      actor,
       kind: 'message.added',
       conversationId,
       payload: { messageId, role, text: normalizedText, provenanceRefs: uniqueProvenance }
@@ -137,7 +152,8 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
         text: event.payload.text,
         provenanceRefs: event.payload.provenanceRefs || [],
         createdAt: event.createdAt,
-        eventId: event.id
+        eventId: event.id,
+        actor: event.actor || null
       }));
 
     return {
@@ -169,7 +185,7 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
         content_ref: `event:${message.eventId}`,
         provenance_refs: message.provenanceRefs
       })),
-      mission_refs: [],
+      mission_refs: missionRefsForConversation(tenantId, conversationId, userId),
       artifact_refs: [],
       approval_refs: [],
       icm_context_refs: [`icm/tenants/${tenantId}`],
