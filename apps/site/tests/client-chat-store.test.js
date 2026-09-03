@@ -153,4 +153,17 @@ describe('browser session auth', () => {
     expect(verifyBrowserSessionToken(`${expiredBody}.${expiredSig}`)).toBeNull();
     expect(verifyBrowserSessionToken(sign({ tenantId: 'asc3nd' }))).toBeNull();
   });
+
+  it('fails closed when JWT_SECRET is unset or left at the known development fallback', () => {
+    const payload = { sub: 'u1', tenantId: 'asc3nd', exp: Date.now() + 60_000 };
+    const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const fallbackSig = crypto.createHmac('sha256', 'dev-only-secret-change-me').update(body).digest('base64url');
+    const fallbackToken = `${body}.${fallbackSig}`;
+
+    delete process.env.JWT_SECRET;
+    expect(verifyBrowserSessionToken(fallbackToken)).toBeNull();
+
+    process.env.JWT_SECRET = 'dev-only-secret-change-me';
+    expect(verifyBrowserSessionToken(fallbackToken)).toBeNull();
+  });
 });
