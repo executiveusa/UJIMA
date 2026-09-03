@@ -23,15 +23,35 @@ function handleAuthFailure(error) {
   return true;
 }
 
+function createRequestKey() {
+  const random = globalThis.crypto?.randomUUID?.();
+  if (random) return `chat-${random}`;
+  return `chat-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+function clientWorkLabel(work) {
+  if (!work) return null;
+  if (work.status === 'needs_you') return 'Needs your approval';
+  if (work.status === 'failed') return 'Blocked — needs input';
+  if (work.status === 'ready') return 'Ready';
+  if (work.status === 'delivered') return 'Delivered';
+  if (work.phase === 'routed') return 'Working — routed';
+  return 'In production / scheduled';
+}
+
 export function ClientChatShell({ initialConversationId = null }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeId, setActiveId] = useState(initialConversationId);
   const [input, setInput] = useState('');
+  const [retryRequest, setRetryRequest] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [messagesByConversation, setMessagesByConversation] = useState({});
+  const [workByConversation, setWorkByConversation] = useState({});
   const [syncState, setSyncState] = useState('loading');
 
   const messages = useMemo(() => messagesByConversation[activeId] || [initialAssistant], [messagesByConversation, activeId]);
+  const activeWork = workByConversation[activeId] || null;
+  const activeWorkLabel = clientWorkLabel(activeWork);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,6 +117,7 @@ export function ClientChatShell({ initialConversationId = null }) {
 
   async function selectConversation(id) {
     setActiveId(id);
+    setRetryRequest(null);
     setSidebarOpen(false);
     routeToConversation(id);
   }
@@ -111,6 +132,7 @@ export function ClientChatShell({ initialConversationId = null }) {
       setConversations((current) => [data.conversation, ...current]);
       setMessagesByConversation((current) => ({ ...current, [data.conversation.conversationId]: [initialAssistant] }));
       setActiveId(data.conversation.conversationId);
+      setRetryRequest(null);
       setSidebarOpen(false);
       setSyncState('saved');
       routeToConversation(data.conversation.conversationId);
@@ -141,8 +163,9 @@ export function ClientChatShell({ initialConversationId = null }) {
     event.preventDefault();
     const text = input.trim();
     if (!text || !activeId) return;
+    const requestKey = retryRequest?.text === text ? retryRequest.key : createRequestKey();
     setInput('');
-    const optimistic = { id: `u-${Date.now()}`, role: 'user', text };
+    const optimistic = { id: `u-${requestKey}`, role: 'user', text };
     setMessagesByConversation((current) => ({
       ...current,
       [activeId]: [...(current[activeId]?.filter((message) => message.id !== 'welcome') || []), optimistic],
@@ -151,31 +174,54 @@ export function ClientChatShell({ initialConversationId = null }) {
     try {
       const data = await api(`${CHAT_API}/conversations/${encodeURIComponent(activeId)}`, {
         method: 'POST',
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ text, idempotencyKey: requestKey })
       });
-      setMessagesByConversation((current) => ({
-        ...current,
-        [activeId]: (current[activeId] || []).map((message) => message.id === optimistic.id ? { ...message, id: data.message.messageId } : message)
-      }));
+      if (data.warning === 'ACKNOWLEDGEMENT_PENDING') {
+        // The durable user message and mission already exist. Keep the exact
+        // request key and text available so the user can safely retry only the
+        // missing acknowledgement without creating a second mission.
+        setRetryRequest({ key: requestKey, text });
+        setInput(text);
+      } else {
+        setRetryRequest(null);
+      }
+      if (data.work) {
+        setWorkByConversation((current) => ({ ...current, [activeId]: data.work }));
+      }
+      setMessagesByConversation((current) => {
+        const persisted = (current[activeId] || []).map((message) => message.id === optimistic.id
+          ? { ...message, id: data.message.messageId, createdAt: data.message.createdAt }
+          : message);
+        const assistant = data.assistant ? {
+          id: data.assistant.messageId,
+          role: 'assistant',
+          text: data.assistant.text,
+          createdAt: data.assistant.createdAt,
+        } : null;
+        return {
+          ...current,
+          [activeId]: assistant ? [...persisted.filter((message) => message.id !== assistant.id), assistant] : persisted
+        };
+      });
       setConversations((current) => current.map((conversation) => conversation.conversationId === activeId ? {
         ...conversation,
-        updatedAt: data.message.createdAt,
-        messageCount: (conversation.messageCount || 0) + 1
+        updatedAt: data.assistant?.createdAt || data.message.createdAt,
+        messageCount: (conversation.messageCount || 0) + (data.message.reused ? 0 : 1) + (data.assistant && !data.assistant.reused ? 1 : 0)
       } : conversation));
-      setSyncState('saved');
+      setSyncState(data.warning ? 'offline' : 'saved');
     } catch (error) {
-      // Never leave an optimistic row looking persisted. Put the text back in
-      // the composer so the user can retry after the connection recovers.
       setMessagesByConversation((current) => ({
         ...current,
         [activeId]: (current[activeId] || []).filter((message) => message.id !== optimistic.id)
       }));
+      setRetryRequest({ key: requestKey, text });
       setInput((current) => current || text);
       if (!handleAuthFailure(error)) setSyncState('offline');
     }
   }
 
   function usePrompt(text) {
+    setRetryRequest(null);
     setInput(text);
   }
 
@@ -192,11 +238,7 @@ export function ClientChatShell({ initialConversationId = null }) {
         <button className={styles.newChat} onClick={newChat}>+ New chat</button>
         <nav className={styles.conversationList}>
           {conversations.map((item) => (
-            <button
-              key={item.conversationId}
-              className={`${styles.conversation} ${activeId === item.conversationId ? styles.active : ''}`}
-              onClick={() => selectConversation(item.conversationId)}
-            >
+            <button key={item.conversationId} className={`${styles.conversation} ${activeId === item.conversationId ? styles.active : ''}`} onClick={() => selectConversation(item.conversationId)}>
               <strong>{item.title || 'Conversation'}</strong>
               <span>{item.messageCount ? `${item.messageCount} message${item.messageCount === 1 ? '' : 's'}` : 'Ready when you are'}</span>
             </button>
@@ -214,11 +256,9 @@ export function ClientChatShell({ initialConversationId = null }) {
       <section className={styles.chat}>
         <header className={styles.header}>
           <button className={styles.menuButton} onClick={() => setSidebarOpen(true)} aria-label="Open conversations">☰</button>
-          <div>
-            <strong>ASC3ND</strong>
-            <span>Ask for an outcome. The system handles the route.</span>
-          </div>
+          <div><strong>ASC3ND</strong><span>Ask for an outcome. The system handles the route.</span></div>
           <span className={styles.previewBadge}>{syncState === 'offline' ? 'Offline' : syncState === 'saving' ? 'Saving' : syncState === 'loading' ? 'Loading' : 'Saved'}</span>
+          {activeWorkLabel && <span className={styles.workBadge} role="status" aria-label="Current work status">{activeWorkLabel}</span>}
         </header>
 
         <div className={styles.messages} aria-live="polite">
@@ -245,13 +285,7 @@ export function ClientChatShell({ initialConversationId = null }) {
 
         <div className={styles.composerWrap}>
           <form className={styles.composer} onSubmit={submit}>
-            <textarea
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask ASC3ND anything…"
-              rows={1}
-              aria-label="Message ASC3ND"
-            />
+            <textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask ASC3ND anything…" rows={1} aria-label="Message ASC3ND" />
             <button type="submit" disabled={!input.trim() || !activeId} aria-label="Send message">↑</button>
           </form>
           <small>Conversation history is saved. Important actions will stop for review when they need you.</small>

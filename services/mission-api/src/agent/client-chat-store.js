@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { emitEvent, readEvents } from '@asc3nd/core/events';
 
 const EVENT_TYPE = 'client_chat';
+const MISSION_EVENT_TYPE = 'client_mission';
 const id = (prefix) => `${prefix}_${crypto.randomBytes(10).toString('hex')}`;
 
 function normalizeEvents(events) {
@@ -13,6 +14,30 @@ function normalizeEvents(events) {
 function cleanTitle(value) {
   const title = String(value || 'New chat').trim() || 'New chat';
   return title.slice(0, 160);
+}
+
+function cleanIdempotencyKey(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const key = String(value).trim();
+  if (!/^[A-Za-z0-9._:-]{8,120}$/.test(key)) throw new Error('INVALID_IDEMPOTENCY_KEY');
+  return key;
+}
+
+function requestRef(value) {
+  if (!value) return null;
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function messageFromEvent(event, reused = false) {
+  return {
+    messageId: event.payload.messageId,
+    role: event.payload.role,
+    text: event.payload.text,
+    provenanceRefs: event.payload.provenanceRefs || [],
+    createdAt: event.createdAt,
+    eventId: event.id,
+    reused
+  };
 }
 
 export function createClientChatStore({ read = readEvents, append = emitEvent } = {}) {
@@ -30,16 +55,41 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
     }) || null;
   }
 
-  function appendChatEvent({ tenantId, userId, kind, conversationId, payload = {} }) {
+  function findIdempotentMessage(events, { conversationId, userId, role, requestReference }) {
+    if (!requestReference) return null;
+    return events.find((event) => {
+      const payload = event.payload || {};
+      return payload.kind === 'message.added'
+        && payload.conversationId === conversationId
+        && payload.userId === userId
+        && payload.role === role
+        && payload.requestRef === requestReference;
+    }) || null;
+  }
+
+  function appendChatEvent({ tenantId, userId, actor = userId, kind, conversationId, payload = {} }) {
     return append({
       tenantId,
       type: EVENT_TYPE,
       version: '1',
       correlationId: id('corr'),
-      actor: userId,
+      actor,
       subject: conversationId || null,
       payload: { kind, conversationId, userId, ...payload }
     });
+  }
+
+  function missionRefsForConversation(tenantId, conversationId, userId) {
+    const events = read({ tenantId, type: MISSION_EVENT_TYPE }) || [];
+    const refs = events
+      .filter((event) => !event.type || event.type === MISSION_EVENT_TYPE)
+      .map((event) => event.payload?.handoff)
+      .filter((mission) => mission
+        && mission.tenant_id === tenantId
+        && mission.user_id === userId
+        && mission.conversation_id === conversationId)
+      .map((mission) => `mission:${mission.mission_id}`);
+    return [...new Set(refs)];
   }
 
   async function createConversation({ tenantId, userId, title = 'New chat' }) {
@@ -62,7 +112,16 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
     };
   }
 
-  async function appendMessage({ tenantId, conversationId, role, text, userId, provenanceRefs = [] }) {
+  async function appendMessage({
+    tenantId,
+    conversationId,
+    role,
+    text,
+    userId,
+    actor = userId,
+    provenanceRefs = [],
+    idempotencyKey = null
+  }) {
     if (!['user', 'assistant', 'system'].includes(role)) throw new Error('INVALID_ROLE');
     const normalizedText = String(text || '').trim();
     if (!normalizedText) throw new Error('MESSAGE_REQUIRED');
@@ -72,23 +131,36 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
     const events = eventsForTenant(tenantId);
     if (!findOwnedConversation(events, conversationId, userId)) throw new Error('CONVERSATION_NOT_FOUND');
 
+    const requestKey = cleanIdempotencyKey(idempotencyKey);
+    const requestReference = requestRef(requestKey);
+    const existing = findIdempotentMessage(events, {
+      conversationId,
+      userId,
+      role,
+      requestReference
+    });
+    if (existing) {
+      if (String(existing.payload.text || '').trim() !== normalizedText) throw new Error('IDEMPOTENCY_CONFLICT');
+      return messageFromEvent(existing, true);
+    }
+
     const messageId = id('msg');
     const uniqueProvenance = [...new Set((provenanceRefs || []).filter(Boolean).map(String))];
     const event = appendChatEvent({
       tenantId,
       userId,
+      actor,
       kind: 'message.added',
       conversationId,
-      payload: { messageId, role, text: normalizedText, provenanceRefs: uniqueProvenance }
+      payload: {
+        messageId,
+        role,
+        text: normalizedText,
+        provenanceRefs: uniqueProvenance,
+        requestRef: requestReference
+      }
     });
-    return {
-      messageId,
-      role,
-      text: normalizedText,
-      provenanceRefs: uniqueProvenance,
-      createdAt: event.createdAt,
-      eventId: event.id
-    };
+    return messageFromEvent(event, false);
   }
 
   async function listConversations({ tenantId, userId }) {
@@ -137,7 +209,8 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
         text: event.payload.text,
         provenanceRefs: event.payload.provenanceRefs || [],
         createdAt: event.createdAt,
-        eventId: event.id
+        eventId: event.id,
+        actor: event.actor || null
       }));
 
     return {
@@ -169,7 +242,7 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
         content_ref: `event:${message.eventId}`,
         provenance_refs: message.provenanceRefs
       })),
-      mission_refs: [],
+      mission_refs: missionRefsForConversation(tenantId, conversationId, userId),
       artifact_refs: [],
       approval_refs: [],
       icm_context_refs: [`icm/tenants/${tenantId}`],

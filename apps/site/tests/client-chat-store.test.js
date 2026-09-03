@@ -2,11 +2,14 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import express from 'express';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createClientChatStore } from '../../../services/mission-api/src/agent/client-chat-store.js';
 import { browserSessionAuth, verifyBrowserSessionToken } from '../../../services/mission-api/src/agent/browser-session-auth.js';
+import clientChatRouter from '../../../services/mission-api/src/agent/client-chat-router.js';
 
 let dataDir;
+let httpServer = null;
 
 beforeEach(() => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'asc3nd-chat-'));
@@ -14,7 +17,11 @@ beforeEach(() => {
   process.env.JWT_SECRET = 'client-chat-test-secret-1234567890';
 });
 
-afterEach(() => {
+afterEach(async () => {
+  if (httpServer) {
+    await new Promise((resolve) => httpServer.close(resolve));
+    httpServer = null;
+  }
   fs.rmSync(dataDir, { recursive: true, force: true });
   delete process.env.DATA_DIR;
   delete process.env.JWT_SECRET;
@@ -24,6 +31,20 @@ function sign(payload) {
   const body = Buffer.from(JSON.stringify({ ...payload, exp: Date.now() + 60_000 })).toString('base64url');
   const sig = crypto.createHmac('sha256', process.env.JWT_SECRET).update(body).digest('base64url');
   return `${body}.${sig}`;
+}
+
+async function startClientChatServer() {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/agent/client-chat', clientChatRouter);
+  return new Promise((resolve, reject) => {
+    const server = app.listen(0, '127.0.0.1', () => {
+      httpServer = server;
+      const address = server.address();
+      resolve(`http://127.0.0.1:${address.port}`);
+    });
+    server.on('error', reject);
+  });
 }
 
 describe('client chat persistence', () => {
@@ -123,12 +144,66 @@ describe('client chat persistence', () => {
     expect(loaded.messages.map((message) => message.text)).toEqual(['first', 'second']);
   });
 
-  it('keeps failed-send recovery behavior in the client shell', () => {
+  it('keeps failed-send recovery, idempotency, and visible work state in the client shell', () => {
     const shellPath = path.resolve(process.cwd(), 'apps/site/components/ClientChatShell.jsx');
     const shell = fs.readFileSync(shellPath, 'utf8');
     expect(shell).toContain("filter((message) => message.id !== optimistic.id)");
     expect(shell).toContain('setInput((current) => current || text)');
     expect(shell).toContain("setSyncState('offline')");
+    expect(shell).toContain('idempotencyKey: requestKey');
+    expect(shell).toContain('setRetryRequest({ key: requestKey, text })');
+    expect(shell).toContain('setWorkByConversation');
+    expect(shell).toContain('Current work status');
+  });
+
+  it('returns the same message, mission, and acknowledgement across an HTTP retry', async () => {
+    const baseUrl = await startClientChatServer();
+    const token = sign({ sub: 'u1', tenantId: 'asc3nd', role: 'owner' });
+    const headers = {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json'
+    };
+
+    const createResponse = await fetch(`${baseUrl}/api/agent/client-chat/conversations`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ title: 'HTTP retry' })
+    });
+    expect(createResponse.status).toBe(201);
+    const created = await createResponse.json();
+    const conversationId = created.conversation.conversationId;
+    const body = JSON.stringify({
+      text: 'Find three grants worth pursuing.',
+      idempotencyKey: 'chat-http-retry-12345678'
+    });
+
+    const firstResponse = await fetch(`${baseUrl}/api/agent/client-chat/conversations/${conversationId}`, {
+      method: 'POST',
+      headers,
+      body
+    });
+    expect(firstResponse.status).toBe(201);
+    const first = await firstResponse.json();
+
+    const retryResponse = await fetch(`${baseUrl}/api/agent/client-chat/conversations/${conversationId}`, {
+      method: 'POST',
+      headers,
+      body
+    });
+    expect(retryResponse.status).toBe(200);
+    const retry = await retryResponse.json();
+
+    expect(retry.message.messageId).toBe(first.message.messageId);
+    expect(retry.message.reused).toBe(true);
+    expect(retry.work.id).toBe(first.work.id);
+    expect(retry.assistant.messageId).toBe(first.assistant.messageId);
+    expect(retry.assistant.reused).toBe(true);
+
+    const exportResponse = await fetch(`${baseUrl}/api/agent/client-chat/conversations/${conversationId}/export`, { headers });
+    expect(exportResponse.status).toBe(200);
+    const exported = await exportResponse.json();
+    expect(exported.session.messages).toHaveLength(2);
+    expect(exported.session.mission_refs).toEqual([`mission:${first.work.id}`]);
   });
 });
 
