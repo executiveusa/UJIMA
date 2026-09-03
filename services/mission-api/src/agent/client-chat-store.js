@@ -23,6 +23,11 @@ function cleanIdempotencyKey(value) {
   return key;
 }
 
+function requestRef(value) {
+  if (!value) return null;
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
 function messageFromEvent(event, reused = false) {
   return {
     messageId: event.payload.messageId,
@@ -50,15 +55,15 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
     }) || null;
   }
 
-  function findIdempotentMessage(events, { conversationId, userId, role, idempotencyKey }) {
-    if (!idempotencyKey) return null;
+  function findIdempotentMessage(events, { conversationId, userId, role, requestReference }) {
+    if (!requestReference) return null;
     return events.find((event) => {
       const payload = event.payload || {};
       return payload.kind === 'message.added'
         && payload.conversationId === conversationId
         && payload.userId === userId
         && payload.role === role
-        && payload.idempotencyKey === idempotencyKey;
+        && payload.requestRef === requestReference;
     }) || null;
   }
 
@@ -127,11 +132,12 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
     if (!findOwnedConversation(events, conversationId, userId)) throw new Error('CONVERSATION_NOT_FOUND');
 
     const requestKey = cleanIdempotencyKey(idempotencyKey);
+    const requestReference = requestRef(requestKey);
     const existing = findIdempotentMessage(events, {
       conversationId,
       userId,
       role,
-      idempotencyKey: requestKey
+      requestReference
     });
     if (existing) {
       if (String(existing.payload.text || '').trim() !== normalizedText) throw new Error('IDEMPOTENCY_CONFLICT');
@@ -151,7 +157,7 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
         role,
         text: normalizedText,
         provenanceRefs: uniqueProvenance,
-        idempotencyKey: requestKey
+        requestRef: requestReference
       }
     });
     return messageFromEvent(event, false);
