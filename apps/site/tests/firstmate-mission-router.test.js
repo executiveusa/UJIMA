@@ -1,0 +1,188 @@
+import { describe, expect, it } from 'vitest';
+import { createClientChatStore } from '../../../services/mission-api/src/agent/client-chat-store.js';
+import {
+  CLIENT_MISSION_EVENT,
+  classifyClientIntent,
+  classifyRequestedRisk,
+  missionAcknowledgement,
+  routeFirstMateMission
+} from '../../../services/mission-api/src/agent/firstmate-mission-router.js';
+
+function eventHarness() {
+  const events = [];
+  let sequence = 0;
+  const read = ({ tenantId, type } = {}) => events.filter((event) => {
+    if (tenantId && event.tenantId !== tenantId) return false;
+    if (type && event.type !== type) return false;
+    return true;
+  });
+  const append = (event) => {
+    sequence += 1;
+    const row = {
+      id: `evt-${sequence}`,
+      createdAt: new Date(1_800_000_000_000 + sequence).toISOString(),
+      ...event
+    };
+    events.push(row);
+    return row;
+  };
+  return { events, read, append };
+}
+
+async function createSourceMessage({ tenantId = 'asc3nd', userId = 'u1', text = 'Find three grants worth pursuing.' } = {}) {
+  const harness = eventHarness();
+  const store = createClientChatStore({ read: harness.read, append: harness.append });
+  const conversation = await store.createConversation({ tenantId, userId, title: 'Mission routing' });
+  const message = await store.appendMessage({
+    tenantId,
+    userId,
+    conversationId: conversation.conversationId,
+    role: 'user',
+    text
+  });
+  return { ...harness, store, conversation, message, tenantId, userId };
+}
+
+describe('First Mate intent routing', () => {
+  it('routes the minimum required grants, content, and CRM lanes deterministically', () => {
+    expect(classifyClientIntent('Find three grants worth pursuing this month.').domain).toBe('grants');
+    expect(classifyClientIntent('Prepare next week’s content plan and captions.').domain).toBe('content');
+    expect(classifyClientIntent('Who needs a follow-up from our volunteers and partners?').domain).toBe('crm');
+  });
+
+  it('keeps unknown work bounded to general internal planning', () => {
+    const route = classifyClientIntent('Help me organize what we should focus on in October.');
+    expect(route.domain).toBe('general');
+    expect(route.capabilities).toEqual(['context.read', 'planning.prepare']);
+  });
+
+  it('marks direct consequential requests as approval-required risk tier 3', async () => {
+    const source = await createSourceMessage({ text: 'Submit the strongest grant application today.' });
+    const routed = routeFirstMateMission({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      conversationId: source.conversation.conversationId,
+      sourceMessage: source.message,
+      read: source.read,
+      append: source.append
+    });
+
+    expect(classifyRequestedRisk(source.message.text)).toBe(3);
+    expect(routed.mission.status).toBe('needs_you');
+    expect(routed.mission.approval).toMatchObject({ required: true, class: 'red' });
+    expect(routed.mission.denied_capabilities).toContain('grant.submit');
+    expect(routed.mission.denied_capabilities).toContain('public.publish');
+    expect(routed.mission.denied_capabilities).toContain('external.message');
+    expect(missionAcknowledgement(routed)).toMatch(/^Needs you —/);
+  });
+
+  it('allows internal grant preparation without granting submission authority', async () => {
+    const source = await createSourceMessage({ text: 'Prepare a draft grant application and eligibility checklist.' });
+    const routed = routeFirstMateMission({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      conversationId: source.conversation.conversationId,
+      sourceMessage: source.message,
+      read: source.read,
+      append: source.append
+    });
+
+    expect(routed.mission.domain).toBe('grants');
+    expect(routed.mission.risk_tier).toBe(1);
+    expect(routed.mission.approval.required).toBe(false);
+    expect(routed.mission.allowed_capabilities).toContain('grant.draft.prepare');
+    expect(routed.mission.denied_capabilities).toContain('grant.submit');
+    expect(missionAcknowledgement(routed)).toMatch(/^Working —/);
+  });
+});
+
+describe('First Mate mission persistence and recovery', () => {
+  it('persists one mission per originating message and reuses it on duplicate routing', async () => {
+    const source = await createSourceMessage();
+    const args = {
+      tenantId: source.tenantId,
+      userId: source.userId,
+      conversationId: source.conversation.conversationId,
+      sourceMessage: source.message,
+      read: source.read,
+      append: source.append
+    };
+    const first = routeFirstMateMission(args);
+    const second = routeFirstMateMission(args);
+    const missionEvents = source.events.filter((event) => event.type === CLIENT_MISSION_EVENT);
+
+    expect(second.reused).toBe(true);
+    expect(second.mission.mission_id).toBe(first.mission.mission_id);
+    expect(missionEvents).toHaveLength(1);
+    expect(missionEvents[0].payload.source_message_event_ref).toBe(`event:${source.message.eventId}`);
+  });
+
+  it('records a contract-shaped handoff and returns it to portable chat recovery', async () => {
+    const source = await createSourceMessage({ text: 'Prepare next week’s content plan.' });
+    const routed = routeFirstMateMission({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      conversationId: source.conversation.conversationId,
+      sourceMessage: source.message,
+      read: source.read,
+      append: source.append
+    });
+    const assistantText = missionAcknowledgement(routed);
+    const assistant = await source.store.appendMessage({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      actor: 'firstmate',
+      conversationId: source.conversation.conversationId,
+      role: 'assistant',
+      text: assistantText,
+      provenanceRefs: [`event:${routed.eventId}`, `mission:${routed.mission.mission_id}`]
+    });
+    const exported = await source.store.exportPortableSession({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      conversationId: source.conversation.conversationId
+    });
+
+    expect(routed.mission).toMatchObject({
+      version: '1.0.0',
+      tenant_id: source.tenantId,
+      user_id: source.userId,
+      conversation_id: source.conversation.conversationId,
+      originating_message_id: source.message.messageId,
+      domain: 'content',
+      risk_tier: 1,
+      status: 'working'
+    });
+    expect(routed.mission.acceptance_gates.length).toBeGreaterThan(0);
+    expect(routed.mission.evidence_requirements).toContain(`event:${source.message.eventId}`);
+    expect(routed.mission.icm_context_refs).toEqual([`icm/tenants/${source.tenantId}`]);
+    expect(exported.mission_refs).toEqual([`mission:${routed.mission.mission_id}`]);
+    expect(assistant.actor).toBeUndefined();
+
+    const loaded = await source.store.getConversation({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      conversationId: source.conversation.conversationId
+    });
+    expect(loaded.messages.at(-1)).toMatchObject({
+      role: 'assistant',
+      actor: 'firstmate',
+      text: assistantText
+    });
+    expect(assistantText).not.toMatch(/repository|model|provider|worker|mcp|docker/i);
+  });
+
+  it('fails closed when source governance evidence is missing or malformed', () => {
+    const base = {
+      tenantId: 'asc3nd',
+      userId: 'u1',
+      conversationId: 'chat-1',
+      read: () => [],
+      append: () => { throw new Error('should not append'); }
+    };
+
+    expect(() => routeFirstMateMission({ ...base, sourceMessage: null })).toThrow('ORIGINATING_MESSAGE_REQUIRED');
+    expect(() => routeFirstMateMission({ ...base, sourceMessage: { messageId: 'm1', eventId: 'e1', role: 'assistant', text: 'x' } })).toThrow('ORIGINATING_MESSAGE_MUST_BE_USER');
+    expect(() => routeFirstMateMission({ ...base, sourceMessage: { messageId: 'm1', eventId: 'e1', role: 'user', text: '   ' } })).toThrow('OBJECTIVE_REQUIRED');
+  });
+});
