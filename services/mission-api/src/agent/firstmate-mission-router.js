@@ -1,0 +1,219 @@
+import crypto from 'node:crypto';
+import { emitEvent, readEvents } from '@asc3nd/core/events';
+
+export const CLIENT_MISSION_EVENT = 'client_mission';
+
+const ALWAYS_DENIED = [
+  'external.email',
+  'external.message',
+  'public.publish',
+  'grant.submit',
+  'payment.execute',
+  'legal.attest',
+  'production.deploy',
+  'dns.change',
+  'database.production_migrate',
+  'delete.execute',
+  'cross_tenant.access',
+  'unrestricted.execution'
+];
+
+const ROUTES = [
+  {
+    domain: 'grants',
+    pattern: /\b(grant|grants|funding|funder|funders|foundation|foundations|rfp|proposal)\b/i,
+    capabilities: ['context.read', 'grant.discover', 'grant.eligibility', 'grant.fit', 'grant.draft.prepare'],
+    gate: 'Grant recommendations require source provenance and eligibility checks before they can be marked ready.',
+    label: 'funding'
+  },
+  {
+    domain: 'content',
+    pattern: /\b(content|post|posts|reel|reels|caption|captions|social|campaign|calendar|story|stories)\b/i,
+    capabilities: ['context.read', 'content.plan', 'content.draft.prepare'],
+    gate: 'Public-facing facts and claims must remain tied to approved organizational context before publishing.',
+    label: 'content'
+  },
+  {
+    domain: 'crm',
+    pattern: /\b(follow[- ]?up|contact|contacts|family|families|mentor|mentors|volunteer|volunteers|sponsor|sponsors|partner|partners|donor|donors|relationship|relationships)\b/i,
+    capabilities: ['context.read', 'crm.followup.analyze', 'crm.draft.prepare'],
+    gate: 'Consent and relationship context must be checked before any future outreach can be approved.',
+    label: 'follow-up'
+  },
+  {
+    domain: 'seo',
+    pattern: /\b(seo|search|google|schema|visibility|ranking|rankings|discoverability)\b/i,
+    capabilities: ['context.read', 'seo.audit', 'seo.recommend'],
+    gate: 'Visibility recommendations must distinguish observed evidence from proposed changes.',
+    label: 'search visibility'
+  },
+  {
+    domain: 'analytics',
+    pattern: /\b(analytics|metric|metrics|results|performance|conversion|conversions|report|reporting|outcome|outcomes)\b/i,
+    capabilities: ['context.read', 'analytics.read', 'analytics.summarize'],
+    gate: 'Results must be reported from available evidence without inventing missing measurements.',
+    label: 'results'
+  },
+  {
+    domain: 'engineering',
+    pattern: /\b(website|web site|app|application|code|bug|bugs|technical|engineering|api|integration)\b/i,
+    capabilities: ['context.read', 'engineering.inspect', 'engineering.plan'],
+    gate: 'Engineering work remains inspect/plan only until a separately governed implementation mission is authorized.',
+    label: 'technical planning'
+  }
+];
+
+const CONSEQUENTIAL_PATTERNS = [
+  /\b(submit|file)\b[^.]{0,80}\b(grant|application|proposal)\b/i,
+  /\b(send|email|message|text|call)\b[^.]{0,120}\b(donor|partner|sponsor|mentor|volunteer|family|families|contact|contacts|them|everyone|people)\b/i,
+  /\b(publish|schedule|post)\b[^.]{0,80}\b(now|today|live|public|facebook|instagram|linkedin|social|website|site|this|it)\b/i,
+  /\b(pay|purchase|charge|transfer|refund)\b/i,
+  /\b(sign|attest|accept)\b[^.]{0,100}\b(agreement|terms|legal|form|filing|application)\b/i,
+  /\bdeploy\b/i,
+  /\b(dns|domain)\b[^.]{0,80}\b(change|update|point|switch|move)\b/i,
+  /\b(migrate|migration)\b[^.]{0,80}\b(database|production|data)\b/i,
+  /\b(delete|destroy|purge|erase)\b/i
+];
+
+function id(prefix) {
+  return `${prefix}_${crypto.randomBytes(10).toString('hex')}`;
+}
+
+function normalizeObjective(text) {
+  const objective = String(text || '').trim();
+  if (!objective) throw new Error('OBJECTIVE_REQUIRED');
+  if (objective.length > 2000) throw new Error('OBJECTIVE_TOO_LONG');
+  return objective;
+}
+
+export function classifyClientIntent(text) {
+  const objective = normalizeObjective(text);
+  return ROUTES.find((route) => route.pattern.test(objective)) || {
+    domain: 'general',
+    capabilities: ['context.read', 'planning.prepare'],
+    gate: 'The next step must stay bounded to internal planning until a specific governed domain route is selected.',
+    label: 'planning'
+  };
+}
+
+export function classifyRequestedRisk(text) {
+  const objective = normalizeObjective(text);
+  return CONSEQUENTIAL_PATTERNS.some((pattern) => pattern.test(objective)) ? 3 : 1;
+}
+
+function approvalForRisk(riskTier) {
+  if (riskTier === 3) {
+    return {
+      required: true,
+      class: 'red',
+      approval_id: null,
+      approved_by: null,
+      approved_at: null
+    };
+  }
+  return {
+    required: false,
+    class: 'green',
+    approval_id: null,
+    approved_by: null,
+    approved_at: null
+  };
+}
+
+function existingMissionForMessage({ tenantId, userId, conversationId, messageId, read = readEvents }) {
+  const events = read({ tenantId, type: CLIENT_MISSION_EVENT }) || [];
+  for (const event of events) {
+    if (event.type && event.type !== CLIENT_MISSION_EVENT) continue;
+    const mission = event.payload?.handoff;
+    if (!mission) continue;
+    if (mission.tenant_id !== tenantId) continue;
+    if (mission.user_id !== userId) continue;
+    if (mission.conversation_id !== conversationId) continue;
+    if (mission.originating_message_id !== messageId) continue;
+    return { mission, eventId: event.id };
+  }
+  return null;
+}
+
+export function routeFirstMateMission({
+  tenantId,
+  userId,
+  conversationId,
+  sourceMessage,
+  read = readEvents,
+  append = emitEvent
+}) {
+  if (!tenantId) throw new Error('TENANT_REQUIRED');
+  if (!userId) throw new Error('USER_REQUIRED');
+  if (!conversationId) throw new Error('CONVERSATION_REQUIRED');
+  if (!sourceMessage?.messageId) throw new Error('ORIGINATING_MESSAGE_REQUIRED');
+  if (!sourceMessage?.eventId) throw new Error('ORIGINATING_MESSAGE_EVIDENCE_REQUIRED');
+  if (sourceMessage.role !== 'user') throw new Error('ORIGINATING_MESSAGE_MUST_BE_USER');
+
+  const objective = normalizeObjective(sourceMessage.text);
+  const previous = existingMissionForMessage({
+    tenantId,
+    userId,
+    conversationId,
+    messageId: sourceMessage.messageId,
+    read
+  });
+  if (previous) return { ...previous, reused: true, route: classifyClientIntent(objective) };
+
+  const route = classifyClientIntent(objective);
+  const riskTier = classifyRequestedRisk(objective);
+  const missionId = id('msn');
+  const createdAt = new Date().toISOString();
+  const handoff = {
+    version: '1.0.0',
+    mission_id: missionId,
+    tenant_id: tenantId,
+    user_id: userId,
+    conversation_id: conversationId,
+    originating_message_id: sourceMessage.messageId,
+    objective,
+    domain: route.domain,
+    risk_tier: riskTier,
+    allowed_capabilities: [...route.capabilities],
+    denied_capabilities: [...ALWAYS_DENIED],
+    acceptance_gates: [
+      'Use only approved tenant-scoped ICM context and source evidence.',
+      route.gate,
+      'No external or consequential action may execute in Slice 04.'
+    ],
+    evidence_requirements: [
+      `event:${sourceMessage.eventId}`,
+      `icm/tenants/${tenantId}`,
+      'client_mission routing event receipt'
+    ],
+    approval: approvalForRisk(riskTier),
+    status: riskTier === 3 ? 'needs_you' : 'working',
+    created_at: createdAt,
+    rollback_note: 'Slice 04 creates an internal route only; no consequential external action is executed.',
+    icm_context_refs: [`icm/tenants/${tenantId}`],
+    artifact_refs: []
+  };
+
+  const event = append({
+    tenantId,
+    type: CLIENT_MISSION_EVENT,
+    version: '1',
+    actor: 'firstmate',
+    subject: missionId,
+    payload: {
+      handoff,
+      source_message_event_ref: `event:${sourceMessage.eventId}`,
+      execution_mode: 'route-only'
+    }
+  });
+
+  return { mission: handoff, eventId: event.id, reused: false, route };
+}
+
+export function missionAcknowledgement({ mission, route }) {
+  if (!mission || !route) throw new Error('MISSION_ROUTE_REQUIRED');
+  if (mission.status === 'needs_you') {
+    return `Needs you — I can prepare the ${route.label} work, but the final action you asked for requires approval. Nothing has been sent, submitted, published, paid, deployed, migrated, deleted, or changed externally.`;
+  }
+  return `Working — I routed this into ${route.label}. I’m preparing the next bounded step from approved organizational context; nothing has been sent, submitted, published, or changed externally.`;
+}
