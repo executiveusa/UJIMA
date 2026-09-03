@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://asc3nd.org/schemas/portable-record.schema.json",
+  "title":"ASC3ND Portable Record Envelope",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["version","tenant_id","domain","record_id","data","provenance","updated_at"],
+  "properties":{
+    "version":{"const":"1.0"},
+    "tenant_id":{"const":"asc3nd"},
+    "domain":{"enum":["people","relationships","consents","participation","grants","content","followups","evidence","metrics","approvals","audit"]},
+    "record_id":{"type":"string","minLength":1},
+    "data":{"type":"object"},
+    "provenance":{"type":"array","minItems":1,"items":{"type":"string","minLength":1}},
+    "updated_at":{"type":"string","format":"date-time"},
+    "sensitivity":{"enum":["public","internal","restricted"]}
+  }
+}

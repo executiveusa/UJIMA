@@ -1,0 +1,9 @@
+{
+  "version":"1.0.0",
+  "tenant_id":"asc3nd",
+  "record_schema":"schemas/asc3nd/portable-record.schema.json",
+  "domains":["people","relationships","consents","participation","grants","content","followups","evidence","metrics","approvals","audit"],
+  "storage_law":"schema and safe fixtures may live in Git; restricted exports require private encrypted storage and are referenced by digest/receipt only",
+  "provenance_required":true,
+  "portable_restore_target":"PostgreSQL/Supabase-compatible operational store"
+}
