@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { Router } from 'express';
 import { browserSessionAuth } from './browser-session-auth.js';
 import { createClientChatStore } from './client-chat-store.js';
+import { getClientMissionWorkState, latestConversationWorkState } from './client-work-state.js';
 import { missionAcknowledgement, routeFirstMateMission } from './firstmate-mission-router.js';
 
 const router = Router();
@@ -11,16 +12,6 @@ router.use(browserSessionAuth);
 
 function identity(req) {
   return { tenantId: req.user.tenantId, userId: req.user.sub };
-}
-
-function clientWorkProjection(mission) {
-  return {
-    id: mission.mission_id,
-    status: mission.status,
-    phase: mission.status === 'needs_you' ? 'approval_required' : 'routed',
-    area: mission.domain,
-    approvalRequired: mission.approval.required
-  };
 }
 
 function safeRoutingCode(error) {
@@ -62,9 +53,11 @@ router.post('/conversations', async (req, res) => {
 router.get('/conversations/:conversationId', async (req, res) => {
   try {
     const { tenantId, userId } = identity(req);
-    const conversation = await store.getConversation({ tenantId, userId, conversationId: req.params.conversationId });
+    const conversationId = req.params.conversationId;
+    const conversation = await store.getConversation({ tenantId, userId, conversationId });
     if (!conversation) return res.status(404).json({ ok: false, error: 'NOT_FOUND' });
-    return res.json({ ok: true, conversation });
+    const work = latestConversationWorkState({ tenantId, userId, conversationId });
+    return res.json({ ok: true, conversation, work });
   } catch (error) {
     return res.status(500).json({ ok: false, error: error.message });
   }
@@ -106,11 +99,16 @@ router.post('/conversations/:conversationId', async (req, res) => {
         ok: true,
         message,
         assistant,
-        work: { status: 'failed', phase: 'routing_failed', area: 'planning', approvalRequired: false }
+        work: { status: 'failed', label: 'Failed', phase: 'routing_failed', area: 'planning', approvalRequired: false, nextAction: 'Try again or ask for a smaller internal planning step.' }
       });
     }
 
-    const work = clientWorkProjection(routed.mission);
+    const work = getClientMissionWorkState({
+      tenantId,
+      userId,
+      conversationId,
+      missionId: routed.mission.mission_id
+    });
     try {
       const assistant = await store.appendMessage({
         tenantId,
