@@ -1,0 +1,26 @@
+project:
+  name: asc3nd-social-purpose-os
+  language: JavaScript
+
+commands:
+  test: node scripts/verify-backend-execution-loop.mjs
+  lint: node scripts/verify-backend-execution-loop.mjs
+
+rules:
+  - inspect existing capability before adding code or dependencies
+  - use one isolated branch or worktree per bounded task
+  - create a pull request; never write directly to main
+  - tests and verification may not be skipped
+  - preserve repository ownership, ICM truth, approvals, privacy, audit, recovery, and accessibility controls
+  - public ASC3ND website redesign and feature work is frozen until explicit owner approval
+  - do not use dangerous permission bypass modes
+
+boundaries:
+  never_touch:
+    - "secrets/**"
+    - ".env*"
+    - "**/*.pem"
+    - "**/*.key"
+
+capabilities:
+  browser: "false"

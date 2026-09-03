@@ -1,0 +1,58 @@
+name: Backend Execution Loop
+
+on:
+  pull_request:
+    paths:
+      - "control-plane/backend-execution-loop.json"
+      - "docs/BACKEND_EXECUTION_LOOP.md"
+      - "docs/checkpoints/**"
+      - "icm/tenants/asc3nd/**"
+      - "schemas/**"
+      - "supabase/**"
+      - "scripts/verify-backend-execution-loop.mjs"
+      - ".github/workflows/backend-execution-loop.yml"
+  push:
+    branches: [main]
+    paths:
+      - "control-plane/backend-execution-loop.json"
+      - "docs/BACKEND_EXECUTION_LOOP.md"
+      - "docs/checkpoints/**"
+      - "icm/tenants/asc3nd/**"
+      - "schemas/**"
+      - "supabase/**"
+      - "scripts/verify-backend-execution-loop.mjs"
+      - ".github/workflows/backend-execution-loop.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    name: backend-loop-policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Verify repository boundary
+        run: node scripts/repo-boundary-guard.mjs
+      - name: Verify backend execution loop
+        run: node scripts/verify-backend-execution-loop.mjs
+
+  critic:
+    name: independent-checkpoint-critic
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: policy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Fresh-process binary critic
+        run: |
+          node scripts/verify-backend-execution-loop.mjs | tee /tmp/backend-loop.txt
+          grep -qx 'BACKEND_LOOP_OK' /tmp/backend-loop.txt
