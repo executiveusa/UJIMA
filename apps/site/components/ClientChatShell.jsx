@@ -117,6 +117,7 @@ export function ClientChatShell({ initialConversationId = null }) {
 
   async function selectConversation(id) {
     setActiveId(id);
+    setRetryRequest(null);
     setSidebarOpen(false);
     routeToConversation(id);
   }
@@ -175,7 +176,15 @@ export function ClientChatShell({ initialConversationId = null }) {
         method: 'POST',
         body: JSON.stringify({ text, idempotencyKey: requestKey })
       });
-      setRetryRequest(null);
+      if (data.warning === 'ACKNOWLEDGEMENT_PENDING') {
+        // The durable user message and mission already exist. Keep the exact
+        // request key and text available so the user can safely retry only the
+        // missing acknowledgement without creating a second mission.
+        setRetryRequest({ key: requestKey, text });
+        setInput(text);
+      } else {
+        setRetryRequest(null);
+      }
       if (data.work) {
         setWorkByConversation((current) => ({ ...current, [activeId]: data.work }));
       }
@@ -201,9 +210,6 @@ export function ClientChatShell({ initialConversationId = null }) {
       } : conversation));
       setSyncState(data.warning ? 'offline' : 'saved');
     } catch (error) {
-      // Never leave an optimistic row looking persisted. Put the text back in
-      // the composer and retain the same request key so a retry cannot create a
-      // second durable message/mission when the original response was lost.
       setMessagesByConversation((current) => ({
         ...current,
         [activeId]: (current[activeId] || []).filter((message) => message.id !== optimistic.id)
@@ -232,11 +238,7 @@ export function ClientChatShell({ initialConversationId = null }) {
         <button className={styles.newChat} onClick={newChat}>+ New chat</button>
         <nav className={styles.conversationList}>
           {conversations.map((item) => (
-            <button
-              key={item.conversationId}
-              className={`${styles.conversation} ${activeId === item.conversationId ? styles.active : ''}`}
-              onClick={() => selectConversation(item.conversationId)}
-            >
+            <button key={item.conversationId} className={`${styles.conversation} ${activeId === item.conversationId ? styles.active : ''}`} onClick={() => selectConversation(item.conversationId)}>
               <strong>{item.title || 'Conversation'}</strong>
               <span>{item.messageCount ? `${item.messageCount} message${item.messageCount === 1 ? '' : 's'}` : 'Ready when you are'}</span>
             </button>
@@ -254,10 +256,7 @@ export function ClientChatShell({ initialConversationId = null }) {
       <section className={styles.chat}>
         <header className={styles.header}>
           <button className={styles.menuButton} onClick={() => setSidebarOpen(true)} aria-label="Open conversations">☰</button>
-          <div>
-            <strong>ASC3ND</strong>
-            <span>Ask for an outcome. The system handles the route.</span>
-          </div>
+          <div><strong>ASC3ND</strong><span>Ask for an outcome. The system handles the route.</span></div>
           <span className={styles.previewBadge}>{syncState === 'offline' ? 'Offline' : syncState === 'saving' ? 'Saving' : syncState === 'loading' ? 'Loading' : 'Saved'}</span>
           {activeWorkLabel && <span className={styles.workBadge} role="status" aria-label="Current work status">{activeWorkLabel}</span>}
         </header>
@@ -286,13 +285,7 @@ export function ClientChatShell({ initialConversationId = null }) {
 
         <div className={styles.composerWrap}>
           <form className={styles.composer} onSubmit={submit}>
-            <textarea
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask ASC3ND anything…"
-              rows={1}
-              aria-label="Message ASC3ND"
-            />
+            <textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask ASC3ND anything…" rows={1} aria-label="Message ASC3ND" />
             <button type="submit" disabled={!input.trim() || !activeId} aria-label="Send message">↑</button>
           </form>
           <small>Conversation history is saved. Important actions will stop for review when they need you.</small>
