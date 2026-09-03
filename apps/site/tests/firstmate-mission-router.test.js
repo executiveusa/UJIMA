@@ -101,10 +101,11 @@ describe('First Mate intent routing', () => {
 
     expect(routed.mission.domain).toBe('grants');
     expect(routed.mission.risk_tier).toBe(1);
+    expect(routed.mission.status).toBe('routed');
     expect(routed.mission.approval.required).toBe(false);
     expect(routed.mission.allowed_capabilities).toContain('grant_draft_prepare');
     expect(routed.mission.denied_capabilities).toContain('grant_submission');
-    expect(missionAcknowledgement(routed)).toMatch(/^Working —/);
+    expect(missionAcknowledgement(routed)).toMatch(/^Saved —/);
     expect(missionAcknowledgement(routed)).toContain('Execution has not started yet');
   });
 });
@@ -262,7 +263,7 @@ describe('First Mate mission persistence and recovery', () => {
       originating_message_id: source.message.messageId,
       domain: 'content',
       risk_tier: 1,
-      status: 'working'
+      status: 'routed'
     });
     expect(routed.mission.acceptance_gates.length).toBeGreaterThan(0);
     expect(routed.mission.evidence_requirements).toContain(`event:${source.message.eventId}`);
