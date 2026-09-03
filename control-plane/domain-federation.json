@@ -1,0 +1,17 @@
+{
+  "version":"1.0.0",
+  "law":"one-boss-per-truth",
+  "canonical_control_plane":"executiveusa/ascend-social-purpose-agentic-systems-",
+  "tenant_truth_owner":"ICM",
+  "domains":{
+    "grants":{"engine":"executiveusa/grant-agent","contract":"social-purpose-mission-envelope-v1","merged_pr":6,"merge_sha":"0e57deb9086c6b3a94cb46d620fd9cfdc06d3bdf","may_own":["grant.opportunity","grant.fit_report","grant.requirements","grant.application_draft","grant.evidence_gap","grant.review_packet","grant.submission_packet","grant.obligation","grant.outcome","grant.learning"],"may_not_own":["organization truth","consent","relationship truth","cross-domain approvals"]},
+    "crm":{"owner":"ICM","external_adapters_may_write_only_through_typed_handoffs":true},
+    "content":{"owner":"ICM + approved content artifacts","public_publish_requires_human_approval":true},
+    "seo":{"specialist":"claude-seo","truth_source":"ICM","may_not_invent_claims":true},
+    "analytics":{"owner":"Social Purpose OS","inputs_must_have_provenance":true},
+    "approvals":{"owner":"Social Purpose OS","builder_cannot_final_approve":true}
+  },
+  "executor_limits":{"ralphy":"engineering-only","openhands":"optional-bounded-technical-executor","firstmate":"liaison-and-supervisor-not-truth-store"},
+  "consequential_actions":["grant submission","external email","public publishing","payments","legal attestation","production database migration","DNS","private youth data access"],
+  "consequential_actions_require_human_approval":true
+}
