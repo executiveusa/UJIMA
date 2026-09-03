@@ -1,0 +1,22 @@
+name: Client Chat Slice 02 UI
+
+on:
+  pull_request:
+    paths:
+      - 'apps/site/app/app/**'
+      - 'apps/site/components/ClientChatShell*'
+      - 'apps/site/app/login/page.jsx'
+      - 'scripts/verify-client-chat-slice-02.mjs'
+      - 'icm/client-chat-loop/02-chat-shell/**'
+      - '.github/workflows/client-chat-slice-02.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify chat shell
+        run: node scripts/verify-client-chat-slice-02.mjs
