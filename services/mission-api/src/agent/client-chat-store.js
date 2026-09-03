@@ -16,6 +16,25 @@ function cleanTitle(value) {
   return title.slice(0, 160);
 }
 
+function cleanIdempotencyKey(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const key = String(value).trim();
+  if (!/^[A-Za-z0-9._:-]{8,160}$/.test(key)) throw new Error('INVALID_IDEMPOTENCY_KEY');
+  return key;
+}
+
+function messageFromEvent(event, reused = false) {
+  return {
+    messageId: event.payload.messageId,
+    role: event.payload.role,
+    text: event.payload.text,
+    provenanceRefs: event.payload.provenanceRefs || [],
+    createdAt: event.createdAt,
+    eventId: event.id,
+    reused
+  };
+}
+
 export function createClientChatStore({ read = readEvents, append = emitEvent } = {}) {
   function eventsForTenant(tenantId) {
     if (!tenantId) throw new Error('TENANT_REQUIRED');
@@ -28,6 +47,18 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
       return payload.kind === 'conversation.created'
         && payload.conversationId === conversationId
         && payload.userId === userId;
+    }) || null;
+  }
+
+  function findIdempotentMessage(events, { conversationId, userId, role, idempotencyKey }) {
+    if (!idempotencyKey) return null;
+    return events.find((event) => {
+      const payload = event.payload || {};
+      return payload.kind === 'message.added'
+        && payload.conversationId === conversationId
+        && payload.userId === userId
+        && payload.role === role
+        && payload.idempotencyKey === idempotencyKey;
     }) || null;
   }
 
@@ -76,7 +107,16 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
     };
   }
 
-  async function appendMessage({ tenantId, conversationId, role, text, userId, actor = userId, provenanceRefs = [] }) {
+  async function appendMessage({
+    tenantId,
+    conversationId,
+    role,
+    text,
+    userId,
+    actor = userId,
+    provenanceRefs = [],
+    idempotencyKey = null
+  }) {
     if (!['user', 'assistant', 'system'].includes(role)) throw new Error('INVALID_ROLE');
     const normalizedText = String(text || '').trim();
     if (!normalizedText) throw new Error('MESSAGE_REQUIRED');
@@ -86,6 +126,15 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
     const events = eventsForTenant(tenantId);
     if (!findOwnedConversation(events, conversationId, userId)) throw new Error('CONVERSATION_NOT_FOUND');
 
+    const requestKey = cleanIdempotencyKey(idempotencyKey);
+    const existing = findIdempotentMessage(events, {
+      conversationId,
+      userId,
+      role,
+      idempotencyKey: requestKey
+    });
+    if (existing) return messageFromEvent(existing, true);
+
     const messageId = id('msg');
     const uniqueProvenance = [...new Set((provenanceRefs || []).filter(Boolean).map(String))];
     const event = appendChatEvent({
@@ -94,16 +143,15 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
       actor,
       kind: 'message.added',
       conversationId,
-      payload: { messageId, role, text: normalizedText, provenanceRefs: uniqueProvenance }
+      payload: {
+        messageId,
+        role,
+        text: normalizedText,
+        provenanceRefs: uniqueProvenance,
+        idempotencyKey: requestKey
+      }
     });
-    return {
-      messageId,
-      role,
-      text: normalizedText,
-      provenanceRefs: uniqueProvenance,
-      createdAt: event.createdAt,
-      eventId: event.id
-    };
+    return messageFromEvent(event, false);
   }
 
   async function listConversations({ tenantId, userId }) {
