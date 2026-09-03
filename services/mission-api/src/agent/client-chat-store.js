@@ -5,10 +5,9 @@ const EVENT_TYPE = 'client_chat';
 const id = (prefix) => `${prefix}_${crypto.randomBytes(10).toString('hex')}`;
 
 function normalizeEvents(events) {
-  return [...events].sort((a, b) => {
-    const time = String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
-    return time || String(a.id || '').localeCompare(String(b.id || ''));
-  });
+  // ECMAScript sort is stable. Returning 0 for equal timestamps preserves the
+  // storage backend's append order instead of introducing random-ID reordering.
+  return [...events].sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
 }
 
 function cleanTitle(value) {
