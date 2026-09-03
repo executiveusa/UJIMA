@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asc3nd.local/contracts/client-chat-session.schema.json",
+  "title": "Client Chat Session",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version","session_id","tenant_id","user_id","conversation_id","status","created_at","updated_at","messages","mission_refs","artifact_refs","approval_refs"],
+  "properties": {
+    "version": {"const": "1.0.0"},
+    "session_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "user_id": {"type": "string", "minLength": 1},
+    "conversation_id": {"type": "string", "minLength": 1},
+    "title": {"type": ["string","null"], "maxLength": 160},
+    "status": {"enum": ["working","needs_you","ready","failed","delivered"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["message_id","role","created_at","content_ref"],
+        "properties": {
+          "message_id": {"type": "string", "minLength": 1},
+          "role": {"enum": ["user","assistant","system"]},
+          "created_at": {"type": "string", "format": "date-time"},
+          "content_ref": {"type": "string", "minLength": 1},
+          "provenance_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+        }
+      }
+    },
+    "mission_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "artifact_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "approval_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "icm_context_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "sensitivity": {"enum": ["public","internal","confidential","restricted"]},
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exportable": {"type": "boolean"},
+        "last_export_ref": {"type": ["string","null"]}
+      }
+    }
+  }
+}
