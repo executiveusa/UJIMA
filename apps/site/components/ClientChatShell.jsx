@@ -30,13 +30,13 @@ function createRequestKey() {
 }
 
 function clientWorkLabel(work) {
-  if (!work) return null;
+  if (!work?.status) return null;
+  if (work.status === 'working') return 'Working';
   if (work.status === 'needs_you') return 'Needs your approval';
   if (work.status === 'failed') return 'Blocked — needs input';
   if (work.status === 'ready') return 'Ready';
   if (work.status === 'delivered') return 'Delivered';
-  if (work.phase === 'routed') return 'Working — routed';
-  return 'In production / scheduled';
+  return null;
 }
 
 export function ClientChatShell({ initialConversationId = null }) {
@@ -52,6 +52,7 @@ export function ClientChatShell({ initialConversationId = null }) {
   const messages = useMemo(() => messagesByConversation[activeId] || [initialAssistant], [messagesByConversation, activeId]);
   const activeWork = workByConversation[activeId] || null;
   const activeWorkLabel = clientWorkLabel(activeWork);
+  const activeNextAction = activeWork?.nextAction && ['needs_you', 'failed'].includes(activeWork?.status) ? activeWork.nextAction : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -107,6 +108,7 @@ export function ClientChatShell({ initialConversationId = null }) {
           createdAt: message.createdAt,
         }));
         setMessagesByConversation((current) => ({ ...current, [activeId]: mapped.length ? mapped : [initialAssistant] }));
+        setWorkByConversation((current) => ({ ...current, [activeId]: data.work || null }));
         setSyncState('saved');
       })
       .catch((error) => {
@@ -131,6 +133,7 @@ export function ClientChatShell({ initialConversationId = null }) {
       });
       setConversations((current) => [data.conversation, ...current]);
       setMessagesByConversation((current) => ({ ...current, [data.conversation.conversationId]: [initialAssistant] }));
+      setWorkByConversation((current) => ({ ...current, [data.conversation.conversationId]: null }));
       setActiveId(data.conversation.conversationId);
       setRetryRequest(null);
       setSidebarOpen(false);
@@ -177,9 +180,6 @@ export function ClientChatShell({ initialConversationId = null }) {
         body: JSON.stringify({ text, idempotencyKey: requestKey })
       });
       if (data.warning === 'ACKNOWLEDGEMENT_PENDING') {
-        // The durable user message and mission already exist. Keep the exact
-        // request key and text available so the user can safely retry only the
-        // missing acknowledgement without creating a second mission.
         setRetryRequest({ key: requestKey, text });
         setInput(text);
       } else {
@@ -260,6 +260,7 @@ export function ClientChatShell({ initialConversationId = null }) {
           <span className={styles.previewBadge}>{syncState === 'offline' ? 'Offline' : syncState === 'saving' ? 'Saving' : syncState === 'loading' ? 'Loading' : 'Saved'}</span>
           {activeWorkLabel && <span className={styles.workBadge} role="status" aria-label="Current work status">{activeWorkLabel}</span>}
         </header>
+        {activeNextAction && <div className={styles.nextAction} role="status"><strong>Next action</strong><span>{activeNextAction}</span></div>}
 
         <div className={styles.messages} aria-live="polite">
           <div className={styles.intro}>
