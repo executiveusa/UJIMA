@@ -23,12 +23,17 @@ function requestRef(value) { return value ? crypto.createHash('sha256').update(S
 function missionEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_MISSION_EVENT }) || []; }
 function stateEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_MISSION_STATE_EVENT }) || []; }
 function failureEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_ROUTING_FAILURE_EVENT }) || []; }
+function initialMissionStatus(mission, routingEvent) {
+  const routeOnly = routingEvent?.payload?.execution_mode === 'route-only' && routingEvent?.payload?.execution_state === 'routed';
+  if (!routeOnly) return mission.status;
+  return mission.approval?.required ? 'needs_you' : 'routed';
+}
 function findMission({ tenantId, userId, conversationId, missionId, read = readEvents }) {
   for (const event of missionEvents({ tenantId, read })) {
     const mission = event.payload?.handoff;
     if (!mission || mission.mission_id !== missionId) continue;
     if (mission.tenant_id !== tenantId || mission.user_id !== userId || mission.conversation_id !== conversationId) return null;
-    return { mission, eventId: event.id, createdAt: event.createdAt };
+    return { mission, routingEvent: event, eventId: event.id, createdAt: event.createdAt };
   }
   return null;
 }
@@ -38,8 +43,8 @@ function latestStateEvent({ tenantId, userId, conversationId, missionId, read = 
     return state && state.mission_id === missionId && state.tenant_id === tenantId && state.user_id === userId && state.conversation_id === conversationId;
   }).at(-1) || null;
 }
-function projection({ mission, state, eventId = null }) {
-  const internalState = state?.status || mission.status;
+function projection({ mission, state, eventId = null, routingEvent = null }) {
+  const internalState = state?.status || initialMissionStatus(mission, routingEvent);
   return {
     id: mission.mission_id,
     status: internalState === 'routed' ? null : internalState,
@@ -69,6 +74,10 @@ function verifyApprovalRef({ tenantId, missionId, approvalRef, getApprovalRecord
   if (linkedMission !== missionId) throw new Error('APPROVAL_MISSION_MISMATCH');
   return approval;
 }
+function artifactLinkedToMission(artifact, missionId) {
+  const refs = normalizeRefs(artifact?.sourceRefs || []);
+  return refs.includes(missionId) || refs.includes(`mission:${missionId}`);
+}
 function verifyProofRefs({ tenantId, missionId, refs, mode, read = readEvents, listArtifacts = getArtifacts }) {
   if (!refs.length) throw new Error(mode === 'delivered' ? 'DELIVERY_PROOF_REQUIRED' : 'READY_PROOF_REQUIRED');
   const artifacts = listArtifacts({ tenantId }) || [];
@@ -79,6 +88,7 @@ function verifyProofRefs({ tenantId, missionId, refs, mode, read = readEvents, l
       const id = ref.slice('artifact:'.length);
       const artifact = artifacts.find((row) => row.id === id);
       if (!artifact || artifact.tenantId !== tenantId || artifact.approvalStatus !== 'approved') throw new Error('PROOF_ARTIFACT_UNVERIFIED');
+      if (!artifactLinkedToMission(artifact, missionId)) throw new Error('PROOF_ARTIFACT_MISSION_MISMATCH');
       resultBearingProof = true;
       continue;
     }
@@ -105,7 +115,7 @@ export function getClientMissionWorkState({ tenantId, userId, conversationId, mi
   const found = findMission({ tenantId, userId, conversationId, missionId, read });
   if (!found) return null;
   const stateEvent = latestStateEvent({ tenantId, userId, conversationId, missionId, read });
-  return projection({ mission: found.mission, state: stateEvent?.payload?.state || null, eventId: stateEvent?.id || found.eventId });
+  return projection({ mission: found.mission, state: stateEvent?.payload?.state || null, eventId: stateEvent?.id || found.eventId, routingEvent: found.routingEvent });
 }
 
 export function listConversationWorkStates({ tenantId, userId, conversationId, read = readEvents }) {
@@ -118,7 +128,7 @@ export function listConversationWorkStates({ tenantId, userId, conversationId, r
       const stateEvent = latestStateEvent({ tenantId, userId, conversationId, missionId: mission.mission_id, read });
       const latestEvent = stateEvent || event;
       return {
-        projection: projection({ mission, state: stateEvent?.payload?.state || null, eventId: latestEvent.id }),
+        projection: projection({ mission, state: stateEvent?.payload?.state || null, eventId: latestEvent.id, routingEvent: event }),
         createdAt: latestEvent.createdAt,
         journalOrder: journalOrder.get(latestEvent.id) ?? -1
       };
@@ -159,7 +169,7 @@ export function transitionClientMissionState({ tenantId, userId, conversationId,
   const found = findMission({ tenantId, userId, conversationId, missionId, read });
   if (!found) throw new Error('MISSION_NOT_FOUND');
   const currentEvent = latestStateEvent({ tenantId, userId, conversationId, missionId, read });
-  const current = currentEvent?.payload?.state?.status || found.mission.status;
+  const current = currentEvent?.payload?.state?.status || initialMissionStatus(found.mission, found.routingEvent);
   const keyRef = requestRef(key);
   const duplicate = stateEvents({ tenantId, read }).find((event) => {
     const state = event.payload?.state;
@@ -167,7 +177,7 @@ export function transitionClientMissionState({ tenantId, userId, conversationId,
   });
   if (duplicate) {
     if (duplicate.payload.state.status !== to) throw new Error('IDEMPOTENCY_CONFLICT');
-    return { projection: projection({ mission: found.mission, state: duplicate.payload.state, eventId: duplicate.id }), eventId: duplicate.id, reused: true };
+    return { projection: projection({ mission: found.mission, state: duplicate.payload.state, eventId: duplicate.id, routingEvent: found.routingEvent }), eventId: duplicate.id, reused: true };
   }
   const isRecovery = recovery && current === 'failed' && to === 'working';
   if (!isRecovery && !ALLOWED[current]?.has(to)) throw new Error(`INVALID_WORK_TRANSITION:${current}->${to}`);
@@ -188,5 +198,5 @@ export function transitionClientMissionState({ tenantId, userId, conversationId,
     next_action: resolvedNextAction, request_ref: keyRef, recovery: Boolean(isRecovery), changed_at: new Date().toISOString()
   };
   const event = append({ tenantId, type: CLIENT_MISSION_STATE_EVENT, version: '1', actor, subject: missionId, payload: { state } });
-  return { projection: projection({ mission: found.mission, state, eventId: event.id }), eventId: event.id, reused: false };
+  return { projection: projection({ mission: found.mission, state, eventId: event.id, routingEvent: found.routingEvent }), eventId: event.id, reused: false };
 }
