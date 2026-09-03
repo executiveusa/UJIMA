@@ -1,0 +1,34 @@
+name: Client Chat Slice 04 Mission Router
+
+on:
+  pull_request:
+    paths:
+      - 'services/mission-api/src/agent/firstmate-mission-router.js'
+      - 'services/mission-api/src/agent/client-chat-router.js'
+      - 'services/mission-api/src/agent/client-chat-store.js'
+      - 'apps/site/components/ClientChatShell.jsx'
+      - 'apps/site/tests/firstmate-mission-router.test.js'
+      - 'apps/site/tests/client-chat-store.test.js'
+      - 'icm/client-chat-loop/04-firstmate-mission-router/**'
+      - '.github/workflows/client-chat-slice-04.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  mission-router:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Repository boundary guard
+        run: npm run guard:repo
+      - name: Run Slice 04 and persistence regression tests
+        run: npx vitest run apps/site/tests/firstmate-mission-router.test.js apps/site/tests/client-chat-store.test.js
+      - name: Build client surface
+        run: npm run build --workspace @asc3nd/site
