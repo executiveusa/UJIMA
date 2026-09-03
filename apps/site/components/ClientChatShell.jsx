@@ -153,14 +153,25 @@ export function ClientChatShell({ initialConversationId = null }) {
         method: 'POST',
         body: JSON.stringify({ text })
       });
-      setMessagesByConversation((current) => ({
-        ...current,
-        [activeId]: (current[activeId] || []).map((message) => message.id === optimistic.id ? { ...message, id: data.message.messageId } : message)
-      }));
+      setMessagesByConversation((current) => {
+        const persisted = (current[activeId] || []).map((message) => message.id === optimistic.id
+          ? { ...message, id: data.message.messageId, createdAt: data.message.createdAt }
+          : message);
+        const assistant = data.assistant ? {
+          id: data.assistant.messageId,
+          role: 'assistant',
+          text: data.assistant.text,
+          createdAt: data.assistant.createdAt,
+        } : null;
+        return {
+          ...current,
+          [activeId]: assistant ? [...persisted, assistant] : persisted
+        };
+      });
       setConversations((current) => current.map((conversation) => conversation.conversationId === activeId ? {
         ...conversation,
-        updatedAt: data.message.createdAt,
-        messageCount: (conversation.messageCount || 0) + 1
+        updatedAt: data.assistant?.createdAt || data.message.createdAt,
+        messageCount: (conversation.messageCount || 0) + (data.assistant ? 2 : 1)
       } : conversation));
       setSyncState('saved');
     } catch (error) {
