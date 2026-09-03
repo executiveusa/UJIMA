@@ -21,6 +21,11 @@ function clientWorkProjection(mission) {
   };
 }
 
+function safeRoutingCode(error) {
+  const message = String(error?.message || '');
+  return /^[A-Z0-9_]+$/.test(message) ? message : 'ROUTING_FAILED';
+}
+
 router.get('/conversations', async (req, res) => {
   try {
     const { tenantId, userId } = identity(req);
@@ -105,7 +110,7 @@ router.post('/conversations/:conversationId', async (req, res) => {
           conversationId,
           role: 'assistant',
           text: 'Failed — I saved your message, but I could not safely route the next step. Nothing was sent, submitted, published, or changed externally.',
-          provenanceRefs: [`routing-error:${routingError.message}`]
+          provenanceRefs: [`routing-error:${safeRoutingCode(routingError)}`]
         });
       } catch {}
       return res.status(202).json({
