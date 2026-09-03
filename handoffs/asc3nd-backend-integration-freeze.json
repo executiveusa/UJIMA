@@ -1,0 +1,12 @@
+{
+  "version":"1.0.0",
+  "status":"backend-integration-frozen",
+  "tenant":"asc3nd",
+  "public_frontend":{"repo":"executiveusa/asc3nd-brand-site","main_sha":"34e7f86fcdaef419fa5cd6cc633663af857d455b","mutation_allowed_in_backend_loop":false,"production_verified_at_this_sha":false},
+  "database_contract":{"repo":"executiveusa/asc3nd-supabase-landing","main_sha":"d2bd7447cf42d0e0bd46533e3bc8ede08454d578","supabase_project_ref":"cyxdevcjycmffhmwxojh","schema":"asc3nd","source_of_truth":"Supabase canonical tables + ICM contracts"},
+  "canonical_interfaces":{"community_signup_rpc":"public.asc3nd_join_community(jsonb)","participation_table":"asc3nd.participation_intakes","identity_table":"asc3nd.people","routes_table":"asc3nd.person_routes","consent_table":"asc3nd.communication_consents","followup_table":"asc3nd.followup_tasks","memory_table":"asc3nd.person_memory","sheet_role":"mirror only"},
+  "deployment_truth":{"phase10_merged":true,"phase10_production_verified":false,"asc3nd_org_cutover_verified":false,"automatic_sheet_sync_verified":false,"outbound_email_verified":false},
+  "known_human_or_secret_gates":["reconnect Vercel Git integration if still stale","SUPABASE_SERVICE_ROLE_KEY","GOOGLE_SERVICE_ACCOUNT_JSON","CRON_SECRET","RESEND_API_KEY","ASC3ND_FROM_EMAIL","domain/DNS approval","production deployment verification"],
+  "frontend_contract":{"may_read_canonical_interfaces":true,"may_submit_only_through_validated_interfaces":true,"may_not_become_secondary_truth_store":true,"may_not_infer_success_from_queued_or_intended_state":true,"design_redesign_in_scope":false},
+  "rollback":{"social_purpose_os":"revert backend-loop merge commits","database_contract":"source-controlled contract changes only; no production DDL was applied by loops 04-10","public_frontend":"unchanged during backend loop"}
+}
