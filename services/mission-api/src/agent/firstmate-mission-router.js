@@ -31,6 +31,9 @@ const CONSEQUENTIAL_PATTERNS = [
 
 const SAFE_INTERNAL_PREFIX = /^(review|analyze|analyse|summarize|summarise|plan|prepare|draft|find|check|audit|research|compare|inspect|report|explain|list|show|identify|recommend|outline|score|qualify|evaluate)\b/i;
 const EXTERNAL_CONTEXT = /\b(public|live|youtube|instagram|facebook|linkedin|tiktok|x|twitter|portal|donor|donors|partner|partners|sponsor|sponsors|mentor|mentors|volunteer|volunteers|family|families|contact|contacts|everyone|people|email|message|dm|domain|dns|production|payment|bank|grant portal)\b/i;
+// A safe-looking verb must never turn an explicit public destination into an
+// internal-only request. These phrases represent disclosure/publishing intent.
+const PUBLIC_DESTINATION = /\b(show|list|display|put|add|feature|place)\b[^.]{0,160}(\bpublicly\b|\b(on|to|onto)\s+(our\s+)?(facebook|instagram|linkedin|youtube|tiktok|x|twitter|website|site|portal)\b|\b(public|live)\s+(website|site|page|portal)\b)/i;
 
 function id(prefix) { return `${prefix}_${crypto.randomBytes(10).toString('hex')}`; }
 function normalizeObjective(text) {
@@ -48,6 +51,7 @@ export function classifyClientIntent(text) {
 export function classifyRequestedRisk(text) {
   const objective = normalizeObjective(text);
   if (CONSEQUENTIAL_PATTERNS.some((pattern) => pattern.test(objective))) return 3;
+  if (PUBLIC_DESTINATION.test(objective)) return 3;
   if (EXTERNAL_CONTEXT.test(objective) && !SAFE_INTERNAL_PREFIX.test(objective)) return 3;
   return 1;
 }
