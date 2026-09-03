@@ -1,14 +1,18 @@
 import crypto from 'node:crypto';
 
 function jwtSecret() {
-  return process.env.JWT_SECRET || 'dev-only-secret-change-me';
+  const secret = String(process.env.JWT_SECRET || '').trim();
+  if (!secret || secret === 'dev-only-secret-change-me') return null;
+  return secret;
 }
 
 export function verifyBrowserSessionToken(token) {
   try {
     if (!token || !token.includes('.')) return null;
+    const secret = jwtSecret();
+    if (!secret) return null;
     const [body, sig] = token.split('.');
-    const expected = crypto.createHmac('sha256', jwtSecret()).update(body).digest('base64url');
+    const expected = crypto.createHmac('sha256', secret).update(body).digest('base64url');
     const sigBuf = Buffer.from(sig || '');
     const expBuf = Buffer.from(expected);
     if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return null;
