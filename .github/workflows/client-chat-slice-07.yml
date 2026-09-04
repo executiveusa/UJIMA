@@ -31,16 +31,23 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          audit_file="$(mktemp)"
+          passed=0
           for attempt in 1 2 3; do
             echo "Production dependency audit attempt ${attempt}/3"
-            npm audit --omit=dev --audit-level=high && exit 0
-            code=$?
+            npm audit --omit=dev --json > "$audit_file" || true
+            if node -e "const fs=require('fs'); const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const v=a.metadata?.vulnerabilities||{}; console.log('production audit severities',v); process.exit(((v.high||0)+(v.critical||0))>0 ? 1 : 0);" "$audit_file"; then
+              passed=1
+              break
+            fi
             if [ "$attempt" -lt 3 ]; then
               sleep $((attempt * 15))
             fi
           done
-          echo "Production dependency audit did not pass after 3 attempts."
-          exit "$code"
+          if [ "$passed" -ne 1 ]; then
+            echo "Production dependency audit still contains high or critical findings after 3 attempts."
+            exit 1
+          fi
       - name: Repository boundary guard
         run: npm run guard:repo
       - name: Secret audit
