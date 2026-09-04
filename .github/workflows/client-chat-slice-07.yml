@@ -3,6 +3,8 @@ name: Client Chat Slice 07 Deployment Final Gauntlet
 on:
   pull_request:
     paths:
+      - 'package.json'
+      - 'package-lock.json'
       - 'netlify.toml'
       - 'apps/site/**'
       - 'services/mission-api/src/agent/**'
