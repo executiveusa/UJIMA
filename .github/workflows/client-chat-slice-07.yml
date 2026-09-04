@@ -25,6 +25,8 @@ jobs:
         with:
           node-version: 24
       - run: npm ci
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
       - name: Repository boundary guard
         run: npm run guard:repo
       - name: Secret audit
