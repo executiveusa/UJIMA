@@ -73,7 +73,7 @@ describe('durable client work-state engine', () => {
     expect(fx.events.filter((event) => event.type === CLIENT_MISSION_STATE_EVENT)).toHaveLength(1);
   });
 
-  it('requires tenant-owned approved mission-linked artifacts for Ready and a verified delivery event for Delivered', async () => {
+  it('requires tenant-owned approved mission-linked artifacts for Ready and independently verified delivery evidence for Delivered', async () => {
     const fx = await missionFixture();
     const scope = { tenantId: fx.tenantId, userId: fx.userId, conversationId: fx.conversation.conversationId, missionId: fx.routed.mission.mission_id, read: fx.read, append: fx.append };
     transitionClientMissionState({ ...scope, to: 'working', idempotencyKey: 'state-start-22345678' });
@@ -84,6 +84,10 @@ describe('durable client work-state engine', () => {
     const ready = transitionClientMissionState({ ...scope, to: 'ready', proofRefs: [`artifact:${artifact.id}`], idempotencyKey: 'state-ready-32345678' });
     expect(ready.projection.status).toBe('ready');
     expect(() => transitionClientMissionState({ ...scope, to: 'delivered', proofRefs: [`artifact:${artifact.id}`], idempotencyKey: 'state-deliver-22345678' })).toThrow('VERIFIED_DELIVERY_EVENT_REQUIRED');
+
+    const selfMintedDelivery = fx.append({ tenantId: fx.tenantId, type: 'AGENT.DELIVERY.VERIFIED', actor: 'hermes', subject: fx.routed.mission.mission_id, payload: { missionId: fx.routed.mission.mission_id } });
+    expect(() => transitionClientMissionState({ ...scope, to: 'delivered', proofRefs: [`artifact:${artifact.id}`, `event:${selfMintedDelivery.id}`], idempotencyKey: 'state-deliver-untrusted-32345678' })).toThrow('VERIFIED_DELIVERY_EVENT_REQUIRED');
+
     const deliveryEvent = fx.append({ tenantId: fx.tenantId, type: 'DELIVERY.VERIFIED', actor: 'delivery-verifier', subject: fx.routed.mission.mission_id, payload: { missionId: fx.routed.mission.mission_id } });
     const delivered = transitionClientMissionState({ ...scope, to: 'delivered', proofRefs: [`artifact:${artifact.id}`, `event:${deliveryEvent.id}`], idempotencyKey: 'state-deliver-32345678' });
     expect(delivered.projection).toMatchObject({ status: 'delivered', label: 'Delivered' });
