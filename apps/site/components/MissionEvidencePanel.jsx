@@ -3,7 +3,7 @@
 import styles from './MissionEvidencePanel.module.css';
 
 function approvalLabel(status) {
-  if (!status) return null;
+  if (!status) return 'Needs your decision';
   if (status === 'draft' || status === 'review') return 'Needs your decision';
   if (status === 'approved') return 'Approved';
   if (status === 'rejected') return 'Rejected';
@@ -17,8 +17,10 @@ export function MissionEvidencePanel({ work, evidence, busy = false, onDecision,
   if (!work?.id || work.phase === 'routing_failed') return null;
   const artifacts = evidence?.artifacts || [];
   const approval = evidence?.approval || null;
-  if (!artifacts.length && !approval) return null;
-  const decidable = approval && ['draft', 'review'].includes(approval.status);
+  const needsDecision = work.status === 'needs_you';
+  if (!artifacts.length && !approval && !needsDecision) return null;
+  const decidable = needsDecision && (!approval || ['draft', 'review'].includes(approval.status));
+  const displayedApproval = approval || (needsDecision ? { approvalClass: 'governed', status: 'draft', comments: 'Review this action before anything consequential happens.' } : null);
 
   return (
     <section className={styles.panel} aria-label="Work evidence and approvals">
@@ -27,7 +29,7 @@ export function MissionEvidencePanel({ work, evidence, busy = false, onDecision,
           <span>Work packet</span>
           <strong>Evidence you can inspect</strong>
         </div>
-        {approval && <span className={styles.status}>{approvalLabel(approval.status)}</span>}
+        {displayedApproval && <span className={styles.status}>{approvalLabel(displayedApproval.status)}</span>}
       </div>
 
       {artifacts.length > 0 && (
@@ -48,12 +50,12 @@ export function MissionEvidencePanel({ work, evidence, busy = false, onDecision,
         </div>
       )}
 
-      {approval && (
+      {displayedApproval && (
         <div className={styles.approval}>
           <div>
-            <small>{approval.approvalClass || 'governed'} approval</small>
-            <strong>{approvalLabel(approval.status)}</strong>
-            <p>{approval.comments || 'Review this action before anything consequential happens.'}</p>
+            <small>{displayedApproval.approvalClass || 'governed'} approval</small>
+            <strong>{approvalLabel(displayedApproval.status)}</strong>
+            <p>{displayedApproval.comments || 'Review this action before anything consequential happens.'}</p>
           </div>
           {decidable && (
             <div className={styles.decisionActions}>
