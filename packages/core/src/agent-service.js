@@ -188,7 +188,7 @@ export function recordAgentEvent({ tenantId, runId, type, payload = {} }) {
   });
 }
 
-export function registerAgentArtifact({ tenantId, runId, kind, title, storagePath, approvalClass = 'green', mimeType = 'application/octet-stream' }) {
+export function registerAgentArtifact({ tenantId, runId, kind, title, storagePath, approvalClass = 'green', mimeType = 'application/octet-stream', sourceRefs = [] }) {
   assertTenantBoundary(tenantId);
   if (!kind) throw new Error('kind is required');
   if (!title) throw new Error('title is required');
@@ -204,12 +204,13 @@ export function registerAgentArtifact({ tenantId, runId, kind, title, storagePat
     storagePath,
     approvalClass,
     approvalStatus,
+    sourceRefs: Array.isArray(sourceRefs) ? [...new Set(sourceRefs.filter(Boolean).map(String))] : [],
     createdBy: 'hermes'
   });
 }
 
-export function registerAgentAsset({ tenantId, runId, title, storagePath, mimeType = 'application/octet-stream', approvalClass = 'green' }) {
-  return registerAgentArtifact({ tenantId, runId, kind: 'asset', title, storagePath, mimeType, approvalClass });
+export function registerAgentAsset({ tenantId, runId, title, storagePath, mimeType = 'application/octet-stream', approvalClass = 'green', sourceRefs = [] }) {
+  return registerAgentArtifact({ tenantId, runId, kind: 'asset', title, storagePath, mimeType, approvalClass, sourceRefs });
 }
 
 export function getAgentAsset({ tenantId, assetId }) {
