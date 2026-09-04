@@ -1,0 +1,51 @@
+name: Client Chat Slice 07 Deployment Final Gauntlet
+
+on:
+  pull_request:
+    paths:
+      - 'netlify.toml'
+      - 'apps/site/**'
+      - 'services/mission-api/src/agent/**'
+      - 'packages/core/src/**'
+      - 'control-plane/client-chat-execution-loop.json'
+      - 'icm/client-chat-loop/07-deployment-final-gauntlet/**'
+      - '.github/workflows/client-chat-slice-07.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  release-gauntlet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Repository boundary guard
+        run: npm run guard:repo
+      - name: Secret audit
+        run: npm run secret:audit
+      - name: Final client release regressions
+        run: >-
+          npx vitest run
+          apps/site/tests/client-release-gauntlet.test.js
+          apps/site/tests/client-artifacts-approvals.test.js
+          apps/site/tests/client-work-state.test.js
+          apps/site/tests/client-work-state-review-regressions.test.js
+          apps/site/tests/agent-artifact-mission-link.test.js
+          apps/site/tests/firstmate-mission-router.test.js
+          apps/site/tests/client-chat-store.test.js
+          packages/core/tests/approval-lifecycle.test.js
+          packages/core/tests/agent-service.test.js
+      - name: Verify serialized client-chat loop
+        run: node scripts/verify-client-chat-loop.mjs
+      - name: Production build
+        env:
+          NEXT_PUBLIC_MISSION_API_URL: https://api.asc3nd.org
+          NEXT_PUBLIC_MISSION_TENANT: asc3nd
+          NEXT_PUBLIC_MISSION_PUBLIC_KEY: pk_mission_YXNjM25kOjY0NWNlZmU3ZGU4NWNl
+        run: npm run build --workspace @asc3nd/site
