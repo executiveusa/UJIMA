@@ -27,6 +27,11 @@ const VALID_TRANSITIONS = {
   [APPROVAL_STATES.REJECTED]: []
 };
 
+function actorIdentity(actor) {
+  if (typeof actor === 'object' && actor !== null) return actor.id || actor.email || actor.sub || null;
+  return actor || null;
+}
+
 function resolveActorUser(actor, tenantId) {
   if (typeof actor === 'object' && actor !== null) return actor;
   if (typeof actor === 'string') {
@@ -102,7 +107,7 @@ export function updateApprovalStatus({ tenantId, approvalId, nextStatus, actor, 
 
   approval.status = nextStatus;
   approval.updatedAt = new Date().toISOString();
-  if (nextStatus === APPROVAL_STATES.APPROVED) approval.approver = typeof actor === 'object' ? (actor.id || actor.email) : actor;
+  if (nextStatus === APPROVAL_STATES.APPROVED) approval.approver = actorIdentity(actor);
   if (comments) approval.comments = comments;
   saveApproval(approval);
 
@@ -112,7 +117,7 @@ export function updateApprovalStatus({ tenantId, approvalId, nextStatus, actor, 
     emitEvent({
       tenantId,
       type: eventType,
-      actor: typeof actor === 'object' ? (actor.id || actor.email) : (actor || 'system'),
+      actor: actorIdentity(actor) || 'system',
       subject: approval.id,
       payload: { status: nextStatus, comments }
     });
