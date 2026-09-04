@@ -1,0 +1,10 @@
+{
+  "slice": "05-durable-work-states",
+  "status": "in_progress",
+  "base_sha": "9444c633bdb5fb1ab224d2304e7cce67b29c8edc",
+  "branch": "client-chat-loop/05-durable-work-states",
+  "acceptance_ledger_written_before_implementation": true,
+  "public_frontend_frozen": true,
+  "external_actions_allowed": false,
+  "latest_proof": null
+}

@@ -33,6 +33,8 @@
     "mission_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "artifact_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "approval_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "work_state_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "proof_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "icm_context_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "sensitivity": {"enum": ["public","internal","confidential","restricted"]},
     "recovery": {
