@@ -1,18 +1,18 @@
 export const tenantSite = {
-  tenantId: 'asc3nd',
-  orgName: 'Asc3nd Collective',
-  productName: 'Asc3nd Social Purpose OS',
-  region: 'Seattle / King County',
-  audience: 'youth, sports, mentorship, and community organizations',
-  heroEyebrow: 'Seattle youth + sports + nonprofit operations',
-  heroTitle: 'Outcomes, grants, donors, calls, and campaigns in one AI operating system.',
-  heroLead: 'Seattle-native AI operations for nonprofits that need outcomes, not another dashboard. Built around ICM: one primary agent, clear folders, human approvals, durable workflows, and a backend that can be deployed again and again.',
-  offerTitle: 'Seattle Social Purpose OS deployment package',
-  offerBody: 'Website + AI operations cockpit + grant engine + founder second brain + social campaign system + human approval workflow.',
+  tenantId: 'ujima',
+  orgName: 'Ujima OS',
+  productName: 'Ujima OS',
+  region: 'International',
+  audience: 'volunteers, nonprofits, NGOs, community organizations, and social-purpose teams',
+  heroEyebrow: 'International social-purpose operations',
+  heroTitle: 'Collective work. Shared responsibility.',
+  heroLead: 'Ujima OS is an agentic operating system for international mission-driven teams. Client organizations live in isolated workspaces; the product core, runtime, and internal operations remain separate.',
+  offerTitle: 'Ujima OS private beta',
+  offerBody: 'One governed workspace for organizational context, agentic execution, approvals, artifacts, relationships, campaigns, and institutional memory.',
   theme: {
-    evergreen: '#071513',
-    gold: '#e8b85f',
-    mint: '#84d9b6',
-    cedar: '#c16f45'
+    ink: '#161616',
+    paper: '#f2efe7',
+    clay: '#b85c38',
+    leaf: '#47624f'
   }
 };

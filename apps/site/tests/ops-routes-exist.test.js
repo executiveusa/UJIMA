@@ -52,6 +52,6 @@ describe('Phase 5 preserves route ownership boundaries', () => {
     const appDirs = fs.readdirSync(path.join(siteRoot, 'app'), { withFileTypes: true })
       .filter((e) => e.isDirectory())
       .map((e) => e.name);
-    expect(appDirs.sort()).toEqual(['api', 'app', 'llms.txt', 'login', 'ops'].sort());
+    expect(appDirs.sort()).toEqual(['api', 'app', 'llms.txt', 'login', 'ops', 'workspaces'].sort());
   });
 });
