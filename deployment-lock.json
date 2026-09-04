@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0.0",
-  "repository": "executiveusa/ascend-social-purpose-agentic-systems-",
+  "repository": "executiveusa/UJIMA",
   "package_name": "asc3nd-social-purpose-os",
   "deployment_role": "reusable-operations-platform",
   "allowed_vercel_git_owner": "executiveusa",
-  "allowed_vercel_git_repo_slug": "ascend-social-purpose-agentic-systems-",
+  "allowed_vercel_git_repo_slug": "UJIMA",
   "vercel_production_authorized": false,
   "forbidden_public_targets": [
     "asc3nd.org",
