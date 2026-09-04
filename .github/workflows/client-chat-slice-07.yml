@@ -28,7 +28,19 @@ jobs:
           node-version: 24
       - run: npm ci
       - name: Production dependency audit
-        run: npm audit --omit=dev --audit-level=high
+        shell: bash
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            echo "Production dependency audit attempt ${attempt}/3"
+            npm audit --omit=dev --audit-level=high && exit 0
+            code=$?
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 15))
+            fi
+          done
+          echo "Production dependency audit did not pass after 3 attempts."
+          exit "$code"
       - name: Repository boundary guard
         run: npm run guard:repo
       - name: Secret audit
