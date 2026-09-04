@@ -1,0 +1,14 @@
+{
+  "slice_id": "06",
+  "stage": "artifacts-and-approvals-in-chat",
+  "status": "verifying",
+  "base_main_sha": "36ef92d6209183e61b0e8f208bc29fd789ab0093",
+  "branch": "client-chat-loop/06-artifacts-approvals",
+  "owner_repository": "executiveusa/ascend-social-purpose-agentic-systems-",
+  "public_frontend_frozen": true,
+  "external_actions_enabled": false,
+  "acceptance_ledger": "icm/client-chat-loop/06-artifacts-approvals/OUTPUTS.md",
+  "rollback": "Revert Slice 06 PR; no schema migration or external side effect is required.",
+  "blockers": [],
+  "next_action": "Run exact-head Slice 06 workflow, full CI, predecessor regressions, boundary checks, and fresh independent review; repair any findings before merge."
+}
