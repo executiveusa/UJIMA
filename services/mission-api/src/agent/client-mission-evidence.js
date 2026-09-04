@@ -11,6 +11,12 @@ function refs(value = []) { return Array.isArray(value) ? value.map(String) : []
 function missionRef(missionId) { return `mission:${missionId}`; }
 function isInside(root, candidate) { return candidate === root || candidate.startsWith(`${root}${path.sep}`); }
 
+function conversationMissions({ tenantId, userId, conversationId, read = readEvents }) {
+  return (read({ tenantId, type: CLIENT_MISSION_EVENT }) || [])
+    .map((event) => event.payload?.handoff)
+    .filter((mission) => mission && mission.tenant_id === tenantId && mission.user_id === userId && mission.conversation_id === conversationId);
+}
+
 function findMissionEvent({ tenantId, userId, conversationId, missionId, read = readEvents }) {
   return (read({ tenantId, type: CLIENT_MISSION_EVENT }) || []).find((event) => {
     const mission = event.payload?.handoff;
@@ -69,6 +75,19 @@ export function missionEvidence({ tenantId, userId, conversationId, missionId, r
     downloadUrl: `/api/agent/client-chat/conversations/${encodeURIComponent(conversationId)}/missions/${encodeURIComponent(missionId)}/artifacts/${encodeURIComponent(artifact.id)}?download=1`
   }));
   return { artifacts, approval };
+}
+
+export function conversationEvidenceRefs({ tenantId, userId, conversationId, read = readEvents }) {
+  const missionIds = [...new Set(conversationMissions({ tenantId, userId, conversationId, read }).map((mission) => mission.mission_id))];
+  const artifactRefs = [];
+  const approvalRefs = [];
+  const approvals = listApprovals({ tenantId });
+  for (const missionId of missionIds) {
+    for (const artifact of listMissionArtifacts({ tenantId, missionId })) artifactRefs.push(`artifact:${artifact.id}`);
+    const approval = findMissionApproval({ tenantId, missionId, approvals });
+    if (approval) approvalRefs.push(`approval:${approval.id}`);
+  }
+  return { artifactRefs: [...new Set(artifactRefs)], approvalRefs: [...new Set(approvalRefs)] };
 }
 
 export function resolveMissionArtifactFile({ tenantId, userId, conversationId, missionId, artifactId, read = readEvents }) {
