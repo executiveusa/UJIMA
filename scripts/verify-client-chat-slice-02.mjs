@@ -15,11 +15,12 @@ for (const file of files) if (!fs.existsSync(file)) throw new Error(`MISSING:${f
 const shell = fs.readFileSync('apps/site/components/ClientChatShell.jsx','utf8');
 const login = fs.readFileSync('apps/site/app/login/page.jsx','utf8');
 const workspaces = fs.readFileSync('apps/site/app/workspaces/page.jsx','utf8');
+const ujima = fs.readFileSync('apps/site/lib/ujima.js','utf8');
 for (const token of ['How can I help today?','+ New chat','Ujima operations','Switch workspace']) {
   if (!shell.includes(token)) throw new Error(`SHELL_MISSING:${token}`);
 }
 if (!login.includes("window.location.href = '/workspaces'")) throw new Error('LOGIN_NOT_WORKSPACE_FIRST');
-if (!workspaces.includes('Client workspaces') || !workspaces.includes('ASC3ND')) throw new Error('WORKSPACE_SELECTOR_MISSING_CLIENT');
+if (!workspaces.includes('Client workspaces') || !ujima.includes("name: 'ASC3ND'")) throw new Error('WORKSPACE_SELECTOR_MISSING_CLIENT');
 if (shell.includes('MCP') || shell.includes('Supabase') || shell.includes('Docker')) throw new Error('TECHNICAL_TERMS_LEAKED');
 
 // The client workspace must preserve visible truthful persistence or mission state.
