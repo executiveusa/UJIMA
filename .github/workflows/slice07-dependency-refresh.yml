@@ -5,6 +5,7 @@ on:
     branches:
       - client-chat-loop/07-deployment-final-gauntlet
     paths:
+      - 'package.json'
       - 'apps/site/package.json'
       - '.github/workflows/slice07-dependency-refresh.yml'
 
