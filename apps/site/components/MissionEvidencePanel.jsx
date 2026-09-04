@@ -17,7 +17,7 @@ export function MissionEvidencePanel({ work, evidence, busy = false, onDecision,
   if (!work?.id || work.phase === 'routing_failed') return null;
   const artifacts = evidence?.artifacts || [];
   const approval = evidence?.approval || null;
-  const needsDecision = work.status === 'needs_you';
+  const needsDecision = work.status === 'needs_you' && work.approvalRequired === true;
   if (!artifacts.length && !approval && !needsDecision) return null;
   const decidable = needsDecision && (!approval || ['draft', 'review'].includes(approval.status));
   const displayedApproval = approval || (needsDecision ? { approvalClass: 'governed', status: 'draft', comments: 'Review this action before anything consequential happens.' } : null);
