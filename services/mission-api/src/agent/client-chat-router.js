@@ -5,7 +5,7 @@ import { browserSessionAuth } from './browser-session-auth.js';
 import { createClientChatStore } from './client-chat-store.js';
 import { getClientMissionWorkState, latestConversationWorkState, recordClientRoutingFailure } from './client-work-state.js';
 import { missionAcknowledgement, routeFirstMateMission } from './firstmate-mission-router.js';
-import { decideMissionApproval, ensureMissionApproval, missionEvidence, resolveMissionArtifactFile } from './client-mission-evidence.js';
+import { conversationEvidenceRefs, decideMissionApproval, ensureMissionApproval, missionEvidence, resolveMissionArtifactFile } from './client-mission-evidence.js';
 
 const router = Router();
 const store = createClientChatStore();
@@ -154,14 +154,13 @@ router.get('/conversations/:conversationId/export', async (req, res) => {
     const conversationId = req.params.conversationId;
     const session = await store.exportPortableSession({ tenantId, userId, conversationId });
     if (!session) return res.status(404).json({ ok: false, error: 'NOT_FOUND' });
-    const work = latestConversationWorkState({ tenantId, userId, conversationId });
-    const evidence = evidenceForWork({ tenantId, userId, conversationId, work });
+    const allEvidence = conversationEvidenceRefs({ tenantId, userId, conversationId });
     return res.json({
       ok: true,
       session: {
         ...session,
-        artifact_refs: uniqueRefs(session.artifact_refs, evidence.artifacts.map((a) => `artifact:${a.id}`)),
-        approval_refs: uniqueRefs(session.approval_refs, evidence.approval ? [`approval:${evidence.approval.id}`] : [])
+        artifact_refs: uniqueRefs(session.artifact_refs, allEvidence.artifactRefs),
+        approval_refs: uniqueRefs(session.approval_refs, allEvidence.approvalRefs)
       }
     });
   } catch (error) { return res.status(500).json({ ok: false, error: error.message }); }
