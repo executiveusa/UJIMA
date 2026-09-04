@@ -54,30 +54,10 @@ afterEach(() => {
 describe('Slice 06 mission artifacts and approvals', () => {
   it('returns only tenant-owned artifacts explicitly linked to the active mission', async () => {
     const fx = await fixture();
-    const linked = registerArtifact({
-      tenantId: fx.tenantId,
-      kind: 'content-plan',
-      title: 'Week plan',
-      storagePath: 'artifacts/week-plan.txt',
-      sourceRefs: [`mission:${fx.routed.mission.mission_id}`],
-      approvalStatus: 'approved'
-    });
-    registerArtifact({
-      tenantId: fx.tenantId,
-      kind: 'other',
-      title: 'Other mission',
-      storagePath: 'artifacts/other.txt',
-      sourceRefs: ['mission:msn_other'],
-      approvalStatus: 'approved'
-    });
+    const linked = registerArtifact({ tenantId: fx.tenantId, kind: 'content-plan', title: 'Week plan', storagePath: 'artifacts/week-plan.txt', sourceRefs: [`mission:${fx.routed.mission.mission_id}`], approvalStatus: 'approved' });
+    registerArtifact({ tenantId: fx.tenantId, kind: 'other', title: 'Other mission', storagePath: 'artifacts/other.txt', sourceRefs: ['mission:msn_other'], approvalStatus: 'approved' });
 
-    const evidence = missionEvidence({
-      tenantId: fx.tenantId,
-      userId: fx.userId,
-      conversationId: fx.conversation.conversationId,
-      missionId: fx.routed.mission.mission_id,
-      read: fx.read
-    });
+    const evidence = missionEvidence({ tenantId: fx.tenantId, userId: fx.userId, conversationId: fx.conversation.conversationId, missionId: fx.routed.mission.mission_id, read: fx.read });
     expect(evidence.artifacts.map((artifact) => artifact.id)).toEqual([linked.id]);
     expect(() => missionEvidence({ tenantId: fx.tenantId, userId: 'other-user', conversationId: fx.conversation.conversationId, missionId: fx.routed.mission.mission_id, read: fx.read })).toThrow('MISSION_NOT_FOUND');
   });
@@ -87,22 +67,8 @@ describe('Slice 06 mission artifacts and approvals', () => {
     const dir = path.join(dataDir, fx.tenantId, 'artifacts');
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'result.txt'), 'verified result', 'utf8');
-    const artifact = registerArtifact({
-      tenantId: fx.tenantId,
-      kind: 'result',
-      title: 'Verified result',
-      storagePath: 'artifacts/result.txt',
-      sourceRefs: [`mission:${fx.routed.mission.mission_id}`],
-      approvalStatus: 'approved'
-    });
-    const resolved = resolveMissionArtifactFile({
-      tenantId: fx.tenantId,
-      userId: fx.userId,
-      conversationId: fx.conversation.conversationId,
-      missionId: fx.routed.mission.mission_id,
-      artifactId: artifact.id,
-      read: fx.read
-    });
+    const artifact = registerArtifact({ tenantId: fx.tenantId, kind: 'result', title: 'Verified result', storagePath: 'artifacts/result.txt', sourceRefs: [`mission:${fx.routed.mission.mission_id}`], approvalStatus: 'approved' });
+    const resolved = resolveMissionArtifactFile({ tenantId: fx.tenantId, userId: fx.userId, conversationId: fx.conversation.conversationId, missionId: fx.routed.mission.mission_id, artifactId: artifact.id, read: fx.read });
     expect(resolved.exists).toBe(true);
     expect(fs.readFileSync(resolved.absolute, 'utf8')).toBe('verified result');
   });
@@ -118,7 +84,7 @@ describe('Slice 06 mission artifacts and approvals', () => {
     expect(listApprovals({ tenantId: fx.tenantId }).map((row) => row.id)).toEqual([first.id]);
   });
 
-  it('allows an authorized owner to approve but never executes the consequential action', async () => {
+  it('allows an authorized browser owner to approve but never executes the consequential action', async () => {
     const fx = await fixture('Submit the strongest grant application today.');
     ensureMissionApproval({ tenantId: fx.tenantId, userId: fx.userId, conversationId: fx.conversation.conversationId, missionId: fx.routed.mission.mission_id, read: fx.read });
     const approved = decideMissionApproval({
@@ -127,7 +93,7 @@ describe('Slice 06 mission artifacts and approvals', () => {
       conversationId: fx.conversation.conversationId,
       missionId: fx.routed.mission.mission_id,
       decision: 'approve',
-      actor: { id: fx.userId, role: 'owner', tenantId: fx.tenantId },
+      actor: { sub: fx.userId, role: 'owner', tenantId: fx.tenantId },
       read: fx.read
     });
     expect(approved.status).toBe('approved');
@@ -145,7 +111,7 @@ describe('Slice 06 mission artifacts and approvals', () => {
       conversationId: fx.conversation.conversationId,
       missionId: fx.routed.mission.mission_id,
       decision: 'reject',
-      actor: { id: fx.userId, role: 'owner', tenantId: fx.tenantId },
+      actor: { sub: fx.userId, role: 'owner', tenantId: fx.tenantId },
       read: fx.read
     });
     expect(rejected.status).toBe('rejected');
