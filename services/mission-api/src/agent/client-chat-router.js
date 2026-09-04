@@ -33,9 +33,12 @@ function requirePermission(req, permission) {
     throw error;
   }
 }
-function evidenceForWork({ tenantId, userId, conversationId, work }) {
+function uniqueRefs(...values) {
+  return [...new Set(values.flatMap((value) => Array.isArray(value) ? value : []).filter(Boolean).map(String))];
+}
+function evidenceForWork({ tenantId, userId, conversationId, work, recoverApproval = false }) {
   if (!work?.id || work.phase === 'routing_failed') return { artifacts: [], approval: null };
-  return missionEvidence({ tenantId, userId, conversationId, missionId: work.id });
+  return missionEvidence({ tenantId, userId, conversationId, missionId: work.id, recoverApproval });
 }
 
 router.get('/conversations', async (req, res) => {
@@ -60,7 +63,8 @@ router.get('/conversations/:conversationId', async (req, res) => {
     const conversation = await store.getConversation({ tenantId, userId, conversationId });
     if (!conversation) return res.status(404).json({ ok: false, error: 'NOT_FOUND' });
     const work = latestConversationWorkState({ tenantId, userId, conversationId });
-    return res.json({ ok: true, conversation, work, evidence: evidenceForWork({ tenantId, userId, conversationId, work }) });
+    const recoverApproval = work?.status === 'needs_you' && work?.approvalRequired === true;
+    return res.json({ ok: true, conversation, work, evidence: evidenceForWork({ tenantId, userId, conversationId, work, recoverApproval }) });
   } catch (error) { return res.status(error.status || 500).json({ ok: false, error: error.message }); }
 });
 
@@ -88,7 +92,7 @@ router.post('/conversations/:conversationId', async (req, res) => {
       return res.status(202).json({ ok: true, message, assistant, work: failure.projection, evidence: { artifacts: [], approval: null } });
     }
 
-    if (routed.mission.approval?.required) {
+    if (routed.mission.approval?.required || routed.mission.status === 'needs_you') {
       ensureMissionApproval({ tenantId, userId, conversationId, missionId: routed.mission.mission_id });
     }
     const work = getClientMissionWorkState({ tenantId, userId, conversationId, missionId: routed.mission.mission_id });
@@ -152,7 +156,14 @@ router.get('/conversations/:conversationId/export', async (req, res) => {
     if (!session) return res.status(404).json({ ok: false, error: 'NOT_FOUND' });
     const work = latestConversationWorkState({ tenantId, userId, conversationId });
     const evidence = evidenceForWork({ tenantId, userId, conversationId, work });
-    return res.json({ ok: true, session: { ...session, artifact_refs: evidence.artifacts.map((a) => `artifact:${a.id}`), approval_refs: evidence.approval ? [`approval:${evidence.approval.id}`] : [] } });
+    return res.json({
+      ok: true,
+      session: {
+        ...session,
+        artifact_refs: uniqueRefs(session.artifact_refs, evidence.artifacts.map((a) => `artifact:${a.id}`)),
+        approval_refs: uniqueRefs(session.approval_refs, evidence.approval ? [`approval:${evidence.approval.id}`] : [])
+      }
+    });
   } catch (error) { return res.status(500).json({ ok: false, error: error.message }); }
 });
 
