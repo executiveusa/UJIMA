@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build --workspace @asc3nd/site"
+  publish = "apps/site/.next"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+[dev]
+  command = "npm run dev:web"
+  targetPort = 3000
+  port = 8888
