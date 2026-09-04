@@ -7,10 +7,14 @@ on:
       - 'services/mission-api/src/agent/firstmate-mission-router.js'
       - 'services/mission-api/src/agent/client-chat-router.js'
       - 'services/mission-api/src/agent/client-chat-store.js'
+      - 'services/mission-api/src/agent/artifacts.js'
+      - 'packages/core/src/agent-service.js'
+      - 'packages/core/src/artifacts.js'
       - 'apps/site/components/ClientChatShell.jsx'
       - 'apps/site/components/ClientChatShell.module.css'
       - 'apps/site/tests/client-work-state.test.js'
       - 'apps/site/tests/client-work-state-review-regressions.test.js'
+      - 'apps/site/tests/agent-artifact-mission-link.test.js'
       - 'apps/site/tests/firstmate-mission-router.test.js'
       - 'apps/site/tests/client-chat-store.test.js'
       - 'control-plane/contracts/chat-mission-handoff.schema.json'
@@ -35,6 +39,6 @@ jobs:
       - name: Repository boundary guard
         run: npm run guard:repo
       - name: Run Slice 05 and predecessor regressions
-        run: npx vitest run apps/site/tests/client-work-state.test.js apps/site/tests/client-work-state-review-regressions.test.js apps/site/tests/firstmate-mission-router.test.js apps/site/tests/client-chat-store.test.js
+        run: npx vitest run apps/site/tests/client-work-state.test.js apps/site/tests/client-work-state-review-regressions.test.js apps/site/tests/agent-artifact-mission-link.test.js apps/site/tests/firstmate-mission-router.test.js apps/site/tests/client-chat-store.test.js packages/core/tests/agent-service.test.js
       - name: Build client surface
         run: npm run build --workspace @asc3nd/site
