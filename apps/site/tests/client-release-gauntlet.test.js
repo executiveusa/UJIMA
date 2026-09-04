@@ -22,6 +22,9 @@ describe('Slice 07 release gauntlet contract', () => {
     expect(config).toContain('npm run build --workspace @asc3nd/site');
     expect(config).toContain('publish = "apps/site/.next"');
     expect(config).toContain('NODE_VERSION = "24"');
+    expect(config).toContain('NEXT_PUBLIC_MISSION_API_URL = "https://api.asc3nd.org"');
+    expect(config).toContain('NEXT_PUBLIC_MISSION_TENANT = "asc3nd"');
+    expect(config).toContain('NEXT_PUBLIC_MISSION_PUBLIC_KEY = "pk_mission_YXNjM25kOjY0NWNlZmU3ZGU4NWNl"');
   });
 
   it('keeps the client shell mobile-first, keyboard-visible and reduced-motion safe', () => {
