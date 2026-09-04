@@ -8,6 +8,25 @@ export function hashSecret(secret) {
   return crypto.createHash('sha256').update(String(secret)).digest('hex');
 }
 
+export function verifyBrowserSessionToken(token, secretValue = process.env.JWT_SECRET) {
+  try {
+    if (!token || !String(token).includes('.')) return null;
+    const secret = String(secretValue || '').trim();
+    if (!secret || secret === 'dev-only-secret-change-me') return null;
+    const [body, sig] = String(token).split('.');
+    const expected = crypto.createHmac('sha256', secret).update(body).digest('base64url');
+    const sigBuf = Buffer.from(sig || '');
+    const expBuf = Buffer.from(expected);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return null;
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+    if (!payload.exp || payload.exp < Date.now()) return null;
+    if (!payload.tenantId || !payload.sub || !payload.role) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 export function createUser({ tenantId, email, name, passwordHash, role = 'readonly' }) {
   if (!tenantId) throw new Error('tenantId is required');
   if (!email) throw new Error('email is required');
@@ -55,7 +74,6 @@ export function createInvite({ tenantId, email, role, invitedBy, expiresAt }) {
 
   const rawToken = crypto.randomBytes(32).toString('hex');
   const tokenHash = hashSecret(rawToken);
-
   const invite = {
     id: `inv_${crypto.randomBytes(12).toString('hex')}`,
     tenantId,
@@ -66,10 +84,8 @@ export function createInvite({ tenantId, email, role, invitedBy, expiresAt }) {
     expiresAt: expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     createdAt: new Date().toISOString()
   };
-
   const repos = getRepos();
   repos.invites.add(tenantId, invite);
-
   return { invite, rawToken };
 }
 
@@ -77,34 +93,19 @@ export function acceptInvite({ inviteToken, tenantId, userId }) {
   if (!inviteToken) throw new Error('inviteToken is required');
   const tokenHash = hashSecret(inviteToken);
   const repos = getRepos();
-
   const invite = repos.invites.findByHash(tenantId, tokenHash);
-  if (!invite) {
-    throw new Error('Invite not found or invalid');
-  }
-
-  if (new Date(invite.expiresAt) < new Date()) {
-    throw new Error('Invite has expired');
-  }
-
-  const membership = createMembership({
-    tenantId: invite.tenantId,
-    userId,
-    role: invite.role
-  });
-
+  if (!invite) throw new Error('Invite not found or invalid');
+  if (new Date(invite.expiresAt) < new Date()) throw new Error('Invite has expired');
+  const membership = createMembership({ tenantId: invite.tenantId, userId, role: invite.role });
   repos.invites.remove(invite.tenantId, invite.id);
-
   return membership;
 }
 
 export function createSession({ userId, tenantId, ttlSeconds = 3600 }) {
   if (!userId) throw new Error('userId is required');
   if (!tenantId) throw new Error('tenantId is required');
-
   const rawToken = crypto.randomBytes(32).toString('hex');
   const sessionTokenHash = hashSecret(rawToken);
-
   const session = {
     id: `ses_${crypto.randomBytes(12).toString('hex')}`,
     userId,
@@ -113,10 +114,8 @@ export function createSession({ userId, tenantId, ttlSeconds = 3600 }) {
     expiresAt: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
     createdAt: new Date().toISOString()
   };
-
   const repos = getRepos();
   repos.sessions.add(tenantId, session);
-
   return { session, rawToken };
 }
 
@@ -124,17 +123,12 @@ export function validateSession({ sessionToken, tenantId }) {
   if (!sessionToken) throw new Error('sessionToken is required');
   const sessionTokenHash = hashSecret(sessionToken);
   const repos = getRepos();
-
   const session = repos.sessions.findByHash(tenantId, sessionTokenHash);
-  if (!session) {
-    throw new Error('Session not found or invalid');
-  }
-
+  if (!session) throw new Error('Session not found or invalid');
   if (new Date(session.expiresAt) < new Date()) {
     repos.sessions.remove(session.tenantId, session.id);
     throw new Error('Session has expired');
   }
-
   return session;
 }
 
@@ -142,21 +136,16 @@ export function revokeSession({ sessionToken, tenantId }) {
   if (!sessionToken) throw new Error('sessionToken is required');
   const sessionTokenHash = hashSecret(sessionToken);
   const repos = getRepos();
-
   const session = repos.sessions.findByHash(tenantId, sessionTokenHash);
-  if (session) {
-    repos.sessions.remove(session.tenantId, session.id);
-  }
+  if (session) repos.sessions.remove(session.tenantId, session.id);
   return true;
 }
 
 export function createOperatorKey({ tenantId, label, scopes = ['operator'], createdBy = 'system' }) {
   if (!tenantId) throw new Error('tenantId is required');
   if (!label) throw new Error('label is required');
-
   const rawKey = `ok_${tenantId}_${crypto.randomBytes(24).toString('hex')}`;
   const keyHash = hashSecret(rawKey);
-
   const operatorKey = {
     id: `opk_${crypto.randomBytes(12).toString('hex')}`,
     tenantId,
@@ -166,20 +155,11 @@ export function createOperatorKey({ tenantId, label, scopes = ['operator'], crea
     createdBy,
     createdAt: new Date().toISOString()
   };
-
   const repos = getRepos();
   repos.operatorKeys.add(tenantId, operatorKey);
-
   import('./events.js').then(({ emitEvent }) => {
-    emitEvent({
-      tenantId,
-      type: 'OPERATOR_KEY.CREATED',
-      actor: createdBy,
-      subject: operatorKey.id,
-      payload: { label, scopes }
-    });
+    emitEvent({ tenantId, type: 'OPERATOR_KEY.CREATED', actor: createdBy, subject: operatorKey.id, payload: { label, scopes } });
   }).catch(() => {});
-
   return { operatorKey, rawKey };
 }
 
@@ -187,15 +167,8 @@ export function validateOperatorKey({ key, tenantId, requiredScope }) {
   if (!key) throw new Error('key is required');
   const keyHash = hashSecret(key);
   const repos = getRepos();
-
   const opKey = repos.operatorKeys.findByHash(tenantId, keyHash);
-  if (!opKey) {
-    throw new Error('Invalid operator key');
-  }
-
-  if (requiredScope && !opKey.scopes.includes(requiredScope)) {
-    throw new Error(`Missing required scope: ${requiredScope}`);
-  }
-
+  if (!opKey) throw new Error('Invalid operator key');
+  if (requiredScope && !opKey.scopes.includes(requiredScope)) throw new Error(`Missing required scope: ${requiredScope}`);
   return opKey;
 }
