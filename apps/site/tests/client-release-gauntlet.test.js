@@ -29,10 +29,14 @@ describe('Slice 07 release gauntlet contract', () => {
     const globalCss = read('apps/site/app/globals.css');
     const evidenceCss = read('apps/site/components/MissionEvidencePanel.module.css');
     expect(shellCss).toContain('@media(max-width:840px)');
+    expect(shellCss).toContain('.closeButton{display:block;min-width:44px;min-height:44px}');
+    expect(shellCss).toContain('.menuButton{display:block;min-width:44px;min-height:44px}');
+    expect(shellCss).toMatch(/\.composer button\{[^}]*width:44px;height:44px/);
     expect(shellCss).toContain('@media(prefers-reduced-motion:reduce)');
-    expect(shellCss).toContain('min-height:44px');
+    expect(shellCss).toContain('.sidebar{transition:none!important}');
     expect(globalCss).toContain(':focus-visible');
-    expect(evidenceCss).toContain('min-height:44px');
+    expect(evidenceCss).toMatch(/\.actions button,\.decisionActions button\{[^}]*min-height:44px/);
+    expect(evidenceCss).toMatch(/@media\(max-width:700px\)[\s\S]*\.actions button,\.decisionActions button\{[^}]*min-height:44px/);
   });
 
   it('keeps evidence and approvals inspectable while explicitly separating approval from execution', () => {
