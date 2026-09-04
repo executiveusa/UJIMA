@@ -1,200 +1,196 @@
 'use client';
-import { useState } from 'react';
-import { PublicNav } from '../components/PublicNav';
-import { tenantSite } from '../tenant.config';
 
-const proof = [
-  ['Frontend changes per client', 'Public pages, visuals, copy, schema, and AI-readable files are customized for each nonprofit.'],
-  ['Backend stays shared', 'Approvals, ICM, opportunity scans, reports, imports, campaigns, and adapters improve centrally.'],
-  ['One primary agent', 'ICM folders route the work. Models can change without rewriting the operating system.']
+import { useState } from 'react';
+import styles from './ujima.module.css';
+
+const WAITLIST_ENDPOINT = 'https://cyxdevcjycmffhmwxojh.supabase.co/functions/v1/ujima-waitlist';
+
+const capabilities = [
+  ['Organize', 'Turn scattered conversations, documents, people, programs, and commitments into usable organizational context.'],
+  ['Research', 'Find opportunities, grants, partners, travel information, local resources, and answers across languages.'],
+  ['Create', 'Prepare campaigns, translations, outreach, reports, briefs, applications, social content, and working files.'],
+  ['Coordinate', 'Route work to the right people and agents, track what is moving, and surface what needs a human decision.'],
+  ['Remember', 'Keep institutional memory connected to the work so knowledge does not disappear when people, tools, or models change.'],
+  ['Protect', 'Keep consequential actions human-controlled while reversible research, drafting, and internal work can move autonomously.'],
+];
+
+const examples = [
+  'Find grants we actually qualify for.',
+  'Translate this volunteer guide into Swahili and Spanish.',
+  'Prepare next month\'s social campaign.',
+  'Who have we promised to follow up with?',
+  'Help us plan a community program in Zanzibar.',
+  'Turn these notes into a donor-ready impact report.',
 ];
 
 export default function HomePage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    childrenCount: '1',
-    ageRange: 'Mixed ages',
-    arrivalWindow: 'Not sure yet',
-    consent: false,
-    volunteerInterest: false,
-    schoolSuppliesInterest: false
-  });
-  const [status, setStatus] = useState({ loading: false, success: false, error: null });
+  const [email, setEmail] = useState('');
+  const [website, setWebsite] = useState('');
+  const [status, setStatus] = useState({ state: 'idle', message: '' });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.name || !formData.email) {
-      setStatus({ loading: false, success: false, error: 'Please fill in required fields (Name & Email).' });
-      return;
-    }
-    if (!formData.consent) {
-      setStatus({ loading: false, success: false, error: 'Please accept the contact statement consent.' });
-      return;
-    }
-    setStatus({ loading: true, success: false, error: null });
+  async function requestAccess(event) {
+    event.preventDefault();
+    if (!email) return;
+    setStatus({ state: 'loading', message: 'Sending…' });
+
     try {
-      const res = await fetch('/api/rsvp', {
+      const response = await fetch(WAITLIST_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ email, website, language: navigator.language || 'en', source: 'ujima-os-landing' }),
       });
-      const data = await res.json();
-      if (res.ok && data.ok) {
-        setStatus({ loading: false, success: true, error: null });
-      } else {
-        setStatus({ loading: false, success: false, error: data.error || 'Submission failed.' });
-      }
-    } catch (err) {
-      setStatus({ loading: false, success: false, error: err.message || 'Network error' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) throw new Error('REQUEST_FAILED');
+      setEmail('');
+      setStatus({ state: 'success', message: 'You’re on the private beta list.' });
+    } catch {
+      setStatus({ state: 'error', message: 'We could not save your request. Please try again.' });
     }
-  };
+  }
 
   return (
-    <>
-      <a href="#main-content" className="sr-only focus:not-sr-only">Skip to main content</a>
-      <PublicNav />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'Event', name: 'ASC3ND Community Cuts & Back-to-School Event', startDate: '2026-08-15T10:00:00-07:00', location: { '@type': 'Place', name: 'Tangles & Locs', address: tenantSite.region } })}} />
-      <main id="main-content">
-        <section className="hero refined">
-          <div className="container hero-grid">
-            <div>
-              <span className="eyebrow">Seattle youth + sports + social purpose</span>
-              <img 
-                src="/images/community-cuts-logo-graphic.png" 
-                alt="Community Cuts For Kids" 
-                style={{ width: '100%', maxWidth: '520px', height: 'auto', display: 'block', margin: '0 0 20px 0' }} 
-              />
-              <p className="lead" style={{ fontSize: '1.5rem', fontWeight: '600' }}>Fresh Fade, Fresh Grade</p>
-              <div className="hero-actions">
-                <a className="cta" href="#rsvp">RSVP for Community Event</a>
-                <a className="cta ghost" href="#offer">View deployment package</a>
-              </div>
-            </div>
-            <div className="device-card" aria-label="Mission OS preview">
-              <div className="device-top"><span></span><span></span><span></span></div>
-              <div className="preview-pane">
-                <span className="badge mint">Today</span>
-                <h3>3 decisions need a human.</h3>
-                {[
-                  ['Review youth grant package', 'Red approval · signer needed'],
-                  ['Start Google for Nonprofits readiness', 'Yellow review · documents needed'],
-                  ['Draft sponsor campaign', 'Orange review · no auto-send']
-                ].map(([a,b]) => <div className="preview-row clean" key={a}><span><strong>{a}</strong><small>{b}</small></span><span className="score-chip">Open</span></div>)}
-              </div>
-            </div>
-          </div>
-        </section>
+    <main className={styles.page}>
+      <a className={styles.skip} href="#content">Skip to content</a>
 
-        <section id="rsvp" className="section surface">
-          <div className="container">
-            <div className="card offer-card" style={{ maxWidth: '640px', margin: '0 auto' }}>
-              <h2>Event RSVP & Family Sign-up</h2>
-              <p>Reserve your family's spot for cuts, styling, and school supplies.</p>
-              
-              {status.success ? (
-                <div className="notice" style={{ background: '#052e16', borderColor: '#10b981', color: '#6ee7b7' }}>
-                  <strong>RSVP Confirmed!</strong> We look forward to seeing you. A confirmation record has been saved.
-                </div>
-              ) : (
-                <form className="form" onSubmit={handleSubmit}>
-                  {status.error && (
-                    <div className="notice" style={{ background: '#450a0a', borderColor: '#ef4444', color: '#fca5a5' }} role="alert">
-                      {status.error}
-                    </div>
-                  )}
-                  <label>
-                    Parent/Guardian Full Name *
-                    <input className="input" type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                  </label>
-                  <label>
-                    Email Address *
-                    <input className="input" type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-                  </label>
-                  <label>
-                    Phone Number (Optional)
-                    <input className="input" type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <label>
-                      Children Attending
-                      <select className="select" value={formData.childrenCount} onChange={(e) => setFormData({ ...formData, childrenCount: e.target.value })}>
-                        {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}
-                      </select>
-                    </label>
-                    <label>
-                      Age Range
-                      <select className="select" value={formData.ageRange} onChange={(e) => setFormData({ ...formData, ageRange: e.target.value })}>
-                        <option value="Mixed ages">Mixed ages</option>
-                        <option value="Elementary (5-10)">Elementary (5-10)</option>
-                        <option value="Middle / High (11-18)">Middle / High (11-18)</option>
-                      </select>
-                    </label>
-                  </div>
-                  <label style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: '8px 0' }}>
-                    <input type="checkbox" checked={formData.consent} onChange={(e) => setFormData({ ...formData, consent: e.target.checked })} required aria-required="true" />
-                    <span>I consent to receiving event updates via email or SMS *</span>
-                  </label>
-                  <button type="submit" className="cta" disabled={status.loading}>
-                    {status.loading ? 'Submitting...' : 'Confirm Family RSVP'}
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-        </section>
+      <header className={styles.header}>
+        <a className={styles.wordmark} href="#top" aria-label="Ujima OS home">UJIMA <span>OS</span></a>
+        <div className={styles.headerActions}>
+          <span className={styles.beta}>PRIVATE BETA</span>
+          <a className={styles.textLink} href="/login">Member sign in</a>
+        </div>
+      </header>
 
-        <section id="venue" className="section surface">
-          <div className="container">
-            <div className="section-heading">
-              <span className="eyebrow">Event Location</span>
-              <h2>Tangles & Locs Salon & Spa</h2>
-              <p><a href="https://maps.google.com/?q=2253+S+123rd+St+Suite+6+Seattle+WA" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>2253 S 123rd St, Suite 6 · Seattle, WA</a></p>
-            </div>
-            <div className="card venue-card" style={{ display: 'grid', placeItems: 'center', background: '#0a0e17', borderRadius: '24px', padding: '20px', overflow: 'hidden' }}>
-              <div style={{ width: '100%', maxWidth: '720px', height: '480px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#131b2e', borderRadius: '16px', overflow: 'hidden' }}>
-                <img 
-                  src="/images/tangles-and-locs-flyer.jpg" 
-                  alt="Tangles & Locs Salon and Spa Venue Exterior" 
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
+      <section id="top" className={styles.hero} aria-labelledby="ujima-title">
+        <div className={styles.heroTopline}>
+          <span>KISWAHILI</span>
+          <span>noun · /uˈdʒi.ma/</span>
+        </div>
 
-        <section id="system" className="section surface">
-          <div className="container">
-            <div className="section-heading"><span className="eyebrow">Repeatable deployment</span><h2>Stop selling websites. Ship a mission operating layer.</h2><p>The public site is part of the package because AI agents, grant reviewers, donors, and volunteers need a readable front door. The operating backend remains productized and reusable.</p></div>
-            <div className="grid cols-3">{proof.map(([title, text]) => <Card key={title} title={title} text={text} />)}</div>
-          </div>
-        </section>
+        <h1 id="ujima-title" className={styles.heroWord}>UJIMA</h1>
 
-        <section id="outcomes" className="section">
-          <div className="container split">
-            <div><span className="eyebrow">Nontechnical by default</span><h2>Users choose outcomes, not agents.</h2><p>No one has to understand MCP, Pi, Absurd, Sandcastle, Postiz, or model routing. Staff see clear buttons: find funding, prepare application, grow donors, coordinate volunteers, report impact, and review before sending.</p></div>
-            <div className="grid">
-              {['Find funding', 'Prepare application', 'Grow donors', 'Report impact'].map((x, i) => <div className="card outcome-card" key={x}><span className="score-chip">0{i+1}</span><h3>{x}</h3><p>Every action writes to an ICM stage, creates an audit trail, and waits for human approval when needed.</p></div>)}
-            </div>
+        <div className={styles.definitionGrid}>
+          <div>
+            <p className={styles.languageLabel}>KISWAHILI</p>
+            <p className={styles.definitionSwahili} lang="sw">
+              Mfumo wa kijamii unaojengwa juu ya kazi ya pamoja, uwajibikaji wa pamoja, na kila mtu kuchangia kwa uwezo wake kwa manufaa ya jamii nzima.
+            </p>
           </div>
-        </section>
+          <div>
+            <p className={styles.languageLabel}>ENGLISH</p>
+            <p className={styles.definitionEnglish}>
+              Collective work and shared responsibility: people contributing what they can, solving problems together, and building for the good of the whole community.
+            </p>
+          </div>
+        </div>
 
-        <section id="offer" className="section surface">
-          <div className="container">
-            <div className="card offer-card">
-              <span className="badge gold">Seattle Social Purpose OS</span>
-              <h2>{tenantSite.offerTitle}</h2>
-              <p>{tenantSite.offerBody}</p>
-              <div className="grid cols-4">
-                {['AI-ready website', 'Seattle opportunity engine', 'Founder Second Brain', 'Postiz campaigns', 'Voice/call lane', 'Approval/audit trail', 'ICM workspace', 'Flywheel hosting'].map((x) => <div className="mini-tile" key={x}>{x}</div>)}
-              </div>
+        <div className={styles.heroFooter}>
+          <p>One agentic operating system for volunteers, nonprofits, community groups, and social-purpose teams.</p>
+          <a href="#beta" className={styles.arrowLink}>REQUEST ACCESS <span aria-hidden="true">↘</span></a>
+        </div>
+      </section>
+
+      <section id="content" className={styles.statement}>
+        <p className={styles.kicker}>WHY UJIMA</p>
+        <h2>Good work should not be limited by administrative capacity.</h2>
+        <p className={styles.statementBody}>
+          Ujima OS is being built for the people doing the work: volunteers, small teams, nonprofit leaders, community organizers, social enterprises, and mission-driven groups that need more capacity without losing human judgment or control.
+        </p>
+      </section>
+
+      <section className={styles.askSection} aria-label="Example requests">
+        <div className={styles.askIntro}>
+          <p className={styles.kicker}>START WITH THE OUTCOME</p>
+          <h2>Tell Ujima what needs to get done.</h2>
+        </div>
+        <div className={styles.promptList}>
+          {examples.map((example, index) => (
+            <div className={styles.promptRow} key={example}>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <p>{example}</p>
+              <span aria-hidden="true">→</span>
             </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.systemSection}>
+        <div className={styles.sectionLead}>
+          <p className={styles.kicker}>A DIFFERENT KIND OF OPERATING SYSTEM</p>
+          <h2>People keep the mission. The system carries more of the digital work.</h2>
+        </div>
+        <div className={styles.capabilityGrid}>
+          {capabilities.map(([title, text], index) => (
+            <article className={styles.capability} key={title}>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.modelSection}>
+        <div className={styles.modelLabel}>THE MODEL</div>
+        <div className={styles.modelFlow} aria-label="Ujima operating model">
+          <span>ASK</span><i>→</i><span>WORK</span><i>→</i><span>REVIEW</span><i>→</i><span>REMEMBER</span>
+        </div>
+        <p>
+          Under the surface, Ujima combines organizational context, specialist agents, tools, languages, approvals, and durable memory. The interface stays simple: ask for an outcome, see the work, step in when judgment matters.
+        </p>
+      </section>
+
+      <section className={styles.globalSection}>
+        <p className={styles.kicker}>BUILT TO TRAVEL</p>
+        <div className={styles.globalGrid}>
+          <h2>Seattle.<br />Zanzibar.<br />Anywhere people organize around purpose.</h2>
+          <div>
+            <p>
+              Ujima is being designed for multilingual, cross-cultural work from the beginning: translation, travel research, local context, program planning, communications, partnerships, and the everyday coordination that small mission-driven teams usually carry by hand.
+            </p>
+            <p>
+              ASC3ND is the first live proving ground. The architecture is designed to become reusable for other organizations without copying their private data, relationships, or institutional memory.
+            </p>
           </div>
-        </section>
-      </main>
-      <footer className="footer"><div className="container">{tenantSite.productName} · Built for Seattle mission teams · llms.txt included</div></footer>
-    </>
+        </div>
+      </section>
+
+      <section id="beta" className={styles.betaSection}>
+        <div>
+          <p className={styles.kicker}>PRIVATE BETA</p>
+          <h2>Help shape Ujima.</h2>
+          <p>We are inviting a small group of volunteers, nonprofit teams, community organizations, and social-purpose operators to test the system as it develops.</p>
+        </div>
+        <form className={styles.waitlist} onSubmit={requestAccess}>
+          <label htmlFor="ujima-email">Email address</label>
+          <div className={styles.formRow}>
+            <input
+              id="ujima-email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@organization.org"
+            />
+            <button type="submit" disabled={status.state === 'loading'}>
+              {status.state === 'loading' ? 'SENDING…' : 'REQUEST ACCESS'}
+            </button>
+          </div>
+          <div className={styles.honeypot} aria-hidden="true">
+            <label htmlFor="company-site">Website</label>
+            <input id="company-site" tabIndex="-1" autoComplete="off" value={website} onChange={(event) => setWebsite(event.target.value)} />
+          </div>
+          <p className={`${styles.formStatus} ${status.state === 'error' ? styles.formError : ''}`} role="status" aria-live="polite">
+            {status.message || 'No spam. Beta updates and invitations only.'}
+          </p>
+        </form>
+      </section>
+
+      <footer className={styles.footer}>
+        <div>UJIMA OS</div>
+        <div>Collective work. Shared responsibility.</div>
+        <div>Private beta · first developed with ASC3ND</div>
+      </footer>
+    </main>
   );
 }
-function Card({ title, text }) { return <div className="card"><h3>{title}</h3><p>{text}</p></div>; }
