@@ -27,10 +27,11 @@ function requestRef(value) { return value ? crypto.createHash('sha256').update(S
 function missionEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_MISSION_EVENT }) || []; }
 function stateEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_MISSION_STATE_EVENT }) || []; }
 function failureEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_ROUTING_FAILURE_EVENT }) || []; }
+function missionRequiresApproval(mission) { return mission?.approval?.required === true || mission?.status === 'needs_you'; }
 function initialMissionStatus(mission, routingEvent) {
   const routeOnly = routingEvent?.payload?.execution_mode === 'route-only' && routingEvent?.payload?.execution_state === 'routed';
   if (!routeOnly) return mission.status;
-  return mission.approval?.required ? 'needs_you' : 'routed';
+  return missionRequiresApproval(mission) ? 'needs_you' : 'routed';
 }
 function findMission({ tenantId, userId, conversationId, missionId, read = readEvents }) {
   for (const event of missionEvents({ tenantId, read })) {
@@ -55,7 +56,7 @@ function projection({ mission, state, eventId = null, routingEvent = null }) {
     label: CLIENT_LABELS[internalState] || null,
     phase: internalState,
     area: mission.domain,
-    approvalRequired: Boolean(mission.approval?.required),
+    approvalRequired: missionRequiresApproval(mission),
     nextAction: state?.next_action || (internalState === 'needs_you' ? 'Review the request before anything consequential happens.' : null),
     proofRefs: normalizeRefs(state?.proof_refs || []), approvalRef: state?.approval_ref || null,
     eventRef: eventId ? `event:${eventId}` : null
@@ -194,7 +195,7 @@ export function transitionClientMissionState({ tenantId, userId, conversationId,
   if (to === 'delivered') verifyProofRefs({ tenantId, missionId, refs, mode: 'delivered', read, listArtifacts });
   const inheritedApprovalRef = currentEvent?.payload?.state?.approval_ref || null;
   const effectiveApprovalRef = approvalRef || inheritedApprovalRef;
-  if (found.mission.approval?.required && (to === 'working' || to === 'ready')) {
+  if (missionRequiresApproval(found.mission) && (to === 'working' || to === 'ready')) {
     verifyApprovalRef({ tenantId, missionId, approvalRef: effectiveApprovalRef, getApprovalRecord });
   }
   const requestedNextAction = String(nextAction || '').trim();

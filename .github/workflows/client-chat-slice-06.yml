@@ -1,0 +1,38 @@
+name: Client Chat Slice 06 Artifacts Approvals
+
+on:
+  pull_request:
+    paths:
+      - 'services/mission-api/src/agent/client-mission-evidence.js'
+      - 'services/mission-api/src/agent/client-chat-router.js'
+      - 'packages/core/src/approval-lifecycle.js'
+      - 'packages/core/src/artifacts.js'
+      - 'apps/site/components/ClientChatShell.jsx'
+      - 'apps/site/components/ClientChatShell.module.css'
+      - 'apps/site/components/MissionEvidencePanel.jsx'
+      - 'apps/site/components/MissionEvidencePanel.module.css'
+      - 'apps/site/app/api/ops/approvals/route.js'
+      - 'apps/site/tests/client-artifacts-approvals.test.js'
+      - 'icm/client-chat-loop/06-artifacts-approvals/**'
+      - '.github/workflows/client-chat-slice-06.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  artifacts-approvals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Repository boundary guard
+        run: npm run guard:repo
+      - name: Run Slice 06 and predecessor regressions
+        run: npx vitest run apps/site/tests/client-artifacts-approvals.test.js apps/site/tests/client-work-state.test.js apps/site/tests/client-work-state-review-regressions.test.js apps/site/tests/agent-artifact-mission-link.test.js apps/site/tests/firstmate-mission-router.test.js apps/site/tests/client-chat-store.test.js packages/core/tests/approval-lifecycle.test.js packages/core/tests/agent-service.test.js
+      - name: Build client surface
+        run: npm run build --workspace @asc3nd/site
