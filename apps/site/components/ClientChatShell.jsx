@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { api, clearToken, getToken } from '../lib/api';
+import { MissionEvidencePanel } from './MissionEvidencePanel';
 import styles from './ClientChatShell.module.css';
 
 const initialAssistant = {
@@ -47,10 +48,14 @@ export function ClientChatShell({ initialConversationId = null }) {
   const [conversations, setConversations] = useState([]);
   const [messagesByConversation, setMessagesByConversation] = useState({});
   const [workByConversation, setWorkByConversation] = useState({});
+  const [evidenceByConversation, setEvidenceByConversation] = useState({});
+  const [decisionBusy, setDecisionBusy] = useState(false);
+  const [actionError, setActionError] = useState(null);
   const [syncState, setSyncState] = useState('loading');
 
   const messages = useMemo(() => messagesByConversation[activeId] || [initialAssistant], [messagesByConversation, activeId]);
   const activeWork = workByConversation[activeId] || null;
+  const activeEvidence = evidenceByConversation[activeId] || { artifacts: [], approval: null };
   const activeWorkLabel = clientWorkLabel(activeWork);
   const activeNextAction = activeWork?.nextAction && ['needs_you', 'failed'].includes(activeWork?.status) ? activeWork.nextAction : null;
 
@@ -66,20 +71,13 @@ export function ClientChatShell({ initialConversationId = null }) {
         if (cancelled) return;
         const rows = data.conversations || [];
         setConversations(rows);
-
-        const requested = initialConversationId
-          ? rows.find((conversation) => conversation.conversationId === initialConversationId)
-          : null;
+        const requested = initialConversationId ? rows.find((conversation) => conversation.conversationId === initialConversationId) : null;
         const next = requested || rows[0] || null;
-
         if (next) {
           setActiveId(next.conversationId);
           routeToConversation(next.conversationId);
         } else {
-          const created = await api(`${CHAT_API}/conversations`, {
-            method: 'POST',
-            body: JSON.stringify({ title: 'Today' })
-          });
+          const created = await api(`${CHAT_API}/conversations`, { method: 'POST', body: JSON.stringify({ title: 'Today' }) });
           if (cancelled) return;
           setConversations([created.conversation]);
           setActiveId(created.conversation.conversationId);
@@ -98,17 +96,16 @@ export function ClientChatShell({ initialConversationId = null }) {
   useEffect(() => {
     if (!activeId) return;
     let cancelled = false;
+    setActionError(null);
     api(`${CHAT_API}/conversations/${encodeURIComponent(activeId)}`)
       .then((data) => {
         if (cancelled) return;
         const mapped = (data.conversation.messages || []).map((message) => ({
-          id: message.messageId,
-          role: message.role,
-          text: message.text,
-          createdAt: message.createdAt,
+          id: message.messageId, role: message.role, text: message.text, createdAt: message.createdAt,
         }));
         setMessagesByConversation((current) => ({ ...current, [activeId]: mapped.length ? mapped : [initialAssistant] }));
         setWorkByConversation((current) => ({ ...current, [activeId]: data.work || null }));
+        setEvidenceByConversation((current) => ({ ...current, [activeId]: data.evidence || { artifacts: [], approval: null } }));
         setSyncState('saved');
       })
       .catch((error) => {
@@ -120,6 +117,7 @@ export function ClientChatShell({ initialConversationId = null }) {
   async function selectConversation(id) {
     setActiveId(id);
     setRetryRequest(null);
+    setActionError(null);
     setSidebarOpen(false);
     routeToConversation(id);
   }
@@ -127,15 +125,14 @@ export function ClientChatShell({ initialConversationId = null }) {
   async function newChat() {
     try {
       setSyncState('saving');
-      const data = await api(`${CHAT_API}/conversations`, {
-        method: 'POST',
-        body: JSON.stringify({ title: 'New chat' })
-      });
+      const data = await api(`${CHAT_API}/conversations`, { method: 'POST', body: JSON.stringify({ title: 'New chat' }) });
       setConversations((current) => [data.conversation, ...current]);
       setMessagesByConversation((current) => ({ ...current, [data.conversation.conversationId]: [initialAssistant] }));
       setWorkByConversation((current) => ({ ...current, [data.conversation.conversationId]: null }));
+      setEvidenceByConversation((current) => ({ ...current, [data.conversation.conversationId]: { artifacts: [], approval: null } }));
       setActiveId(data.conversation.conversationId);
       setRetryRequest(null);
+      setActionError(null);
       setSidebarOpen(false);
       setSyncState('saved');
       routeToConversation(data.conversation.conversationId);
@@ -162,46 +159,78 @@ export function ClientChatShell({ initialConversationId = null }) {
     }
   }
 
+  async function decideApproval(decision) {
+    if (!activeId || !activeWork?.id || decisionBusy) return;
+    setDecisionBusy(true);
+    setActionError(null);
+    try {
+      const data = await api(`${CHAT_API}/conversations/${encodeURIComponent(activeId)}/missions/${encodeURIComponent(activeWork.id)}/approval`, {
+        method: 'POST', body: JSON.stringify({ decision })
+      });
+      setEvidenceByConversation((current) => ({ ...current, [activeId]: data.evidence || { artifacts: [], approval: data.approval || null } }));
+      if (data.work) setWorkByConversation((current) => ({ ...current, [activeId]: data.work }));
+      setSyncState('saved');
+    } catch (error) {
+      if (!handleAuthFailure(error)) setActionError(error?.message || 'Could not update the approval.');
+    } finally {
+      setDecisionBusy(false);
+    }
+  }
+
+  async function openArtifact(artifact, download) {
+    if (!artifact) return;
+    setActionError(null);
+    try {
+      const token = getToken();
+      const response = await fetch(download ? artifact.downloadUrl : artifact.previewUrl, { headers: { authorization: `Bearer ${token}` } });
+      if (!response.ok) {
+        if (response.status === 401) {
+          clearToken();
+          window.location.href = '/login';
+          return;
+        }
+        throw new Error(response.status === 404 ? 'Artifact content is not available yet.' : 'Could not open this artifact.');
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      if (download) anchor.download = artifact.title || artifact.id;
+      else anchor.target = '_blank';
+      anchor.rel = 'noopener';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    } catch (error) {
+      setActionError(error?.message || 'Could not open this artifact.');
+    }
+  }
+
   async function submit(event) {
     event.preventDefault();
     const text = input.trim();
     if (!text || !activeId) return;
     const requestKey = retryRequest?.text === text ? retryRequest.key : createRequestKey();
     setInput('');
+    setActionError(null);
     const optimistic = { id: `u-${requestKey}`, role: 'user', text };
-    setMessagesByConversation((current) => ({
-      ...current,
-      [activeId]: [...(current[activeId]?.filter((message) => message.id !== 'welcome') || []), optimistic],
-    }));
+    setMessagesByConversation((current) => ({ ...current, [activeId]: [...(current[activeId]?.filter((message) => message.id !== 'welcome') || []), optimistic] }));
     setSyncState('saving');
     try {
       const data = await api(`${CHAT_API}/conversations/${encodeURIComponent(activeId)}`, {
-        method: 'POST',
-        body: JSON.stringify({ text, idempotencyKey: requestKey })
+        method: 'POST', body: JSON.stringify({ text, idempotencyKey: requestKey })
       });
       if (data.warning === 'ACKNOWLEDGEMENT_PENDING') {
         setRetryRequest({ key: requestKey, text });
         setInput(text);
-      } else {
-        setRetryRequest(null);
-      }
-      if (data.work) {
-        setWorkByConversation((current) => ({ ...current, [activeId]: data.work }));
-      }
+      } else setRetryRequest(null);
+      if (data.work) setWorkByConversation((current) => ({ ...current, [activeId]: data.work }));
+      setEvidenceByConversation((current) => ({ ...current, [activeId]: data.evidence || { artifacts: [], approval: null } }));
       setMessagesByConversation((current) => {
-        const persisted = (current[activeId] || []).map((message) => message.id === optimistic.id
-          ? { ...message, id: data.message.messageId, createdAt: data.message.createdAt }
-          : message);
-        const assistant = data.assistant ? {
-          id: data.assistant.messageId,
-          role: 'assistant',
-          text: data.assistant.text,
-          createdAt: data.assistant.createdAt,
-        } : null;
-        return {
-          ...current,
-          [activeId]: assistant ? [...persisted.filter((message) => message.id !== assistant.id), assistant] : persisted
-        };
+        const persisted = (current[activeId] || []).map((message) => message.id === optimistic.id ? { ...message, id: data.message.messageId, createdAt: data.message.createdAt } : message);
+        const assistant = data.assistant ? { id: data.assistant.messageId, role: 'assistant', text: data.assistant.text, createdAt: data.assistant.createdAt } : null;
+        return { ...current, [activeId]: assistant ? [...persisted.filter((message) => message.id !== assistant.id), assistant] : persisted };
       });
       setConversations((current) => current.map((conversation) => conversation.conversationId === activeId ? {
         ...conversation,
@@ -210,10 +239,7 @@ export function ClientChatShell({ initialConversationId = null }) {
       } : conversation));
       setSyncState(data.warning ? 'offline' : 'saved');
     } catch (error) {
-      setMessagesByConversation((current) => ({
-        ...current,
-        [activeId]: (current[activeId] || []).filter((message) => message.id !== optimistic.id)
-      }));
+      setMessagesByConversation((current) => ({ ...current, [activeId]: (current[activeId] || []).filter((message) => message.id !== optimistic.id) }));
       setRetryRequest({ key: requestKey, text });
       setInput((current) => current || text);
       if (!handleAuthFailure(error)) setSyncState('offline');
@@ -261,6 +287,8 @@ export function ClientChatShell({ initialConversationId = null }) {
           {activeWorkLabel && <span className={styles.workBadge} role="status" aria-label="Current work status">{activeWorkLabel}</span>}
         </header>
         {activeNextAction && <div className={styles.nextAction} role="status"><strong>Next action</strong><span>{activeNextAction}</span></div>}
+        {actionError && <div className={styles.actionError} role="alert">{actionError}</div>}
+        <MissionEvidencePanel work={activeWork} evidence={activeEvidence} busy={decisionBusy} onDecision={decideApproval} onArtifact={openArtifact} />
 
         <div className={styles.messages} aria-live="polite">
           <div className={styles.intro}>
