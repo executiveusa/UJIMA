@@ -15,7 +15,11 @@ const ALLOWED = Object.freeze({
   ready: new Set(['delivered', 'failed']), failed: new Set([]), delivered: new Set([])
 });
 const APPROVED_STATES = new Set([APPROVAL_STATES.APPROVED, APPROVAL_STATES.EXECUTED, APPROVAL_STATES.VERIFIED, APPROVAL_STATES.LOGGED]);
-const VERIFIED_DELIVERY_TYPES = new Set(['DELIVERY.VERIFIED', 'CLIENT.DELIVERY.VERIFIED', 'ARTIFACT.DELIVERED', 'AGENT.DELIVERY.VERIFIED']);
+const TRUSTED_DELIVERY_VERIFIERS = new Map([
+  ['DELIVERY.VERIFIED', new Set(['delivery-verifier', 'system-delivery-verifier'])],
+  ['CLIENT.DELIVERY.VERIFIED', new Set(['client-delivery-verifier', 'system-delivery-verifier'])],
+  ['ARTIFACT.DELIVERED', new Set(['artifact-delivery-verifier', 'system-delivery-verifier'])]
+]);
 const DEFAULT_FAILED_NEXT_ACTION = 'Review the failure details and retry or choose a smaller safe step.';
 
 function normalizeRefs(refs = []) { return [...new Set(refs.filter(Boolean).map(String))]; }
@@ -78,6 +82,10 @@ function artifactLinkedToMission(artifact, missionId) {
   const refs = normalizeRefs(artifact?.sourceRefs || []);
   return refs.includes(missionId) || refs.includes(`mission:${missionId}`);
 }
+function isTrustedDeliveryEvent(event) {
+  const actors = TRUSTED_DELIVERY_VERIFIERS.get(event?.type);
+  return Boolean(actors?.has(event?.actor));
+}
 function verifyProofRefs({ tenantId, missionId, refs, mode, read = readEvents, listArtifacts = getArtifacts }) {
   if (!refs.length) throw new Error(mode === 'delivered' ? 'DELIVERY_PROOF_REQUIRED' : 'READY_PROOF_REQUIRED');
   const artifacts = listArtifacts({ tenantId }) || [];
@@ -98,7 +106,7 @@ function verifyProofRefs({ tenantId, missionId, refs, mode, read = readEvents, l
       if (!event || event.tenantId !== tenantId) throw new Error('PROOF_EVENT_NOT_FOUND');
       const linkedMission = event.subject === missionId || event.payload?.missionId === missionId || event.payload?.mission_id === missionId;
       if (!linkedMission) throw new Error('PROOF_EVENT_MISSION_MISMATCH');
-      if (VERIFIED_DELIVERY_TYPES.has(event.type)) {
+      if (isTrustedDeliveryEvent(event)) {
         verifiedDelivery = true;
         resultBearingProof = true;
       }
