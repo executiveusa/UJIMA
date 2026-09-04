@@ -53,7 +53,7 @@ export function ensureMissionApproval({ tenantId, userId, conversationId, missio
 export function missionEvidence({ tenantId, userId, conversationId, missionId, read = readEvents }) {
   const event = findMissionEvent({ tenantId, userId, conversationId, missionId, read });
   if (!event) throw new Error('MISSION_NOT_FOUND');
-  const approval = ensureMissionApproval({ tenantId, userId, conversationId, missionId, read });
+  const approval = findMissionApproval({ tenantId, missionId });
   const artifacts = listMissionArtifacts({ tenantId, missionId }).map((artifact) => ({
     id: artifact.id,
     title: artifact.title || artifact.kind || 'Artifact',
