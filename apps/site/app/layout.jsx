@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Asc3nd Social Purpose OS',
-  description: 'Seattle-native AI operations system for nonprofits and social-purpose teams.',
+  title: 'Ujima OS — Collective work. Shared responsibility.',
+  description: 'An agentic operating system for volunteers, nonprofits, community groups, and social-purpose teams.',
   metadataBase: new URL(process.env.PUBLIC_SITE_URL || 'http://localhost:3000')
 };
 
