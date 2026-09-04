@@ -14,5 +14,7 @@
     "./repos/audit.repo.js": "./src/repos/audit.repo.js",
     "./repos/icm.repo.js": "./src/repos/icm.repo.js"
   },
-  "dependencies": {}
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
 }
