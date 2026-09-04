@@ -39,7 +39,7 @@ export function MissionEvidencePanel({ work, evidence, busy = false, onDecision,
               <div>
                 <small>{artifact.kind}</small>
                 <strong>{artifact.title}</strong>
-                <span>{artifact.approvalStatus === 'approved' ? 'Verified artifact' : 'Artifact'}</span>
+                <span>{artifact.approvalStatus === 'approved' ? 'Approved artifact' : 'Artifact'}</span>
               </div>
               <div className={styles.actions}>
                 <button type="button" onClick={() => onArtifact(artifact, false)}>Preview</button>
