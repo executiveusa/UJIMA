@@ -9,6 +9,7 @@ const getDataDir = () => process.env.DATA_DIR || path.resolve(process.cwd(), 'mi
 
 function refs(value = []) { return Array.isArray(value) ? value.map(String) : []; }
 function missionRef(missionId) { return `mission:${missionId}`; }
+function isInside(root, candidate) { return candidate === root || candidate.startsWith(`${root}${path.sep}`); }
 
 function findMissionEvent({ tenantId, userId, conversationId, missionId, read = readEvents }) {
   return (read({ tenantId, type: CLIENT_MISSION_EVENT }) || []).find((event) => {
@@ -39,7 +40,8 @@ export function ensureMissionApproval({ tenantId, userId, conversationId, missio
   const event = findMissionEvent({ tenantId, userId, conversationId, missionId, read });
   if (!event) throw new Error('MISSION_NOT_FOUND');
   const mission = event.payload.handoff;
-  if (!mission.approval?.required) return null;
+  const historicallyApprovalGated = mission.approval?.required === true || mission.status === 'needs_you';
+  if (!historicallyApprovalGated) return null;
   const existing = findMissionApproval({ tenantId, missionId });
   if (existing) return existing;
   return requestApproval({
@@ -50,10 +52,12 @@ export function ensureMissionApproval({ tenantId, userId, conversationId, missio
   });
 }
 
-export function missionEvidence({ tenantId, userId, conversationId, missionId, read = readEvents }) {
+export function missionEvidence({ tenantId, userId, conversationId, missionId, read = readEvents, recoverApproval = false }) {
   const event = findMissionEvent({ tenantId, userId, conversationId, missionId, read });
   if (!event) throw new Error('MISSION_NOT_FOUND');
-  const approval = findMissionApproval({ tenantId, missionId });
+  const approval = recoverApproval
+    ? ensureMissionApproval({ tenantId, userId, conversationId, missionId, read })
+    : findMissionApproval({ tenantId, missionId });
   const artifacts = listMissionArtifacts({ tenantId, missionId }).map((artifact) => ({
     id: artifact.id,
     title: artifact.title || artifact.kind || 'Artifact',
@@ -73,9 +77,14 @@ export function resolveMissionArtifactFile({ tenantId, userId, conversationId, m
   if (!artifact) throw new Error('ARTIFACT_NOT_FOUND');
   const tenantRoot = path.resolve(getDataDir(), tenantId);
   const absolute = path.resolve(tenantRoot, artifact.storagePath || '');
-  if (absolute !== tenantRoot && !absolute.startsWith(`${tenantRoot}${path.sep}`)) throw new Error('ARTIFACT_PATH_OUT_OF_SCOPE');
-  const exists = fs.existsSync(absolute) && fs.statSync(absolute).isFile();
-  return { artifact, absolute, exists };
+  if (!isInside(tenantRoot, absolute)) throw new Error('ARTIFACT_PATH_OUT_OF_SCOPE');
+  if (!fs.existsSync(absolute)) return { artifact, absolute, exists: false };
+  if (fs.lstatSync(absolute).isSymbolicLink()) throw new Error('ARTIFACT_SYMLINK_FORBIDDEN');
+  const realTenantRoot = fs.realpathSync(tenantRoot);
+  const realAbsolute = fs.realpathSync(absolute);
+  if (!isInside(realTenantRoot, realAbsolute)) throw new Error('ARTIFACT_PATH_OUT_OF_SCOPE');
+  const exists = fs.statSync(realAbsolute).isFile();
+  return { artifact, absolute: realAbsolute, exists };
 }
 
 export function decideMissionApproval({ tenantId, userId, conversationId, missionId, decision, actor, comments, read = readEvents }) {
