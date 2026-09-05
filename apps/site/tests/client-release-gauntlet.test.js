@@ -9,7 +9,8 @@ describe('Slice 07 release gauntlet contract', () => {
   it('pins the existing Netlify site and keeps the public frontend frozen', () => {
     const loop = JSON.parse(read('control-plane/client-chat-execution-loop.json'));
     expect(loop.references.netlify_site_id).toBe('9ebe01e5-21cf-492d-a091-29dad057f91d');
-    expect(loop.references.netlify_project).toBe('asc3nd-social-purpose-os');
+    expect(loop.references.netlify_project).toBe('ujima-os');
+    expect(loop.references.control_plane_repository).toBe('executiveusa/UJIMA');
     expect(loop.boundaries.client_surface).toBe('/app/*');
     expect(loop.boundaries.public_frontend.state).toBe('frozen');
     expect(loop.laws.no_direct_main).toBe(true);
@@ -22,9 +23,10 @@ describe('Slice 07 release gauntlet contract', () => {
     expect(config).toContain('npm run build --workspace @asc3nd/site');
     expect(config).toContain('publish = "apps/site/.next"');
     expect(config).toContain('NODE_VERSION = "24"');
-    expect(config).toContain('NEXT_PUBLIC_MISSION_API_URL = "https://api.asc3nd.org"');
-    expect(config).toContain('NEXT_PUBLIC_MISSION_TENANT = "asc3nd"');
-    expect(config).toContain('NEXT_PUBLIC_MISSION_PUBLIC_KEY = "pk_mission_YXNjM25kOjY0NWNlZmU3ZGU4NWNl"');
+    expect(config).toContain('NEXT_PUBLIC_UJIMA_PRODUCT = "ujima"');
+    expect(config).toContain('NEXT_PUBLIC_UJIMA_DEFAULT_TENANT = "public"');
+    expect(config).not.toContain('NEXT_PUBLIC_MISSION_TENANT = "asc3nd"');
+    expect(config).not.toContain('NEXT_PUBLIC_MISSION_PUBLIC_KEY');
   });
 
   it('keeps the client shell mobile-first, keyboard-visible and reduced-motion safe', () => {
@@ -54,7 +56,7 @@ describe('Slice 07 release gauntlet contract', () => {
     expect(shell).toContain('handleAuthFailure');
   });
 
-  it('points the browser client at the external mission API instead of silently owning mission truth in Netlify', () => {
+  it('keeps mission truth external to the static frontend by contract', () => {
     const api = read('apps/site/lib/api.js');
     expect(api).toContain('NEXT_PUBLIC_MISSION_API_URL');
     expect(api).toContain("'http://localhost:4000'");
