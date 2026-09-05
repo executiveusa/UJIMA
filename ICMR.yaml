@@ -1,4 +1,4 @@
-schema_version: 1.0.0
+schema_version: 1.0.1
 product:
   id: ujima
   name: UJIMA OS
@@ -38,7 +38,9 @@ runtime:
     orchestrator: false
   deployment:
     primary_frontend: netlify
-    site_id: 9ebe01e5-21cf-492d-a091-29dad057f91d
+    site_id: 9b49e86d-7399-4eb2-b6de-d7a360c27bba
+    project_name: ujima-ai
+    public_url: https://ujima-ai.netlify.app
 
 laws:
   - one_fact_one_home
