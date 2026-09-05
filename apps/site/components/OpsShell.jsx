@@ -16,9 +16,9 @@ const links = [
   ['Setup', '/ops/onboarding', 'Organization profile'],
   ['Agent Room', '/ops/agents', 'Managed agents (dry-run)'],
   ['Artifacts', '/ops/artifacts', 'Generated outputs'],
-  ['Event Journal', '/ops/events', 'Mission OS activity log'],
+  ['Event Journal', '/ops/events', 'UJIMA activity log'],
   ['Model Budgets', '/ops/budgets', 'Spend and gateway status'],
-  ['Health', '/ops/health', 'Mission OS operator health'],
+  ['Health', '/ops/health', 'UJIMA operator health'],
   ['Deployments', '/ops/deployments', 'Release and bundle state'],
   ['Open WebUI', '/ops/openwebui', 'Workspace launcher (dry-run)']
 ];
@@ -28,7 +28,7 @@ export function OpsShell({ children, title, subtitle }) {
   return (
     <div className="ops-layout">
       <aside className="sidebar">
-        <a href="/" className="brand side-brand"><span className="logo">A3</span><span><strong>Mission OS</strong><small>Seattle social purpose</small></span></a>
+        <a href="/" className="brand side-brand"><span className="logo">UJ</span><span><strong>UJIMA OS</strong><small>Collective work · shared responsibility</small></span></a>
         <div className="staff-mode">
           <span className="badge mint">Plain staff mode</span>
           <p>Tools stay under the hood. Work is organized by outcomes.</p>

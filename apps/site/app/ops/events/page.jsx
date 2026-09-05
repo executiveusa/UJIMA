@@ -12,7 +12,7 @@ export default function EventsPage() {
   }, []);
 
   return (
-    <OpsShell title="Event journal" subtitle="Mission OS operator activity log. Dry-run state only.">
+    <OpsShell title="Event journal" subtitle="UJIMA operator activity log. Dry-run state only.">
       {error && <div className="notice">Event journal unavailable: {error}</div>}
       {!error && !events && <div className="card"><p>Loading events…</p></div>}
       {events && events.length === 0 && (

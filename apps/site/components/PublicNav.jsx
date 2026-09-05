@@ -3,8 +3,8 @@ export function PublicNav() {
     <nav className="nav">
       <div className="container nav-inner">
         <a className="brand" href="/">
-          <img src="/images/asc3nd-logo.jpg" alt="ASC3ND Logo" style={{ height: '32px', width: 'auto', display: 'block' }} />
-          <span>Asc3nd Social Purpose OS</span>
+          <span className="logo" aria-hidden="true">UJ</span>
+          <span>UJIMA OS</span>
         </a>
         <div className="nav-links">
           <a href="/#system">System</a>
@@ -14,7 +14,7 @@ export function PublicNav() {
             <button type="button" className="lang-btn active" aria-current="true">EN</button>
             <button type="button" className="lang-btn">ES</button>
           </span>
-          <a href="/login" className="cta dark">Ops login</a>
+          <a href="/login" className="cta dark">Member sign in</a>
         </div>
       </div>
     </nav>

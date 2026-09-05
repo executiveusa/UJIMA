@@ -6,8 +6,8 @@ import { api } from '../../../lib/api';
 export default function BridgePage() {
   const [keys, setKeys] = useState(null);
   useEffect(() => { api('/api/tenant/keys').then(setKeys).catch(() => setKeys(null)); }, []);
-  const endpoint = `${process.env.NEXT_PUBLIC_MISSION_API_URL || 'http://localhost:4000'}/api/public/${keys?.tenantId || 'asc3nd'}/volunteer`;
-  return <OpsShell title="Frontend bridge" subtitle="Wire any custom nonprofit website into the shared Mission OS backend without custom backend work.">
+  const endpoint = `${process.env.NEXT_PUBLIC_MISSION_API_URL || 'http://localhost:4000'}/api/public/${keys?.tenantId || 'public'}/volunteer`;
+  return <OpsShell title="Frontend bridge" subtitle="Wire any custom nonprofit website into the shared UJIMA backend without custom backend work.">
     <div className="grid cols-4">
       <div className="card"><span className="badge mint">Public key</span><h3>{keys?.publicKey ? 'Configured' : 'Not generated'}</h3><p>Use missionctl tenant create or /api/tenant/provision to generate bridge keys.</p></div>
       <div className="card"><span className="badge gold">One SDK</span><h3>Reusable forms</h3><p>Contact, volunteer, program application, donation intent, newsletter, event RSVP, messages, and impact stories.</p></div>
