@@ -52,24 +52,27 @@ export default function WorkspacesPage() {
           <p style={{fontSize:'clamp(18px,2vw,24px)',lineHeight:1.45,maxWidth:720,margin:0}}>Start in the UJIMA Lab. It is connected to Supabase now, so conversations and test runs can persist instead of disappearing between sessions.</p>
         </section>
 
-        <section style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:16}}>
-          {(workspaces.length ? workspaces : [{id:'ujima-lab',name:'UJIMA Lab',summary:'Private test workspace for chat, goals, workflows, and model routing.',status:state}]).map((workspace) => (
-            <a key={workspace.id} href="/lab" style={{display:'block',color:'inherit',textDecoration:'none',border:'1px solid #90897c',padding:28,minHeight:230,background:'#fff'}}>
-              <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center'}}>
-                <span style={{fontSize:11,letterSpacing:'.1em',textTransform:'uppercase'}}>Supabase workspace</span>
-                <span style={{fontSize:11,textTransform:'uppercase'}}>{workspace.status}</span>
-              </div>
-              <h2 style={{fontSize:42,margin:'42px 0 12px'}}>{workspace.name}</h2>
-              <p style={{lineHeight:1.5,margin:0}}>{workspace.summary}</p>
-              <p style={{margin:'22px 0 0',fontWeight:700}}>Open lab →</p>
+        <section aria-labelledby="client-workspaces-heading">
+          <h2 id="client-workspaces-heading" style={{fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',margin:'0 0 16px'}}>Client workspaces</h2>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:16}}>
+            {(workspaces.length ? workspaces : [{id:'ujima-lab',name:'UJIMA Lab',summary:'Private test workspace for chat, goals, workflows, and model routing.',status:state}]).map((workspace) => (
+              <a key={workspace.id} href="/lab" style={{display:'block',color:'inherit',textDecoration:'none',border:'1px solid #90897c',padding:28,minHeight:230,background:'#fff'}}>
+                <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center'}}>
+                  <span style={{fontSize:11,letterSpacing:'.1em',textTransform:'uppercase'}}>Supabase workspace</span>
+                  <span style={{fontSize:11,textTransform:'uppercase'}}>{workspace.status}</span>
+                </div>
+                <h3 style={{fontSize:42,margin:'42px 0 12px'}}>{workspace.name}</h3>
+                <p style={{lineHeight:1.5,margin:0}}>{workspace.summary}</p>
+                <p style={{margin:'22px 0 0',fontWeight:700}}>Open lab →</p>
+              </a>
+            ))}
+            <a href="/app?client=asc3nd" style={{display:'block',color:'inherit',textDecoration:'none',border:'1px solid #90897c',padding:28,minHeight:230,background:'#eee9df'}}>
+              <div style={{fontSize:11,letterSpacing:'.1em',textTransform:'uppercase'}}>Existing client surface</div>
+              <h3 style={{fontSize:42,margin:'42px 0 12px'}}>ASC3ND</h3>
+              <p style={{lineHeight:1.5,margin:0}}>The existing Client 01 workspace remains available while we move its runtime behind the same authentication and gateway layer.</p>
+              <p style={{margin:'22px 0 0',fontWeight:700}}>Open existing workspace →</p>
             </a>
-          ))}
-          <a href="/app?client=asc3nd" style={{display:'block',color:'inherit',textDecoration:'none',border:'1px solid #90897c',padding:28,minHeight:230,background:'#eee9df'}}>
-            <div style={{fontSize:11,letterSpacing:'.1em',textTransform:'uppercase'}}>Existing client surface</div>
-            <h2 style={{fontSize:42,margin:'42px 0 12px'}}>ASC3ND</h2>
-            <p style={{lineHeight:1.5,margin:0}}>The existing Client 01 workspace remains available while we move its runtime behind the same authentication and gateway layer.</p>
-            <p style={{margin:'22px 0 0',fontWeight:700}}>Open existing workspace →</p>
-          </a>
+          </div>
         </section>
       </div>
     </main>
