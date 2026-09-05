@@ -7,7 +7,7 @@
   "deployment_role": "ujima-public-product-and-reusable-operations-platform",
   "production_host": "netlify",
   "netlify_site_id": "9ebe01e5-21cf-492d-a091-29dad057f91d",
-  "netlify_project_name_target": "ujima",
+  "netlify_project_name_target": "ujima-os",
   "allowed_vercel_git_owner": "executiveusa",
   "allowed_vercel_git_repo_slug": "UJIMA",
   "vercel_production_authorized": false,
