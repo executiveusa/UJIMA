@@ -1,8 +1,13 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "repository": "executiveusa/UJIMA",
   "package_name": "asc3nd-social-purpose-os",
-  "deployment_role": "reusable-operations-platform",
+  "package_name_status": "legacy_internal_compatibility_identifier",
+  "product_id": "ujima",
+  "deployment_role": "ujima-public-product-and-reusable-operations-platform",
+  "production_host": "netlify",
+  "netlify_site_id": "9ebe01e5-21cf-492d-a091-29dad057f91d",
+  "netlify_project_name_target": "ujima",
   "allowed_vercel_git_owner": "executiveusa",
   "allowed_vercel_git_repo_slug": "UJIMA",
   "vercel_production_authorized": false,
@@ -12,11 +17,11 @@
     "asc3nd-frontend.vercel.app",
     "asc3nd-frontend-website.vercel.app"
   ],
-  "required_override_variable": "ASC3ND_PLATFORM_DEPLOYMENT_APPROVED",
+  "required_override_variable": "UJIMA_PLATFORM_DEPLOYMENT_APPROVED",
   "required_override_value": "true",
   "triple_check": [
     "source repository identity",
-    "package/platform identity",
+    "UJIMA product identity",
     "explicit deployment-role approval"
   ],
   "fail_closed_on_vercel": true

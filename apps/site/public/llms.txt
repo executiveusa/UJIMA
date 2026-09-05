@@ -1,11 +1,18 @@
-# Asc3nd Social Purpose OS
+# UJIMA OS
 
-> Seattle-native AI operations system for nonprofits, youth programs, sports organizations, and social-purpose companies.
+> A sovereign agentic operating system for nonprofits, community organizations, volunteer teams, NGOs and other mission-driven organizations.
 
 ## Key pages
-- / — public site
-- /login — ops login
-- /ops — private mission cockpit
+- / — public UJIMA site
+- /login — member sign in
+- /workspaces — tenant/client workspace selection
+- /ops — authenticated operations workspace
 
-## Summary
-Website + AI operations cockpit + ICM workspace + opportunity engine + founder second brain + social campaign lane + human approval queue.
+## Product boundary
+UJIMA is the reusable product. ASC3ND is Client 01 and remains isolated as a tenant.
+
+## Operating model
+Goal → ICM context → workflow → bounded capability → approval when needed → verification → evidence → memory.
+
+## Safety
+Consequential external actions remain human-controlled. Browser/computer-use agents are bounded operators and are not the canonical orchestrator.

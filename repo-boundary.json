@@ -1,29 +1,33 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "repository": "executiveusa/UJIMA",
   "package_name": "asc3nd-social-purpose-os",
-  "purpose": "Reusable multi-tenant social-purpose operating system",
+  "package_name_status": "legacy_internal_compatibility_identifier",
+  "product_id": "ujima",
+  "product_name": "UJIMA OS",
+  "purpose": "Reusable multi-tenant agentic operating system for mission-driven organizations",
   "owns": [
-    "agent routing and ICM workflows",
-    "approval and audit systems",
-    "operations console capabilities",
-    "Postiz and communications adapters",
-    "tenant scaffolding, SDKs and deployment handoffs",
+    "goal, workflow, agent routing and ICM contracts",
+    "approval, evidence and audit systems",
+    "reusable operations and client workspace capabilities",
+    "nonprofit operations and cross-domain adapters",
+    "tenant scaffolding, SDKs, deployment handoffs and installation tooling",
     "platform safety policies and tests"
   ],
   "forbids": [
     "production ASC3ND event or evergreen frontend",
     "client contract and workbook truth as shared defaults",
-    "brand and QR master assets",
+    "ASC3ND brand and QR master assets",
     "raw client interview media",
-    "design demonstration work",
     "hidden client-specific databases",
-    "unapproved external publishing"
+    "unapproved external publishing",
+    "computer or browser operators becoming canonical orchestrators"
   ],
   "route_to": {
-    "public_frontend_and_event": "executiveusa/asc3nd-frontend-website-",
-    "workbook_contract_strategy": "executiveusa/asce3nd-interactive-document",
-    "brand_qr_campaign_assets": "executiveusa/asc3nd-brand-kit-",
+    "asc3nd_public_frontend_and_event": "executiveusa/asc3nd-frontend-website-",
+    "asc3nd_workbook_contract_strategy": "executiveusa/asce3nd-interactive-document",
+    "asc3nd_brand_qr_campaign_assets": "executiveusa/asc3nd-brand-kit-",
+    "grant_domain_implementation": "executiveusa/grant-agent",
     "design_demonstrations": "executiveusa/ascend-demonstration-page"
   },
   "tenant_isolation_required": true,

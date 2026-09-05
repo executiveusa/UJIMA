@@ -1,26 +1,76 @@
-# Asc3nd Social Purpose OS
+# UJIMA OS
 
-A repeatable, self-hostable AI operating system for Seattle nonprofits, youth programs, sports organizations, and social-purpose companies.
+UJIMA is a sovereign, installable agentic operating system for nonprofits, community organizations, volunteer teams, NGOs, and other mission-driven organizations.
 
-This is not just a website scaffold. It is a deployable product template with three separated layers:
+Its job is simple:
 
-1. **Custom public frontend** — client-specific website and AI-readable discovery layer.
-2. **Reusable operations console** — onboarding, opportunities, grants, campaigns, calls, approvals, outcomes, founder second brain.
-3. **Reusable backend operating system** — ICM workspaces, durable workflow seams, agent routing, safety, integrations, and audit logging.
+> Tell UJIMA what needs to get done. It works, brings people in when judgment matters, leaves proof, and remembers what it learned.
 
-The backend is designed to remain shared and repeatable. For each new client, customize the public site copy, theme, logo, mission files, and tenant config while keeping the backend stable.
+## Product model
 
+UJIMA is the product. Client organizations are isolated tenants.
 
-## Hard-truth production review
+- **UJIMA** — reusable product, runtime, workflows, approvals, evidence, agent routing, installation tooling.
+- **ASC3ND** — Client 01 and an active proving ground.
+- **Grant Agent** — first official specialist vertical, federated through UJIMA rather than duplicated inside it.
 
-Read these before using the system for paid production:
+## Core loop
 
-- `docs/GOLD-STANDARD-AUDIT.md` — self-review, design critique, and golden-standard backlog.
-- `docs/PRODUCTION-GAPS.md` — non-negotiable production gaps.
-- `npm run doctor` — checks ICM, flywheel vendor overlay, scripts, and deployment scaffolds.
-- `INSTALL_ACFS=true bash scripts/bootstrap-vps.sh` — optionally installs ACFS before bootstrapping the app on a VPS.
+```text
+HUMAN
+  ↓
+GOAL
+  ↓
+ICM — organizational truth, policy, evidence, memory
+  ↓
+WORKFLOW — manual / cron / event / webhook / watch
+  ↓
+CAPABILITY ROUTER
+  ↓
+specialist runtime / agent / API / computer operator
+  ↓
+APPROVAL when judgment or authority is required
+  ↓
+VERIFY
+  ↓
+RESULT + EVIDENCE
+  ↓
+LEARN
+```
 
-## Local quick start
+## Human experience
+
+**WE HANDLE IT → YOU APPROVE IMPORTANT DECISIONS → YOU SEE RESULTS.**
+
+UJIMA should reduce administrative burden, not create another system the organization must learn to operate.
+
+## Architecture laws
+
+- One fact, one canonical home.
+- One owner per truth.
+- The browser/computer operator is never the orchestrator.
+- Native API → MCP → CLI → structured browser → Open Interpreter → visual GUI automation.
+- Consequential actions remain approval-gated.
+- No proof, no completion claim.
+- Reuse before adding.
+- Ship only what can come back.
+- The organization owns its repository, data, deployment, credentials, and export path.
+
+See `CONTEXT.md`, `ICMR.yaml`, and `docs/UJIMA-ARCHITECTURE.md`.
+
+## Repository layout
+
+- `apps/site/` — public UJIMA surface and operator workspace.
+- `services/` — reusable backend services.
+- `packages/` — shared runtime/data/adapters.
+- `control-plane/` — durable ledgers, policy and execution contracts.
+- `icm/` — tenant truth and numbered execution contexts.
+- `.agents/skills/` — specialist execution skills.
+- `_shared/` — product doctrine and shared standards.
+
+Some internal package names still use the historical `@asc3nd/*` namespace for compatibility. They are implementation identifiers, not product identity, and should be migrated only in a dedicated dependency-safe slice.
+
+## Local development
 
 ```bash
 cp .env.example .env
@@ -28,111 +78,28 @@ npm install
 npm run dev
 ```
 
-Open:
+Default local surfaces:
 
-- Public site: http://localhost:3000
-- Login: http://localhost:3000/login
-- Ops cockpit: http://localhost:3000/ops
-- API health: http://localhost:4000/api/health
+- Public site: `http://localhost:3000`
+- Login: `http://localhost:3000/login`
+- Ops workspace: `http://localhost:3000/ops`
+- API health: `http://localhost:4000/api/health`
 
-Default demo login comes from `.env`:
-
-```text
-admin@asc3nd.local / change-this-password
-```
-
-## VPS quick start with the flywheel
-
-On a fresh Ubuntu VPS, run ACFS first, then this repo:
+## Verification
 
 ```bash
-# 1. Install the agentic coding flywheel on the VPS.
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh?$(date +%s)" | bash -s -- --yes --mode vibe
-
-# 2. Upload or git clone this repo into /data/projects.
-cd /data/projects/asc3nd-social-purpose-os
-cp .env.example .env
-nano .env
-
-# 3. Launch.
-bash scripts/bootstrap-vps.sh
+npm run guard:repo
+npm test
+npm run build
+node missionctl/missionctl.mjs doctor
 ```
 
-## What is production-ready here
+Production is not considered verified merely because a deployment exists. The exact revision must be deployed and the primary user journey must be exercised against the live runtime.
 
-- Running Next.js frontend and Node API.
-- Docker Compose deployment.
-- File-backed tenant store for local/demo mode.
-- ICM workspace generation and stage contracts.
-- Opportunity scoring engine.
-- Approval queue and audit log.
-- Postiz, Pi, Absurd, Sandcastle, Composio, LiteLLM, Twilio adapter seams.
-- Founder Second Brain and Obsidian-compatible vault structure.
-- LLM export/import normalizer for ChatGPT/Claude/generic markdown-style exports.
-- AI-readable `llms.txt`, `robots.txt`, sitemap, and JSON-LD.
-- TDD test scaffolds for safety, routing, ICM, and opportunities.
+## Deployment
 
-## What still needs keys or real services
+The current public frontend is hosted on Netlify. ASC3ND-specific runtime configuration must not be treated as UJIMA product defaults.
 
-The app runs without external keys in dry-run mode. To perform real submits, posts, calls, or agent execution, connect credentials for Postiz, Composio/MCP, Twilio, LiteLLM, Pi, Absurd, and Sandcastle. Human approval gates remain mandatory for money, youth data, legal/compliance, public publishing, and external communication.
+## Current status
 
-
-## v0.4 Production Core
-
-This package now includes Rust service source for the production core, Mission Connect frontend bridge, nonprofit CRM helpers, JS SDK, tenant kit, `missionctl`, Postgres migration, and repeatable tenant/front-end scaffolding. See `docs/V0.4-PRODUCTION-CORE.md`.
-
-Quick tenant loop:
-
-```bash
-node missionctl/missionctl.mjs tenant create northwest-youth --org "Northwest Youth"
-node missionctl/missionctl.mjs frontend scaffold northwest-youth
-node missionctl/missionctl.mjs smoke northwest-youth
-npm run verify
-```
-
-## v0.5 Production Handoff
-
-v0.5 adds the repeatable deployment bridge needed for paid Northwest nonprofit rollouts:
-
-- Hostinger VPS handoff generator
-- Tenant-specific production env bundle
-- Caddy and Docker production templates
-- Frontend bridge env handoff
-- Public bridge idempotency and honeypot guard
-- Public submissions become CRM contacts, interactions, pipeline items, staff tasks, and audit events
-- AdamsReview-lite release artifact
-
-Generate a full Hostinger handoff for a tenant:
-
-```bash
-node missionctl/missionctl.mjs tenant create asc3nd \
-  --org "Asc3nd Collective" \
-  --domain "https://asc3nd.org" \
-  --api "https://api.asc3nd.org"
-
-node missionctl/missionctl.mjs frontend scaffold asc3nd
-
-node missionctl/missionctl.mjs hostinger handoff asc3nd \
-  --domain "asc3nd.org" \
-  --api-domain "api.asc3nd.org" \
-  --email "admin@asc3nd.org" \
-  --vps-ip "<HOSTINGER_VPS_IP>"
-```
-
-Primary handoff file:
-
-```text
-HOSTINGER-VPS-HANDOFF.md
-```
-
-Tenant bundle:
-
-```text
-handoff/asc3nd/
-  HOSTINGER-VPS-HANDOFF.md
-  .env.production
-  frontend.env
-  Caddyfile
-  docker-compose.production.yml
-  smoke-test.sh
-```
+UJIMA is a brownfield product with substantial working infrastructure. The current normalization program is consolidating legacy ASC3ND / Mission OS / Agenix naming into one coherent UJIMA product while preserving tenant history and proven runtime behavior.
