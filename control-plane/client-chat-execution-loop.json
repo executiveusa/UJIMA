@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.0.0",
   "decision": "chat_first_client_surface_public_frontend_frozen",
   "references": {
     "popebot": "https://github.com/stephengpope/thepopebot",
