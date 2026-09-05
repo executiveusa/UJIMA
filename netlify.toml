@@ -1,9 +1,9 @@
 [build]
-  command = "npm run build"
+  command = "npm run build --workspace @asc3nd/site"
   publish = "apps/site/.next"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "24"
   NEXT_PUBLIC_UJIMA_PRODUCT = "ujima"
   NEXT_PUBLIC_UJIMA_DEFAULT_TENANT = "public"
 
