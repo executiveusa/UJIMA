@@ -98,7 +98,13 @@ Production is not considered verified merely because a deployment exists. The ex
 
 ## Deployment
 
-The current public frontend is hosted on Netlify. ASC3ND-specific runtime configuration must not be treated as UJIMA product defaults.
+Canonical public frontend: **https://ujima-ai.netlify.app**  
+Canonical Netlify project: **`ujima-ai`**  
+Canonical Netlify site ID: **`9b49e86d-7399-4eb2-b6de-d7a360c27bba`**
+
+These values are locked in `deployment-lock.json` and `ICMR.yaml`. `ujima-os.netlify.app` is not the canonical UJIMA public target.
+
+ASC3ND-specific runtime configuration must not be treated as UJIMA product defaults.
 
 ## Current status
 
