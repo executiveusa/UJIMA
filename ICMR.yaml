@@ -1,0 +1,49 @@
+schema_version: 1.0.0
+product:
+  id: ujima
+  name: UJIMA OS
+  repository: executiveusa/UJIMA
+
+routing:
+  root_context: CONTEXT.md
+  architecture: docs/UJIMA-ARCHITECTURE.md
+  doctrine: _shared/doctrine/HEART-AND-SOUL.md
+  tenant_root: icm/tenants
+  grant_vertical_repository: executiveusa/grant-agent
+
+truth_owners:
+  organizational_context: ICM
+  desired_outcome: Goal
+  execution_sequence: Workflow
+  human_authority: Approval
+  completion_claim: Evidence
+  tenant_identity: Tenant registry
+
+tenants:
+  - id: asc3nd
+    relationship: client
+    status: active
+    context: icm/tenants/asc3nd
+
+runtime:
+  triggers:
+    - manual
+    - goal
+    - cron
+    - event
+    - webhook
+    - condition_watch
+  computer_operator:
+    role: bounded_operator
+    orchestrator: false
+  deployment:
+    primary_frontend: netlify
+    site_id: 9ebe01e5-21cf-492d-a091-29dad057f91d
+
+laws:
+  - one_fact_one_home
+  - one_owner_per_truth
+  - no_proof_no_claim
+  - builders_do_not_approve_themselves
+  - ship_only_what_can_come_back
+  - organization_owns_system
