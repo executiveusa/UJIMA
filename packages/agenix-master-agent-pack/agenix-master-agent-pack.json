@@ -1,8 +1,8 @@
 {
   "package": "agenix-master-agent-pack",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "schema_version": "1.0",
-  "description": "Repo-agnostic operating pack for a digital cofounder, nonprofit strategy, brand/marketing/story, project management, usability review, and local video execution.",
+  "description": "Repo-agnostic operating pack for a digital cofounder, nonprofit operating system, nonprofit execution lanes, brand/marketing/story, project management, usability review, and local video execution.",
   "principles": [
     "mission_before_motion",
     "truth_before_persuasion",
@@ -19,6 +19,9 @@
       "purpose": "Protect mission, cash, trust, focus, product coherence, and verified outcomes.",
       "authority": "recommend_and_execute_within_explicit_scope",
       "forbidden": ["invent_facts", "silently_expand_scope", "publish_without_approval", "override_tenant_truth"]
+    },
+    "nonprofit_operator": {
+      "purpose": "Govern nonprofit work around credibility, visibility, usefulness, lower client burden, verified outcomes, and reusable infrastructure."
     },
     "nonprofit_strategist": {
       "purpose": "Balance mission impact, beneficiary dignity, capacity, governance, funding trust, and sustainability."
@@ -83,6 +86,20 @@
     "copyrighted_source_notes": "private_or_rights_cleared_only",
     "shared_pack_content": "original_high_level_operating_rules_only"
   },
+  "nonprofit": {
+    "governing_skill": ".agents/skills/nonprofit-operating-system/SKILL.md",
+    "supporting_strategy_skill": ".agents/skills/nonprofit-strategy/SKILL.md",
+    "execution_skills": [
+      ".agents/skills/nonprofit-website/SKILL.md",
+      ".agents/skills/nonprofit-social/SKILL.md",
+      ".agents/skills/nonprofit-video/SKILL.md",
+      ".agents/skills/nonprofit-google-discovery/SKILL.md",
+      ".agents/skills/nonprofit-crm/SKILL.md",
+      ".agents/skills/nonprofit-email-followup/SKILL.md",
+      ".agents/skills/nonprofit-reporting/SKILL.md"
+    ],
+    "client_experience": "WE_HANDLE_IT__THEY_APPROVE_IMPORTANT_DECISIONS__THEY_SEE_RESULTS"
+  },
   "video": {
     "preferred_local_engine": "SynthCut_or_equivalent_adapter",
     "canonical_source_of_truth": "host_project_state_not_editor_engine",
@@ -95,7 +112,15 @@
       "control-plane/cofounder/HEART.md",
       "control-plane/cofounder/SOUL.md",
       ".agents/skills/digital-cofounder/SKILL.md",
+      ".agents/skills/nonprofit-operating-system/SKILL.md",
       ".agents/skills/nonprofit-strategy/SKILL.md",
+      ".agents/skills/nonprofit-website/SKILL.md",
+      ".agents/skills/nonprofit-social/SKILL.md",
+      ".agents/skills/nonprofit-video/SKILL.md",
+      ".agents/skills/nonprofit-google-discovery/SKILL.md",
+      ".agents/skills/nonprofit-crm/SKILL.md",
+      ".agents/skills/nonprofit-email-followup/SKILL.md",
+      ".agents/skills/nonprofit-reporting/SKILL.md",
       ".agents/skills/brand-marketing-story/SKILL.md",
       ".agents/skills/project-management-gtd/SKILL.md",
       ".agents/skills/krug-design-review/SKILL.md",
