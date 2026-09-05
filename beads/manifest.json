@@ -6,6 +6,7 @@
     { "id": "bead-0002", "title": "skills discovered and activated", "status": "complete", "file": "checkpoints/0002-skill-ingestion.md" },
     { "id": "bead-0008", "title": "build/test result", "status": "complete", "file": "checkpoints/0008-build-test.md" },
     { "id": "bead-0009", "title": "browser verification", "status": "complete", "file": "checkpoints/0009-browser-verification.md" },
-    { "id": "bead-0010", "title": "PR/review/merge status", "status": "complete", "file": "checkpoints/0010-pr-review-merge.md" }
+    { "id": "bead-0010", "title": "PR/review/merge status", "status": "complete", "file": "checkpoints/0010-pr-review-merge.md" },
+    { "id": "bead-0011", "title": "nonprofit master operating system", "status": "complete", "file": "checkpoints/0011-nonprofit-master-operating-system.md" }
   ]
 }
