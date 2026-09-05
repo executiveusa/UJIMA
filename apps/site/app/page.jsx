@@ -61,26 +61,16 @@ export default function HomePage() {
       </header>
 
       <section id="top" className={styles.hero} aria-labelledby="ujima-title">
-        <div className={styles.heroTopline}>
-          <span>KISWAHILI</span>
-          <span>noun · /uˈdʒi.ma/</span>
+        <div className={styles.heroIdentity}>
+          <h1 id="ujima-title" className={styles.heroWord}>UJIMA</h1>
+          <p className={styles.heroTagline}>Collective work. Shared responsibility.</p>
         </div>
 
-        <h1 id="ujima-title" className={styles.heroWord}>UJIMA</h1>
-
-        <div className={styles.definitionGrid}>
-          <div>
-            <p className={styles.languageLabel}>KISWAHILI</p>
-            <p className={styles.definitionSwahili} lang="sw">
-              Mfumo wa kijamii unaojengwa juu ya kazi ya pamoja, uwajibikaji wa pamoja, na kila mtu kuchangia kwa uwezo wake kwa manufaa ya jamii nzima.
-            </p>
-          </div>
-          <div>
-            <p className={styles.languageLabel}>ENGLISH</p>
-            <p className={styles.definitionEnglish}>
-              Collective work and shared responsibility: people contributing what they can, solving problems together, and building for the good of the whole community.
-            </p>
-          </div>
+        <div className={styles.definitionBlock}>
+          <p className={styles.languageLabel}>DEFINITION</p>
+          <p className={styles.definitionEnglish}>
+            A principle of collective work and shared responsibility: people contributing what they can, solving problems together, and building for the good of the whole community.
+          </p>
         </div>
 
         <div className={styles.heroFooter}>
