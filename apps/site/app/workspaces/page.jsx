@@ -56,7 +56,7 @@ export default function WorkspacesPage() {
           <h2 id="client-workspaces-heading" style={{fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',margin:'0 0 16px'}}>Client workspaces</h2>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:16}}>
             {(workspaces.length ? workspaces : [{id:'ujima-lab',name:'UJIMA Lab',summary:'Private test workspace for chat, goals, workflows, and model routing.',status:state}]).map((workspace) => (
-              <a key={workspace.id} href="/lab" style={{display:'block',color:'inherit',textDecoration:'none',border:'1px solid #90897c',padding:28,minHeight:230,background:'#fff'}}>
+              <a key={workspace.id} href="/app/lab" style={{display:'block',color:'inherit',textDecoration:'none',border:'1px solid #90897c',padding:28,minHeight:230,background:'#fff'}}>
                 <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center'}}>
                   <span style={{fontSize:11,letterSpacing:'.1em',textTransform:'uppercase'}}>Supabase workspace</span>
                   <span style={{fontSize:11,textTransform:'uppercase'}}>{workspace.status}</span>
