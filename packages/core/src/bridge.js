@@ -72,7 +72,7 @@ export function applyPublicSubmission({ kind, payload, meta, state }) {
     interaction,
     pipelineItem: item,
     state: { contacts, interactions, pipelineItems: items },
-    receipt: { id: interaction.id, message: 'Received. A staff member will review this in Mission OS.' }
+    receipt: { id: interaction.id, message: 'Received. A staff member will review this in UJIMA.' }
   };
 }
 

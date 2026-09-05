@@ -4,7 +4,7 @@ export default function FlywheelPage() {
   return <OpsShell title="Agentic coding flywheel" subtitle="Use ACFS to maintain the shared backend and push improvements to every deployment.">
     <div className="grid">
       <div className="card"><h3>VPS bootstrap</h3><pre className="code">curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh?$(date +%s)" | bash -s -- --yes --mode vibe</pre></div>
-      <div className="card"><h3>Mission OS loop</h3><pre className="code">1. Open a bead/task
+      <div className="card"><h3>UJIMA engineering loop</h3><pre className="code">1. Open a bead/task
 2. Run tests first
 3. Code inside small ICM stage
 4. Run npm test + smoke

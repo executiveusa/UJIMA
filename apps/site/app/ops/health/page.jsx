@@ -12,13 +12,13 @@ export default function HealthPage() {
     opsApi('/dashboard-state').then((d) => setState(d.state)).catch((e) => setError(e.message));
   }, []);
 
-  if (error) return <OpsShell title="Health" subtitle="Mission OS operator health summary."><div className="notice">Health unavailable: {error}</div></OpsShell>;
-  if (!state) return <OpsShell title="Health" subtitle="Mission OS operator health summary."><div className="card"><p>Loading health…</p></div></OpsShell>;
+  if (error) return <OpsShell title="Health" subtitle="UJIMA operator health summary."><div className="notice">Health unavailable: {error}</div></OpsShell>;
+  if (!state) return <OpsShell title="Health" subtitle="UJIMA operator health summary."><div className="card"><p>Loading health…</p></div></OpsShell>;
 
   const { summary, health } = state;
 
   return (
-    <OpsShell title="Health" subtitle="Overall Mission OS operator health, derived from managed-agent heartbeats. Dry-run only.">
+    <OpsShell title="Health" subtitle="Overall UJIMA operator health, derived from managed-agent heartbeats. Dry-run only.">
       <div className="grid cols-4">
         <div className="card"><small>Overall status</small><div className="kpi"><StatusBadge value={summary.healthStatus === 'ok' ? 'green' : 'orange'} /></div></div>
         <div className="card"><small>Agents tracked</small><div className="kpi">{health.length}</div></div>

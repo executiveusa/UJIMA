@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { StatusBadge } from './StatusBadge';
 import { opsApi } from '../lib/opsApi';
 
-// Phase 5: internal Mission OS operator overview, driven by the dry-run
+// Phase 5: internal UJIMA operator overview, driven by the dry-run
 // operator/model-gateway state from Phase 3/4 (via the local /api/ops/*
 // proxy routes — see docs/OPS-DASHBOARD.md). This is additive to the
 // existing "Today" outcomes cockpit above; it does not replace it.
@@ -18,15 +18,15 @@ export function MissionOsOverview() {
       .catch((e) => setError(e.message));
   }, []);
 
-  if (error) return <section className="section compact"><div className="notice">Mission OS overview unavailable: {error}</div></section>;
-  if (!state) return <section className="section compact"><div className="card"><p>Loading Mission OS operator state…</p></div></section>;
+  if (error) return <section className="section compact"><div className="notice">UJIMA overview unavailable: {error}</div></section>;
+  if (!state) return <section className="section compact"><div className="card"><p>Loading UJIMA operator state…</p></div></section>;
 
   const { summary, agents, recentArtifacts, recentEvents, nextActions } = state;
 
   return (
     <section className="section compact">
       <div className="section-heading">
-        <h2>Mission OS operator overview</h2>
+        <h2>UJIMA operator overview</h2>
         <p>Dry-run managed agent, model gateway, and observability state. No live execution.</p>
       </div>
 
