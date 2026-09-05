@@ -46,7 +46,7 @@
 .wordmark span { color: var(--warm); }
 
 .headerActions { display: flex; align-items: center; gap: 20px; }
-.beta, .textLink, .kicker, .languageLabel, .heroTopline, .modelLabel {
+.beta, .textLink, .kicker, .languageLabel, .modelLabel {
   font-size: 11px;
   line-height: 1;
   letter-spacing: .15em;
@@ -57,43 +57,54 @@
 
 .hero {
   min-height: calc(100svh - 74px);
-  padding: 26px clamp(18px, 3vw, 42px) 34px;
+  padding: clamp(22px, 3vw, 42px) clamp(18px, 3vw, 42px) 34px;
   display: grid;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto 1fr auto;
+  gap: clamp(28px, 4vw, 56px);
   border-bottom: 1px solid var(--line);
   overflow: hidden;
 }
 
-.heroTopline { display: flex; justify-content: space-between; color: rgba(17,17,15,.62); }
+.heroIdentity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .heroWord {
-  align-self: center;
   margin: 0;
   font-family: 'Galgo Condensed', 'Arial Narrow', sans-serif;
-  font-size: clamp(11rem, 33vw, 39rem);
+  font-size: clamp(10rem, 29vw, 34rem);
   font-weight: 700;
-  line-height: .7;
+  line-height: .68;
   letter-spacing: -.045em;
   text-transform: uppercase;
   white-space: nowrap;
   transform: translateX(-.018em);
 }
 
-.definitionGrid {
-  display: grid;
-  grid-template-columns: 1.15fr .85fr;
-  gap: clamp(28px, 8vw, 120px);
-  padding: 22px 0 34px;
+.heroTagline {
+  margin: clamp(18px, 2vw, 28px) 0 0;
+  font-size: clamp(1.1rem, 1.8vw, 1.65rem);
+  line-height: 1.2;
+  letter-spacing: -.015em;
+}
+
+.definitionBlock {
+  align-self: end;
+  width: min(880px, 100%);
+  padding: 22px 0 0;
   border-top: 1px solid var(--line);
 }
 .languageLabel { margin: 0 0 12px; color: var(--warm); }
-.definitionSwahili, .definitionEnglish {
+.definitionEnglish {
   margin: 0;
-  max-width: 760px;
-  font-size: clamp(1.35rem, 2vw, 2.25rem);
+  max-width: 860px;
+  font-size: clamp(1.35rem, 2.3vw, 2.55rem);
   line-height: 1.08;
   letter-spacing: -.025em;
+  color: rgba(17,17,15,.78);
 }
-.definitionEnglish { color: rgba(17,17,15,.72); }
 
 .heroFooter {
   display: flex;
@@ -245,7 +256,7 @@
 .footer div:nth-child(3) { text-align: right; }
 
 @media (max-width: 900px) {
-  .definitionGrid, .askSection, .sectionLead, .globalGrid, .betaSection { grid-template-columns: 1fr; }
+  .askSection, .sectionLead, .globalGrid, .betaSection { grid-template-columns: 1fr; }
   .capabilityGrid { grid-template-columns: 1fr 1fr; }
   .heroWord { font-size: clamp(9rem, 31vw, 18rem); }
   .modelFlow { flex-wrap: wrap; justify-content: flex-start; }
@@ -256,11 +267,11 @@
 @media (max-width: 620px) {
   .header { min-height: 64px; }
   .beta { display: none; }
-  .hero { min-height: auto; padding-top: 20px; }
-  .heroTopline { font-size: 9px; }
-  .heroWord { margin: 82px 0 96px; font-size: 42vw; line-height: .62; }
-  .definitionGrid { padding-bottom: 28px; }
-  .definitionSwahili, .definitionEnglish { font-size: 1.25rem; }
+  .hero { min-height: auto; padding-top: 18px; gap: 34px; }
+  .heroWord { font-size: 40vw; line-height: .65; }
+  .heroTagline { margin-top: 14px; font-size: 1.05rem; }
+  .definitionBlock { padding-top: 18px; }
+  .definitionEnglish { font-size: 1.25rem; }
   .heroFooter { align-items: flex-start; flex-direction: column; }
   .statement, .askSection, .systemSection, .globalSection, .betaSection, .modelSection { padding-top: 72px; padding-bottom: 72px; }
   .capabilityGrid { grid-template-columns: 1fr; }
