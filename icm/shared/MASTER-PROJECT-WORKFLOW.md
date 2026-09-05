@@ -63,7 +63,9 @@ Run `.agents/skills/digital-cofounder/SKILL.md` and `.agents/skills/project-mana
 ## Stage 04 — Creative / technical plan
 
 Select only the skills needed for this project. Possible references:
-- nonprofit: `.agents/skills/nonprofit-strategy/SKILL.md`
+- nonprofit/social-purpose tenant — governing skill: `.agents/skills/nonprofit-operating-system/SKILL.md`
+- nonprofit program/fundraising/stakeholder strategy support: `.agents/skills/nonprofit-strategy/SKILL.md`
+- nonprofit execution lanes as needed: `nonprofit-website`, `nonprofit-social`, `nonprofit-video`, `nonprofit-google-discovery`, `nonprofit-crm`, `nonprofit-email-followup`, `nonprofit-reporting`
 - brand/marketing/story: `.agents/skills/brand-marketing-story/SKILL.md`
 - UX/design review: `.agents/skills/krug-design-review/SKILL.md`
 - local video: `.agents/skills/synthcut-local-video/SKILL.md`
