@@ -31,11 +31,47 @@ function normalizeMessages(input) {
     .map((message) => ({ role: message.role, content: message.content.slice(0, MAX_MESSAGE_CHARS) }));
 }
 
+function resolveGateway() {
+  const explicitUrl = process.env.MODEL_GATEWAY_BASE_URL || '';
+  const explicitKey = process.env.MODEL_GATEWAY_API_KEY || '';
+  if (explicitUrl && explicitKey) {
+    return {
+      key: explicitKey,
+      url: `${explicitUrl.replace(/\/$/, '')}/chat/completions`,
+      provider: 'custom',
+    };
+  }
+
+  const netlifyUrl = process.env.OPENAI_BASE_URL || '';
+  const netlifyKey = process.env.OPENAI_API_KEY || '';
+  if (netlifyUrl && netlifyKey) {
+    const base = netlifyUrl.replace(/\/$/, '');
+    return {
+      key: netlifyKey,
+      url: `${base}${base.endsWith('/v1') ? '' : '/v1'}/chat/completions`,
+      provider: 'netlify-ai-gateway',
+    };
+  }
+
+  return null;
+}
+
 function demoReply(text) {
   const lower = text.toLowerCase();
-  if (lower.includes('grant')) return 'I can turn this into a funding goal, identify the evidence we need, and route discovery through UJIMA Grants. The live model provider is not connected yet, but this conversation is authenticated and persisted in Supabase.';
-  if (lower.includes('goal')) return 'I would start by turning that into one clear goal with a success condition, constraints, and an approval rule. This test route is already saving the conversation to Supabase.';
-  return 'I received that inside the authenticated UJIMA workspace. The Supabase session and conversation layer are live. The model gateway is running in demo mode until we attach a provider key.';
+  if (lower.includes('grant')) return 'I can turn this into a funding goal, identify the evidence we need, and route discovery through UJIMA Grants. The live model route is not available in this runtime yet, but this conversation is authenticated and persisted in Supabase.';
+  if (lower.includes('goal')) return 'I would start by turning that into one clear goal with a success condition, constraints, and an approval rule. This conversation is already saving to Supabase.';
+  return 'I received that inside the authenticated UJIMA workspace. The Supabase session and conversation layer are live. This runtime is using the deterministic fallback because no model gateway is available.';
+}
+
+export async function GET() {
+  const gateway = resolveGateway();
+  return NextResponse.json({
+    ok: true,
+    providerConfigured: Boolean(gateway),
+    provider: gateway?.provider || 'demo',
+    model: process.env.MODEL_GATEWAY_MODEL || 'gpt-5.6-luna',
+    auth: SUPABASE_KEY ? 'supabase' : 'missing',
+  });
 }
 
 export async function POST(request) {
@@ -47,14 +83,13 @@ export async function POST(request) {
   const last = [...messages].reverse().find((message) => message.role === 'user');
   if (!last) return NextResponse.json({ error: 'A user message is required.' }, { status: 400 });
 
-  const gatewayUrl = process.env.MODEL_GATEWAY_BASE_URL || '';
-  const gatewayKey = process.env.MODEL_GATEWAY_API_KEY || '';
-  const model = process.env.MODEL_GATEWAY_MODEL || 'demo';
+  const gateway = resolveGateway();
+  const model = process.env.MODEL_GATEWAY_MODEL || 'gpt-5.6-luna';
 
-  if (gatewayUrl && gatewayKey) {
-    const response = await fetch(`${gatewayUrl.replace(/\/$/, '')}/chat/completions`, {
+  if (gateway) {
+    const response = await fetch(gateway.url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${gatewayKey}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${gateway.key}` },
       body: JSON.stringify({
         model,
         messages: [{ role: 'developer', content: UJIMA_DEVELOPER_PROMPT }, ...messages],
@@ -66,15 +101,16 @@ export async function POST(request) {
       return NextResponse.json({
         error: data?.error?.message || 'Model gateway failed.',
         route: 'model_gateway_error',
+        provider: gateway.provider,
         model,
       }, { status: 502 });
     }
     const text = data?.choices?.[0]?.message?.content || '';
-    if (!text) return NextResponse.json({ error: 'Model gateway returned no text.', route: 'model_gateway_error', model }, { status: 502 });
+    if (!text) return NextResponse.json({ error: 'Model gateway returned no text.', route: 'model_gateway_error', provider: gateway.provider, model }, { status: 502 });
     return NextResponse.json({
       text,
       route: 'model_gateway',
-      provider: new URL(gatewayUrl).hostname,
+      provider: gateway.provider,
       model,
     });
   }
