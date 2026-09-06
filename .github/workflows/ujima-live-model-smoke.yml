@@ -1,0 +1,36 @@
+name: UJIMA Live Model Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/site/app/api/model-gateway/route.js'
+      - '.github/workflows/ujima-live-model-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  live-model-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify production model gateway is live
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ujima-ai.netlify.app/api/model-gateway"
+          for attempt in $(seq 1 20); do
+            echo "Attempt ${attempt}: ${url}"
+            if body=$(curl --fail --silent --show-error --max-time 15 "$url"); then
+              echo "$body"
+              provider=$(jq -r '.providerConfigured // false' <<<"$body")
+              auth=$(jq -r '.auth // "missing"' <<<"$body")
+              model=$(jq -r '.model // ""' <<<"$body")
+              if [[ "$provider" == "true" && "$auth" == "supabase" && "$model" == "gpt-5.6-luna" ]]; then
+                echo "UJIMA live model gateway verified."
+                exit 0
+              fi
+            fi
+            sleep 15
+          done
+          echo "UJIMA live model gateway did not become ready in time." >&2
+          exit 1
