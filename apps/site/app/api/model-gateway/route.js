@@ -31,6 +31,11 @@ function normalizeMessages(input) {
     .map((message) => ({ role: message.role, content: message.content.slice(0, MAX_MESSAGE_CHARS) }));
 }
 
+function openAiChatUrl(baseUrl) {
+  const base = baseUrl.replace(/\/$/, '');
+  return `${base}${base.endsWith('/v1') ? '' : '/v1'}/chat/completions`;
+}
+
 function resolveGateway() {
   const explicitUrl = process.env.MODEL_GATEWAY_BASE_URL || '';
   const explicitKey = process.env.MODEL_GATEWAY_API_KEY || '';
@@ -42,13 +47,22 @@ function resolveGateway() {
     };
   }
 
-  const netlifyUrl = process.env.OPENAI_BASE_URL || '';
-  const netlifyKey = process.env.OPENAI_API_KEY || '';
-  if (netlifyUrl && netlifyKey) {
-    const base = netlifyUrl.replace(/\/$/, '');
+  const openAiUrl = process.env.OPENAI_BASE_URL || '';
+  const openAiKey = process.env.OPENAI_API_KEY || '';
+  if (openAiUrl && openAiKey) {
     return {
-      key: netlifyKey,
-      url: `${base}${base.endsWith('/v1') ? '' : '/v1'}/chat/completions`,
+      key: openAiKey,
+      url: openAiChatUrl(openAiUrl),
+      provider: 'netlify-ai-gateway',
+    };
+  }
+
+  const gatewayUrl = process.env.NETLIFY_AI_GATEWAY_BASE_URL || '';
+  const gatewayKey = process.env.NETLIFY_AI_GATEWAY_KEY || '';
+  if (gatewayUrl && gatewayKey) {
+    return {
+      key: gatewayKey,
+      url: openAiChatUrl(gatewayUrl),
       provider: 'netlify-ai-gateway',
     };
   }
