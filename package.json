@@ -46,7 +46,9 @@
     "db:migrate": "node packages/db/scripts/migrate.mjs",
     "hermes:mcp": "node packages/adapters/hermes/mcp-server.mjs",
     "hermes:smoke": "node packages/adapters/hermes/smoke-test.mjs",
-    "hermes:test": "node packages/adapters/hermes/client-test.mjs"
+    "hermes:test": "node packages/adapters/hermes/client-test.mjs",
+    "verify:plugin": "node scripts/verify-ujima-plugin.mjs",
+    "verify:product": "node scripts/verify-ujima-full-product.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",
@@ -58,6 +60,13 @@
     "node": ">=20.11.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0"
+    "@modelcontextprotocol/sdk": "1.32.2"
+  },
+  "overrides": {
+    "body-parser@<1.20.9": "1.20.9",
+    "body-parser@>=2.0.0 <2.4.0": "2.4.0",
+    "proxy-addr": "2.0.8",
+    "source-map-js": "1.2.2",
+    "zod": "4.6.7"
   }
 }

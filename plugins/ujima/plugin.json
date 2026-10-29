@@ -1,0 +1,18 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "ujima",
+  "version": "1.0.0",
+  "description": "Governed access to UJIMA nonprofit workflows, Groundwork readiness, approvals, evidence, and portable recovery.",
+  "author": {
+    "name": "The Pauli Effect"
+  },
+  "repository": "https://github.com/executiveusa/UJIMA",
+  "keywords": [
+    "nonprofit",
+    "groundwork",
+    "ujima",
+    "mcp",
+    "workflow",
+    "evidence"
+  ]
+}

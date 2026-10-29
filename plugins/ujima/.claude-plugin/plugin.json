@@ -1,0 +1,8 @@
+{
+  "name": "ujima",
+  "version": "1.0.0",
+  "description": "Use UJIMA and Groundwork from Claude Code without bypassing UJIMA governance.",
+  "author": {
+    "name": "The Pauli Effect"
+  }
+}
