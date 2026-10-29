@@ -3,8 +3,9 @@ import { Router } from 'express';
 import { can } from '@asc3nd/core/rbac';
 import { browserSessionAuth } from './browser-session-auth.js';
 import { createClientChatStore } from './client-chat-store.js';
-import { getClientMissionWorkState, latestConversationWorkState, recordClientRoutingFailure } from './client-work-state.js';
+import { getClientMissionWorkState, latestConversationWorkState, recordClientRoutingFailure, transitionClientMissionState } from './client-work-state.js';
 import { missionAcknowledgement, routeFirstMateMission } from './firstmate-mission-router.js';
+import { executeGroundworkAssessment, summarizeGroundworkAssessment } from './groundwork-executor.js';
 import { conversationEvidenceRefs, decideMissionApproval, ensureMissionApproval, missionEvidence, resolveMissionArtifactFile } from './client-mission-evidence.js';
 
 const router = Router();
@@ -121,12 +122,37 @@ router.post('/conversations/:conversationId', async (req, res) => {
     if (routed.mission.approval?.required || routed.mission.status === 'needs_you') {
       ensureMissionApproval({ tenantId, userId, conversationId, missionId: routed.mission.mission_id });
     }
+
+    let assistantText = missionAcknowledgement(routed);
+    if (routed.mission.domain === 'groundwork') {
+      try {
+        const groundwork = await executeGroundworkAssessment({
+          tenantId,
+          userId,
+          conversationId,
+          missionId: routed.mission.mission_id,
+          orgName: req.user.orgName || tenantId
+        });
+        assistantText = summarizeGroundworkAssessment(groundwork.assessment);
+      } catch (groundworkError) {
+        try {
+          transitionClientMissionState({
+            tenantId, userId, conversationId, missionId: routed.mission.mission_id,
+            to: 'failed', actor: 'groundwork-executor',
+            nextAction: 'Review the Groundwork executor failure and retry the safe assessment.',
+            idempotencyKey: 'groundwork-failed:' + routed.mission.mission_id
+          });
+        } catch {}
+        assistantText = 'Groundwork is blocked — I saved the request, but the safe assessment could not complete. No external changes were made. The failure is recorded for retry.';
+      }
+    }
+
     const work = getClientMissionWorkState({ tenantId, userId, conversationId, missionId: routed.mission.mission_id });
     const evidence = evidenceForWork({ tenantId, userId, conversationId, work });
     try {
       const assistant = await store.appendMessage({
-        tenantId, userId, actor: 'firstmate', conversationId, role: 'assistant', text: missionAcknowledgement(routed),
-        provenanceRefs: [`event:${routed.eventId}`, `mission:${routed.mission.mission_id}`],
+        tenantId, userId, actor: 'firstmate', conversationId, role: 'assistant', text: assistantText,
+        provenanceRefs: [`event:${routed.eventId}`, `mission:${routed.mission.mission_id}`, ...(work?.proofRefs || [])],
         idempotencyKey: derivedIdempotencyKey(requestKey, 'assistant')
       });
       return res.status(message.reused && assistant.reused ? 200 : 201).json({ ok: true, message, assistant, work, evidence });
