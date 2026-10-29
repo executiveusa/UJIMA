@@ -58,6 +58,7 @@ async function publicFetch(startUrl, options = {}) {
     await assertPublicUrl(current, lookup);
     const response = await fetchImpl(current, {
       redirect: 'manual',
+      signal: AbortSignal.timeout(10000),
       headers: {
         'User-Agent': 'UJIMA-Groundwork/1.0 (+public-readiness-audit)',
         Accept: 'text/html,application/xhtml+xml'
@@ -252,20 +253,27 @@ export async function executeGroundworkAssessment(input) {
     idempotencyKey:'groundwork-working:' + missionId
   });
 
+  let profile = {};
+  try {
+    profile = JSON.parse(fs.readFileSync(path.join(getDataDir(), tenantId, 'profile.json'), 'utf8'));
+  } catch {}
+  const effectiveOrgName = input.orgName || profile.orgName || tenantId;
+  const effectiveWebsite = input.website || profile.website || null;
+
   let assessment;
   let normalized = null;
-  try { normalized = normalizeWebsite(input.website); } catch {}
+  try { normalized = normalizeWebsite(effectiveWebsite); } catch {}
   if (!normalized) {
-    assessment = limitedAssessment({ orgName:input.orgName, website:input.website, reason:'WEBSITE_MISSING_OR_INVALID' });
+    assessment = limitedAssessment({ orgName:effectiveOrgName, website:effectiveWebsite, reason:'WEBSITE_MISSING_OR_INVALID' });
   } else {
     try {
       const fetched = await publicFetch(normalized, { fetchImpl:input.fetchImpl, lookup:input.lookup });
       assessment = analyzeGroundworkPage({
         html:fetched.html, url:fetched.url, status:fetched.response.status, fetchedAt:new Date().toISOString()
       });
-      assessment.organization = { name:input.orgName || null, website:normalized.toString() };
+      assessment.organization = { name:effectiveOrgName || null, website:normalized.toString() };
     } catch (error) {
-      assessment = limitedAssessment({ orgName:input.orgName, website:normalized.toString(), reason:error.message || 'GROUNDWORK_FETCH_FAILED' });
+      assessment = limitedAssessment({ orgName:effectiveOrgName, website:normalized.toString(), reason:error.message || 'GROUNDWORK_FETCH_FAILED' });
     }
   }
 
