@@ -36,10 +36,36 @@ function requirePermission(req, permission) {
 function uniqueRefs(...values) {
   return [...new Set(values.flatMap((value) => Array.isArray(value) ? value : []).filter(Boolean).map(String))];
 }
+function clientContext(req) {
+  return {
+    tenantId: req.user.tenantId,
+    userId: req.user.sub,
+    orgName: String(req.user.orgName || req.user.tenantId || 'Organization'),
+    role: req.user.role,
+    email: req.user.email || null
+  };
+}
+
 function evidenceForWork({ tenantId, userId, conversationId, work, recoverApproval = false }) {
   if (!work?.id || work.phase === 'routing_failed') return { artifacts: [], approval: null };
   return missionEvidence({ tenantId, userId, conversationId, missionId: work.id, recoverApproval });
 }
+
+router.get('/context', (req, res) => {
+  const context = clientContext(req);
+  return res.json({
+    ok: true,
+    workspace: {
+      id: context.tenantId,
+      name: context.orgName,
+      role: context.role
+    },
+    user: {
+      id: context.userId,
+      email: context.email
+    }
+  });
+});
 
 router.get('/conversations', async (req, res) => {
   try {
