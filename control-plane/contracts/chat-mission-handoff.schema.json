@@ -13,7 +13,7 @@
     "conversation_id": {"type": "string", "minLength": 1},
     "originating_message_id": {"type": "string", "minLength": 1},
     "objective": {"type": "string", "minLength": 1, "maxLength": 2000},
-    "domain": {"enum": ["grants","crm","content","seo","analytics","engineering","general"]},
+    "domain": {"enum": ["groundwork","grants","crm","content","seo","analytics","engineering","general"]},
     "risk_tier": {"enum": [0,1,2,3]},
     "allowed_capabilities": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "denied_capabilities": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
