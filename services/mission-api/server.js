@@ -19,6 +19,7 @@ import { cleanTenantSlug, createPublicKey, createSecretKey, defaultTenantProfile
 import { checkIdempotency, fingerprintSubmission, recordIdempotency } from '@asc3nd/core/idempotency';
 import { createRepositories, assertProductionStorage, storageMode } from '@asc3nd/db';
 import { assertTenantAccess, canApproveAction, canViewLane } from '@asc3nd/core/rbac';
+import { onboardSupabaseUser, resolveUjimaMembership } from './src/supabase-session-exchange.js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 4000);
@@ -113,6 +114,60 @@ app.post('/api/auth/login', (req, res) => {
     return res.json({ token, user: { email, role: 'owner', tenantId: 'asc3nd' } });
   }
   res.status(401).json({ error: 'Invalid credentials' });
+});
+
+app.post('/api/auth/supabase-exchange', async (req, res) => {
+  try {
+    const accessToken = bearer(req);
+    const resolved = await resolveUjimaMembership(accessToken);
+    if (resolved.needsOnboarding) {
+      return res.json({
+        ok: true,
+        needsOnboarding: true,
+        user: { id: resolved.authUser.id, email: resolved.authUser.email || null }
+      });
+    }
+    const identity = missionIdentityFromResolved(resolved);
+    ensureIcmWorkspace({ base: ICM_ROOT, tenantId: identity.tenantId, orgName: resolved.tenant.org_name });
+    const token = signToken(identity);
+    return res.json({
+      ok: true,
+      needsOnboarding: false,
+      token,
+      user: identity,
+      workspace: { id: resolved.tenant.id, name: resolved.tenant.org_name, status: resolved.tenant.status }
+    });
+  } catch (error) {
+    return res.status(error.status || 401).json({ error: error.message || 'SUPABASE_SESSION_EXCHANGE_FAILED' });
+  }
+});
+
+app.post('/api/auth/supabase-onboard', async (req, res) => {
+  try {
+    const accessToken = bearer(req);
+    const resolved = await onboardSupabaseUser(accessToken, {
+      orgName: req.body?.orgName,
+      website: req.body?.website,
+      displayName: req.body?.displayName
+    });
+    const identity = missionIdentityFromResolved(resolved);
+    ensureIcmWorkspace({ base: ICM_ROOT, tenantId: identity.tenantId, orgName: resolved.tenant.org_name });
+    const token = signToken(identity);
+    audit(identity.tenantId, 'tenant.supabase_onboarded', {
+      authUserId: resolved.authUser.id,
+      userId: identity.sub,
+      created: resolved.created === true
+    });
+    return res.status(resolved.created ? 201 : 200).json({
+      ok: true,
+      needsOnboarding: false,
+      token,
+      user: identity,
+      workspace: { id: resolved.tenant.id, name: resolved.tenant.org_name, status: resolved.tenant.status }
+    });
+  } catch (error) {
+    return res.status(error.status || 400).json({ error: error.message || 'SUPABASE_ONBOARDING_FAILED' });
+  }
 });
 
 app.get('/api/me', requireAuth, (req, res) => res.json({ user: req.user }));
@@ -460,6 +515,27 @@ function requireAuth(req, res, next) {
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
   req.user = user;
   next();
+}
+
+function bearer(req) {
+  const header = String(req.headers.authorization || '');
+  return header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+}
+function missionIdentityFromResolved(resolved) {
+  const membership = resolved?.membership;
+  const tenant = resolved?.tenant;
+  const user = membership?.user;
+  if (!tenant?.id || !user?.id || !membership?.role) {
+    const error = new Error('UJIMA_IDENTITY_INCOMPLETE');
+    error.status = 403;
+    throw error;
+  }
+  return {
+    sub: user.id,
+    email: user.email || resolved.authUser?.email || null,
+    role: membership.role,
+    tenantId: tenant.id
+  };
 }
 
 function signToken(payload) {
