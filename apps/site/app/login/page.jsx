@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { exchangeSupabaseSession } from '../../lib/api';
 import { sendMagicLink, sendPasswordRecovery, signInWithGoogle, signInWithPassword, signUpWithPassword } from '../../lib/supabase';
 
 export default function LoginPage() {
@@ -18,6 +19,11 @@ export default function LoginPage() {
     return 'Sign in to UJIMA';
   }, [mode]);
 
+  async function enterUjima(session) {
+    const exchanged = await exchangeSupabaseSession(session?.access_token);
+    window.location.href = exchanged.needsOnboarding ? '/onboarding' : '/app';
+  }
+
   async function submit(event) {
     event.preventDefault();
     setError('');
@@ -26,7 +32,7 @@ export default function LoginPage() {
     try {
       if (mode === 'signup') {
         const result = await signUpWithPassword(email, password);
-        if (result.session) window.location.href = '/workspaces';
+        if (result.session) await enterUjima(result.session);
         else setMessage('Check your email to confirm the account, then return to UJIMA.');
       } else if (mode === 'magic') {
         await sendMagicLink(email);
@@ -35,8 +41,8 @@ export default function LoginPage() {
         await sendPasswordRecovery(email);
         setMessage('Check your email for the password-reset link.');
       } else {
-        await signInWithPassword(email, password);
-        window.location.href = '/workspaces';
+        const session = await signInWithPassword(email, password);
+        await enterUjima(session);
       }
     } catch (err) {
       setError(err.message || 'Authentication failed.');
