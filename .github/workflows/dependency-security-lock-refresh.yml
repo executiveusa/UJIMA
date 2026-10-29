@@ -1,0 +1,36 @@
+name: Dependency Security Lock Refresh
+
+on:
+  push:
+    branches:
+      - 'zte/ZTE-20261028-0003/dependency-security'
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lock:
+    if: contains(github.event.head_commit.message, '[deps-refresh]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Regenerate lockfile from declared dependency versions
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Commit generated lockfile only
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock.json already matches package manifests."
+            exit 0
+          fi
+          git config user.name "ujima-zte[bot]"
+          git config user.email "ujima-zte[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "[ZTE][ZTE-20261028-0003] build: refresh lockfile after security upgrades"
+          git push origin "HEAD:${{ github.ref_name }}"
