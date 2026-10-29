@@ -30,3 +30,34 @@ export async function login(email, password) {
   setToken(body.token);
   return body;
 }
+
+
+async function supabaseBridge(path, accessToken, body = null) {
+  if (!accessToken) throw new Error('SUPABASE_ACCESS_TOKEN_REQUIRED');
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`
+    },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: 'no-store'
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const error = new Error(typeof data.error === 'string' ? data.error : 'UJIMA_SESSION_EXCHANGE_FAILED');
+    error.status = res.status;
+    error.body = data;
+    throw error;
+  }
+  if (data.token) setToken(data.token);
+  return data;
+}
+
+export function exchangeSupabaseSession(accessToken) {
+  return supabaseBridge('/api/auth/supabase-exchange', accessToken);
+}
+
+export function onboardSupabaseSession(accessToken, input) {
+  return supabaseBridge('/api/auth/supabase-onboard', accessToken, input);
+}
