@@ -152,6 +152,15 @@ app.post('/api/auth/supabase-onboard', async (req, res) => {
     });
     const identity = missionIdentityFromResolved(resolved);
     ensureIcmWorkspace({ base: ICM_ROOT, tenantId: identity.tenantId, orgName: resolved.tenant.org_name });
+    const existingProfile = readJson(profilePath(identity.tenantId), {});
+    writeJson(profilePath(identity.tenantId), {
+      ...existingProfile,
+      orgName: resolved.tenant.org_name,
+      website: resolved.tenant.profile?.website || existingProfile.website || null,
+      tenantId: identity.tenantId,
+      onboardingSource: 'supabase_self_service',
+      updatedAt: new Date().toISOString()
+    });
     const token = signToken(identity);
     audit(identity.tenantId, 'tenant.supabase_onboarded', {
       authUserId: resolved.authUser.id,
