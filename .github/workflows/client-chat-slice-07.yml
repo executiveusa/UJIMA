@@ -46,6 +46,25 @@ jobs:
           done
           if [ "$passed" -ne 1 ]; then
             echo "Production dependency audit still contains high or critical findings after 3 attempts."
+            echo "Actionable production vulnerability summary:"
+            node - "$audit_file" <<'NODE'
+          const fs = require('fs');
+          const audit = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          for (const [name, item] of Object.entries(audit.vulnerabilities || {})) {
+            const severity = item.severity || 'unknown';
+            if (!['high', 'critical'].includes(severity)) continue;
+            const via = (item.via || []).map((entry) => typeof entry === 'string'
+              ? entry
+              : [entry.title, entry.url].filter(Boolean).join(' — '));
+            console.log(JSON.stringify({
+              package: name,
+              severity,
+              range: item.range || null,
+              fixAvailable: item.fixAvailable ?? null,
+              via
+            }));
+          }
+          NODE
             exit 1
           fi
       - name: Repository boundary guard
