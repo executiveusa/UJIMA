@@ -534,7 +534,8 @@ function missionIdentityFromResolved(resolved) {
     sub: user.id,
     email: user.email || resolved.authUser?.email || null,
     role: membership.role,
-    tenantId: tenant.id
+    tenantId: tenant.id,
+    orgName: tenant.org_name || tenant.id
   };
 }
 
