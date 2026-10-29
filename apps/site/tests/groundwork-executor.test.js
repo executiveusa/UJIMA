@@ -40,7 +40,8 @@ describe('Groundwork safe public executor', () => {
     expect(assessment.evidence.contactPath).toBe(true);
     expect(assessment.outcomes.find((row) => row.key === 'identity').status).toBe('UNKNOWN');
     expect(assessment.outcomes.find((row) => row.key === 'ownership').status).toBe('UNKNOWN');
-    expect(assessment.findings.some((row) => row.evidenceClass === 'OBSERVED_EVIDENCE')).toBe(true);
+    expect(assessment.evidenceClass).toBe('OBSERVED_EVIDENCE');
+    expect(assessment.findings.every((row) => row.evidenceClass === 'OBSERVED_EVIDENCE')).toBe(true);
     expect(assessment.limitations.join(' ')).toContain('does not make legal');
   });
 
