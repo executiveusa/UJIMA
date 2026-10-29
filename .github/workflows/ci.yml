@@ -34,6 +34,9 @@ jobs:
       - name: Verify UJIMA Agent Plugin
         run: npm run verify:plugin
 
+      - name: Verify UJIMA Full Product Walk Contract
+        run: npm run verify:product
+
       - name: missionctl doctor
         run: node missionctl/missionctl.mjs doctor
 
