@@ -8,6 +8,7 @@ const ALWAYS_DENIED = [
 ];
 
 const ROUTES = [
+  { domain: 'groundwork', pattern: /\b(groundwork|readiness audit|readiness check|digital readiness|nonprofit readiness|are we ready|launch readiness|funding readiness audit)\b/i, capabilities: ['context_read','groundwork_identity','groundwork_trust','groundwork_discovery','groundwork_action_paths','groundwork_accessibility','groundwork_funding_readiness','groundwork_evidence_map','groundwork_score','groundwork_repair_plan'], gate: 'Groundwork must distinguish verified facts, observed evidence, unknowns, recommendations, and human-review items. No repair or external profile change executes without the relevant authorization.', label: 'Groundwork readiness' },
   { domain: 'grants', pattern: /\b(grant|grants|funding|funder|funders|foundation|foundations|rfp|proposal)\b/i, capabilities: ['context_read','grant_discovery','grant_eligibility','grant_fit','grant_draft_prepare'], gate: 'Grant recommendations require source provenance and eligibility checks before they can be marked ready.', label: 'funding' },
   { domain: 'content', pattern: /\b(content|post|posts|reel|reels|caption|captions|social|campaign|calendar|story|stories)\b/i, capabilities: ['context_read','content_plan','content_draft_prepare'], gate: 'Public-facing facts and claims must remain tied to approved organizational context before publishing.', label: 'content' },
   { domain: 'crm', pattern: /\b(follow[- ]?up|contact|contacts|family|families|mentor|mentors|volunteer|volunteers|sponsor|sponsors|partner|partners|donor|donors|relationship|relationships)\b/i, capabilities: ['context_read','crm_followup_analysis','crm_draft_prepare'], gate: 'Consent and relationship context must be checked before any future outreach can be approved.', label: 'follow-up' },
@@ -106,5 +107,6 @@ export function routeFirstMateMission({ tenantId, userId, conversationId, source
 export function missionAcknowledgement({ mission, route }) {
   if (!mission || !route) throw new Error('MISSION_ROUTE_REQUIRED');
   if (mission.status === 'needs_you') return `Needs you — I can prepare the ${route.label} work, but the final action you asked for requires approval. Nothing has been sent, submitted, published, paid, deployed, migrated, deleted, or changed externally.`;
+  if (route.domain === 'groundwork') return 'Groundwork started — I saved the request and routed the readiness review. I will separate verified facts from unknowns and show what is strong, missing, risky, and next. No external changes have been made.';
   return `Saved — your request is routed into ${route.label}. Execution has not started yet; nothing has been sent, submitted, published, or changed externally.`;
 }
