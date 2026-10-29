@@ -553,7 +553,7 @@ begin
     execute format('revoke all on table public.%I from public, anon, authenticated', t);
     execute format('grant select, insert, update, delete on table public.%I to service_role', t);
   end loop;
-end $;
+end $$;
 
 -- The Lab is an authenticated user-owned compatibility surface only.
 grant select on table public.ujima_workspaces to authenticated;
