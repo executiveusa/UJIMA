@@ -48,6 +48,32 @@ describe('First Mate intent routing', () => {
     expect(classifyClientIntent('Find three grants worth pursuing this month.').domain).toBe('grants');
     expect(classifyClientIntent('Prepare next week’s content plan and captions.').domain).toBe('content');
     expect(classifyClientIntent('Who needs a follow-up from our volunteers and partners?').domain).toBe('crm');
+    expect(classifyClientIntent('Run Groundwork on our organization.').domain).toBe('groundwork');
+    expect(classifyClientIntent('Are we ready for funding and launch?').domain).toBe('groundwork');
+  });
+
+  it('routes Groundwork as evidence-first internal readiness work without repair authority', async () => {
+    const source = await createSourceMessage({ tenantId: 'community-lab', text: 'Run Groundwork on our organization.' });
+    const routed = routeFirstMateMission({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      conversationId: source.conversation.conversationId,
+      sourceMessage: source.message,
+      read: source.read,
+      append: source.append
+    });
+
+    expect(routed.mission.domain).toBe('groundwork');
+    expect(routed.mission.risk_tier).toBe(1);
+    expect(routed.mission.status).toBe('routed');
+    expect(routed.mission.approval.required).toBe(false);
+    expect(routed.mission.allowed_capabilities).toContain('groundwork_evidence_map');
+    expect(routed.mission.allowed_capabilities).toContain('groundwork_repair_plan');
+    expect(routed.mission.denied_capabilities).toContain('production_mutation');
+    expect(routed.mission.denied_capabilities).toContain('public_publishing');
+    expect(routed.mission.icm_context_refs).toEqual(['icm/tenants/community-lab']);
+    expect(missionAcknowledgement(routed)).toMatch(/^Groundwork started/);
+    expect(missionAcknowledgement(routed)).toContain('No external changes have been made');
   });
 
   it('keeps unknown work bounded to general internal planning', () => {
