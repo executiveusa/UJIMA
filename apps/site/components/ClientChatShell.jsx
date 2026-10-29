@@ -8,14 +8,14 @@ import styles from './ClientChatShell.module.css';
 const initialAssistant = {
   id: 'welcome',
   role: 'assistant',
-  text: 'What would you like to work on? I can help with funding, content, follow-up, planning, and results.',
+  text: 'What would you like to work on? Groundwork, funding, content, follow-up, planning, and results can all start here.',
 };
 
 const CHAT_API = '/api/agent/client-chat';
-const ACTIVE_CLIENT = { id: 'asc3nd', name: 'ASC3ND', label: 'Client 01' };
+const DEFAULT_WORKSPACE = { id: 'workspace', name: 'Your organization', role: 'member' };
 
 function routeToConversation(conversationId) {
-  window.history.replaceState({}, '', conversationId ? `/app/chat/${conversationId}?client=${ACTIVE_CLIENT.id}` : `/app?client=${ACTIVE_CLIENT.id}`);
+  window.history.replaceState({}, '', conversationId ? `/app/chat/${conversationId}` : '/app');
 }
 
 function handleAuthFailure(error) {
@@ -53,6 +53,7 @@ export function ClientChatShell({ initialConversationId = null }) {
   const [decisionBusy, setDecisionBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [syncState, setSyncState] = useState('loading');
+  const [workspace, setWorkspace] = useState(DEFAULT_WORKSPACE);
 
   const messages = useMemo(() => messagesByConversation[activeId] || [initialAssistant], [messagesByConversation, activeId]);
   const activeWork = workByConversation[activeId] || null;
@@ -68,8 +69,14 @@ export function ClientChatShell({ initialConversationId = null }) {
         return;
       }
       try {
-        const data = await api(`${CHAT_API}/conversations`);
+        const [contextData, data] = await Promise.all([
+          api(`${CHAT_API}/context`),
+          api(`${CHAT_API}/conversations`)
+        ]);
         if (cancelled) return;
+        if (contextData?.workspace) setWorkspace(contextData.workspace);
+        const start = new URLSearchParams(window.location.search).get('start');
+        if (start === 'groundwork') setInput('Run Groundwork on our organization.');
         const rows = data.conversations || [];
         setConversations(rows);
         const requested = initialConversationId ? rows.find((conversation) => conversation.conversationId === initialConversationId) : null;
@@ -150,7 +157,7 @@ export function ClientChatShell({ initialConversationId = null }) {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `ujima-${ACTIVE_CLIENT.id}-chat-${activeId}.json`;
+      anchor.download = `ujima-${workspace.id}-chat-${activeId}.json`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -258,7 +265,7 @@ export function ClientChatShell({ initialConversationId = null }) {
         <div className={styles.sidebarTop}>
           <a href="/workspaces" className={styles.brand} onClick={() => setSidebarOpen(false)}>
             <span className={styles.mark}>U</span>
-            <span><strong>UJIMA</strong><small>{ACTIVE_CLIENT.name} workspace</small></span>
+            <span><strong>UJIMA</strong><small>{workspace.name} workspace</small></span>
           </a>
           <button className={styles.closeButton} onClick={() => setSidebarOpen(false)} aria-label="Close conversations">×</button>
         </div>
@@ -284,7 +291,7 @@ export function ClientChatShell({ initialConversationId = null }) {
       <section className={styles.chat}>
         <header className={styles.header}>
           <button className={styles.menuButton} onClick={() => setSidebarOpen(true)} aria-label="Open conversations">☰</button>
-          <div><strong>{ACTIVE_CLIENT.name}</strong><span>{ACTIVE_CLIENT.label} · managed in Ujima</span></div>
+          <div><strong>{workspace.name}</strong><span>{workspace.role || 'member'} · managed in UJIMA</span></div>
           <span className={styles.previewBadge}>{syncState === 'offline' ? 'Offline' : syncState === 'saving' ? 'Saving' : syncState === 'loading' ? 'Loading' : 'Saved'}</span>
           {activeWorkLabel && <span className={styles.workBadge} role="status" aria-label="Current work status">{activeWorkLabel}</span>}
         </header>
@@ -296,11 +303,11 @@ export function ClientChatShell({ initialConversationId = null }) {
           <div className={styles.intro}>
             <span className={styles.markLarge}>U</span>
             <h1>How can I help today?</h1>
-            <p>You are working inside the {ACTIVE_CLIENT.name} client workspace. Funding, content, people, follow-up, planning, and results can all start here.</p>
+            <p>You are working inside the {workspace.name} workspace. Start with Groundwork, or ask UJIMA to handle a specific piece of nonprofit work.</p>
             <div className={styles.prompts}>
-              <button onClick={() => usePrompt('Find ASC3ND three grants worth pursuing this month.')}>Find funding</button>
-              <button onClick={() => usePrompt('Prepare next week’s content plan for ASC3ND.')}>Plan next week</button>
-              <button onClick={() => usePrompt('Who needs a follow-up from ASC3ND?')}>Check follow-up</button>
+              <button onClick={() => usePrompt('Run Groundwork on our organization.')}>Run Groundwork</button>
+              <button onClick={() => usePrompt('Find three grants worth pursuing this month.')}>Find funding</button>
+              <button onClick={() => usePrompt('Who needs a follow-up from our organization?')}>Check follow-up</button>
             </div>
           </div>
 
@@ -316,7 +323,7 @@ export function ClientChatShell({ initialConversationId = null }) {
 
         <div className={styles.composerWrap}>
           <form className={styles.composer} onSubmit={submit}>
-            <textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder={`Ask about ${ACTIVE_CLIENT.name}…`} rows={1} aria-label={`Message Ujima about ${ACTIVE_CLIENT.name}`} />
+            <textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder={`Ask UJIMA about ${workspace.name}…`} rows={1} aria-label={`Message UJIMA about ${workspace.name}`} />
             <button type="submit" disabled={!input.trim() || !activeId} aria-label="Send message">↑</button>
           </form>
           <small>Conversation history is saved to this client workspace. Important actions stop for review when they need you.</small>
