@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { captureSessionFromLocation, getCurrentUser, updatePassword } from '../../../lib/supabase';
+import { exchangeSupabaseSession } from '../../../lib/api';
+import { captureSessionFromLocation, getCurrentUser, getSession, updatePassword } from '../../../lib/supabase';
 
 export default function AuthCallbackPage() {
   const [state, setState] = useState('loading');
@@ -12,15 +13,17 @@ export default function AuthCallbackPage() {
     try {
       captureSessionFromLocation();
       const mode = new URLSearchParams(window.location.search).get('mode');
-      getCurrentUser().then((user) => {
+      getCurrentUser().then(async (user) => {
         if (!user) throw new Error('The authentication link is invalid or expired.');
         if (mode === 'recovery') {
           setState('recovery');
           setMessage('Choose a new password.');
           return;
         }
+        const session = getSession();
+        const exchanged = await exchangeSupabaseSession(session?.access_token);
         window.history.replaceState({}, '', '/auth/callback');
-        window.location.replace('/workspaces');
+        window.location.replace(exchanged.needsOnboarding ? '/onboarding' : '/app');
       }).catch((error) => {
         setState('error');
         setMessage(error.message || 'Could not complete sign in.');
@@ -37,8 +40,9 @@ export default function AuthCallbackPage() {
     setMessage('Updating password…');
     try {
       await updatePassword(password);
+      const exchanged = await exchangeSupabaseSession(getSession()?.access_token);
       window.history.replaceState({}, '', '/auth/callback');
-      window.location.replace('/workspaces');
+      window.location.replace(exchanged.needsOnboarding ? '/onboarding' : '/app');
     } catch (error) {
       setState('recovery');
       setMessage(error.message || 'Could not update password.');
