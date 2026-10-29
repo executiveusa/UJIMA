@@ -45,6 +45,7 @@ create table if not exists public.users (
   email text not null,
   role text not null check (role in (
     'owner','operator','programs','comms','grants',
+    'executive_director','program_director','volunteer_manager','finance',
     'board_member','reviewer','readonly',
     'director','staff','board','volunteer','read_only'
   )),
