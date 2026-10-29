@@ -21,8 +21,10 @@ alter default privileges for role postgres in schema public
   revoke select, insert, update, delete on tables from anon, authenticated;
 alter default privileges for role postgres in schema public
   revoke usage, select on sequences from anon, authenticated;
+alter default privileges for role postgres
+  revoke execute on functions from public;
 alter default privileges for role postgres in schema public
-  revoke execute on functions from public, anon, authenticated;
+  revoke execute on functions from anon, authenticated;
 
 create table if not exists public.tenants (
   id text primary key,
@@ -342,6 +344,68 @@ create table if not exists public.managed_agent_health (
 create index if not exists managed_agent_health_tenant_idx
   on public.managed_agent_health(tenant_id, timestamp desc);
 
+-- Authenticated Lab compatibility bridge.
+-- These tables preserve the current private UJIMA Lab while the client-facing
+-- chat migrates fully behind the canonical mission API. They are intentionally
+-- user-scoped and must not become a tenant truth store.
+
+create table if not exists public.ujima_workspaces (
+  id text primary key,
+  name text not null,
+  summary text,
+  status text not null default 'active',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.ujima_conversations (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id text not null references public.ujima_workspaces(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null default 'Conversation',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists ujima_conversations_user_updated_idx
+  on public.ujima_conversations(user_id, updated_at desc);
+
+create table if not exists public.ujima_messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references public.ujima_conversations(id) on delete cascade,
+  role text not null check (role in ('user','assistant','system','tool')),
+  content text not null,
+  route text,
+  created_at timestamptz not null default now()
+);
+create index if not exists ujima_messages_conversation_created_idx
+  on public.ujima_messages(conversation_id, created_at);
+
+create table if not exists public.ujima_model_runs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  conversation_id uuid not null references public.ujima_conversations(id) on delete cascade,
+  route text,
+  provider text,
+  model text,
+  status text not null default 'completed',
+  created_at timestamptz not null default now()
+);
+create index if not exists ujima_model_runs_user_created_idx
+  on public.ujima_model_runs(user_id, created_at desc);
+
+insert into public.ujima_workspaces (id, name, summary, status)
+values (
+  'ujima-lab',
+  'UJIMA Lab',
+  'Private test workspace for chat, goals, workflows, and model routing.',
+  'active'
+)
+on conflict (id) do update
+set name = excluded.name,
+    summary = excluded.summary,
+    status = excluded.status,
+    updated_at = now();
+
 -- Compatibility/product tables retained from the earlier UJIMA schema.
 create table if not exists public.workflows (
   id text primary key,
@@ -479,7 +543,8 @@ begin
     'outbox_events','audit_events','typed_event_journal','approval_requests','artifacts',
     'managed_agents','managed_agent_runs','managed_agent_health',
     'workflows','opportunities','campaigns','calls','vault_notes','outcomes',
-    'sync_sources','sync_receipts','source_mirrors'
+    'sync_sources','sync_receipts','source_mirrors',
+    'ujima_workspaces','ujima_conversations','ujima_messages','ujima_model_runs'
   ]
   loop
     execute format('alter table public.%I enable row level security', t);
@@ -487,7 +552,74 @@ begin
     execute format('revoke all on table public.%I from public, anon, authenticated', t);
     execute format('grant select, insert, update, delete on table public.%I to service_role', t);
   end loop;
-end $$;
+end $;
+
+-- The Lab is an authenticated user-owned compatibility surface only.
+grant select on table public.ujima_workspaces to authenticated;
+grant select, insert, update, delete on table public.ujima_conversations to authenticated;
+grant select, insert, update, delete on table public.ujima_messages to authenticated;
+grant select, insert, update, delete on table public.ujima_model_runs to authenticated;
+
+drop policy if exists ujima_workspaces_authenticated_read on public.ujima_workspaces;
+create policy ujima_workspaces_authenticated_read
+  on public.ujima_workspaces
+  for select
+  to authenticated
+  using ((select auth.uid()) is not null);
+
+drop policy if exists ujima_conversations_owner_all on public.ujima_conversations;
+create policy ujima_conversations_owner_all
+  on public.ujima_conversations
+  for all
+  to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+
+drop policy if exists ujima_messages_owner_all on public.ujima_messages;
+create policy ujima_messages_owner_all
+  on public.ujima_messages
+  for all
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.ujima_conversations c
+      where c.id = ujima_messages.conversation_id
+        and c.user_id = (select auth.uid())
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.ujima_conversations c
+      where c.id = ujima_messages.conversation_id
+        and c.user_id = (select auth.uid())
+    )
+  );
+
+drop policy if exists ujima_model_runs_owner_all on public.ujima_model_runs;
+create policy ujima_model_runs_owner_all
+  on public.ujima_model_runs
+  for all
+  to authenticated
+  using (
+    user_id = (select auth.uid())
+    and exists (
+      select 1
+      from public.ujima_conversations c
+      where c.id = ujima_model_runs.conversation_id
+        and c.user_id = (select auth.uid())
+    )
+  )
+  with check (
+    user_id = (select auth.uid())
+    and exists (
+      select 1
+      from public.ujima_conversations c
+      where c.id = ujima_model_runs.conversation_id
+        and c.user_id = (select auth.uid())
+    )
+  );
 
 -- Future browser-facing access can use these helpers in narrow policies.
 create or replace function ujima_private.is_tenant_member(p_tenant_id text)
