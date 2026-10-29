@@ -67,10 +67,10 @@ export async function signInWithPassword(email, password) {
 
 export async function signUpWithPassword(email, password) {
   assertConfigured();
-  const response = await fetch(SUPABASE_URL + '/auth/v1/signup', {
+  const response = await fetch(SUPABASE_URL + '/auth/v1/signup?redirect_to=' + encodeURIComponent(callbackUrl('signup')), {
     method: 'POST',
     headers: baseHeaders(),
-    body: JSON.stringify({ email, password, options: { emailRedirectTo: callbackUrl('signup') } }),
+    body: JSON.stringify({ email, password }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.msg || data.message || 'Could not create the account.');
@@ -81,10 +81,10 @@ export async function signUpWithPassword(email, password) {
 
 export async function sendMagicLink(email) {
   assertConfigured();
-  const response = await fetch(SUPABASE_URL + '/auth/v1/otp', {
+  const response = await fetch(SUPABASE_URL + '/auth/v1/otp?redirect_to=' + encodeURIComponent(callbackUrl('magic')), {
     method: 'POST',
     headers: baseHeaders(),
-    body: JSON.stringify({ email, create_user: true, options: { emailRedirectTo: callbackUrl('magic') } }),
+    body: JSON.stringify({ email, create_user: true }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.msg || data.message || 'Could not send the sign-in link.');
@@ -102,10 +102,10 @@ export function signInWithGoogle() {
 
 export async function sendPasswordRecovery(email) {
   assertConfigured();
-  const response = await fetch(SUPABASE_URL + '/auth/v1/recover', {
+  const response = await fetch(SUPABASE_URL + '/auth/v1/recover?redirect_to=' + encodeURIComponent(callbackUrl('recovery')), {
     method: 'POST',
     headers: baseHeaders(),
-    body: JSON.stringify({ email, redirect_to: callbackUrl('recovery') }),
+    body: JSON.stringify({ email }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.msg || data.message || 'Could not send recovery email.');
