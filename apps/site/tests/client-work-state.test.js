@@ -157,6 +157,82 @@ describe('durable client work-state engine', () => {
     expect(completed.projection.workflow[0]).toMatchObject({ id: 'identity', status: 'complete' });
     expect(completed.projection.currentStage).toMatchObject({ id: 'trust', status: 'pending' });
     expect(fx.events.filter((event) => event.type === CLIENT_GROUNDWORK_STAGE_EVENT)).toHaveLength(2);
+
+    const exported = await fx.store.exportPortableSession({
+      tenantId: fx.tenantId,
+      userId: fx.userId,
+      conversationId: fx.conversation.conversationId
+    });
+    expect(exported.work_state_refs).toContain(`event:${completed.eventId}`);
+    expect(exported.proof_refs).toContain(`artifact:${identityProof.id}`);
+  });
+
+  it('treats a newer Groundwork stage event as the latest conversation work after another mission was routed', async () => {
+    const fx = await missionFixture({ text: 'Run Groundwork on our nonprofit readiness.' });
+    const scope = {
+      tenantId: fx.tenantId,
+      userId: fx.userId,
+      conversationId: fx.conversation.conversationId,
+      missionId: fx.routed.mission.mission_id,
+      read: fx.read,
+      append: fx.append
+    };
+
+    transitionGroundworkStage({
+      ...scope,
+      stageId: 'identity',
+      to: 'working',
+      idempotencyKey: 'groundwork-latest-start-12345678'
+    });
+
+    const laterMessage = await fx.store.appendMessage({
+      tenantId: fx.tenantId,
+      userId: fx.userId,
+      conversationId: fx.conversation.conversationId,
+      role: 'user',
+      text: 'Prepare next week’s content plan.'
+    });
+    const laterMission = routeFirstMateMission({
+      tenantId: fx.tenantId,
+      userId: fx.userId,
+      conversationId: fx.conversation.conversationId,
+      sourceMessage: laterMessage,
+      read: fx.read,
+      append: fx.append
+    });
+    expect(latestConversationWorkState({
+      tenantId: fx.tenantId,
+      userId: fx.userId,
+      conversationId: fx.conversation.conversationId,
+      read: fx.read
+    }).id).toBe(laterMission.mission.mission_id);
+
+    const artifact = registerArtifact({
+      tenantId: fx.tenantId,
+      runId: null,
+      kind: 'groundwork-evidence',
+      title: 'Identity evidence after second mission',
+      storagePath: 'proof/groundwork-latest-identity.json',
+      approvalStatus: 'approved',
+      sourceRefs: [`mission:${fx.routed.mission.mission_id}`],
+      createdBy: 'critic'
+    });
+    transitionGroundworkStage({
+      ...scope,
+      stageId: 'identity',
+      to: 'complete',
+      proofRefs: [`artifact:${artifact.id}`],
+      idempotencyKey: 'groundwork-latest-complete-12345678'
+    });
+
+    const latest = latestConversationWorkState({
+      tenantId: fx.tenantId,
+      userId: fx.userId,
+      conversationId: fx.conversation.conversationId,
+      read: fx.read
+    });
+    expect(latest.id).toBe(fx.routed.mission.mission_id);
+    expect(latest.currentStage).toMatchObject({ id: 'trust', status: 'pending' });
   });
 
   it('surfaces blocked Groundwork stages as Needs you and resumes without inventing an approval requirement', async () => {
