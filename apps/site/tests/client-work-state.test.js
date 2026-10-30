@@ -9,10 +9,12 @@ import { requestApproval, updateApprovalStatus, APPROVAL_STATES } from '@asc3nd/
 import { createClientChatStore } from '../../../services/mission-api/src/agent/client-chat-store.js';
 import clientChatRouter from '../../../services/mission-api/src/agent/client-chat-router.js';
 import {
+  CLIENT_GROUNDWORK_STAGE_EVENT,
   CLIENT_MISSION_STATE_EVENT,
   getClientMissionWorkState,
   latestConversationWorkState,
-  transitionClientMissionState
+  transitionClientMissionState,
+  transitionGroundworkStage
 } from '../../../services/mission-api/src/agent/client-work-state.js';
 import { routeFirstMateMission } from '../../../services/mission-api/src/agent/firstmate-mission-router.js';
 
@@ -71,6 +73,173 @@ describe('durable client work-state engine', () => {
     const started = transitionClientMissionState({ tenantId: fx.tenantId, userId: fx.userId, conversationId: fx.conversation.conversationId, missionId: fx.routed.mission.mission_id, to: 'working', actor: 'grant-worker', idempotencyKey: 'state-start-12345678', read: fx.read, append: fx.append });
     expect(started.projection).toMatchObject({ status: 'working', label: 'Working', phase: 'working' });
     expect(fx.events.filter((event) => event.type === CLIENT_MISSION_STATE_EVENT)).toHaveLength(1);
+  });
+
+  it('projects the six Groundwork stages and advances them only in order with approved mission-linked proof', async () => {
+    const fx = await missionFixture({ text: 'Run Groundwork and check if our nonprofit is ready to launch.' });
+    const scope = {
+      tenantId: fx.tenantId,
+      userId: fx.userId,
+      conversationId: fx.conversation.conversationId,
+      missionId: fx.routed.mission.mission_id,
+      read: fx.read,
+      append: fx.append
+    };
+
+    const initial = getClientMissionWorkState(scope);
+    expect(initial.area).toBe('groundwork');
+    expect(initial.workflow).toHaveLength(6);
+    expect(initial.workflow.map((stage) => stage.id)).toEqual(['identity', 'trust', 'discovery', 'readiness', 'repair', 'proof']);
+    expect(initial.workflow.every((stage) => stage.status === 'pending')).toBe(true);
+    expect(initial.currentStage).toMatchObject({ id: 'identity', status: 'pending' });
+
+    expect(() => transitionGroundworkStage({
+      ...scope,
+      stageId: 'trust',
+      to: 'working',
+      idempotencyKey: 'groundwork-skip-12345678'
+    })).toThrow('GROUNDWORK_STAGE_OUT_OF_ORDER');
+
+    const started = transitionGroundworkStage({
+      ...scope,
+      stageId: 'identity',
+      to: 'working',
+      actor: 'groundwork-worker',
+      idempotencyKey: 'groundwork-identity-start-12345678'
+    });
+    expect(started.projection).toMatchObject({ status: 'working', label: 'Working' });
+    expect(started.projection.currentStage).toMatchObject({ id: 'identity', status: 'working' });
+
+    expect(() => transitionGroundworkStage({
+      ...scope,
+      stageId: 'identity',
+      to: 'complete',
+      actor: 'groundwork-worker',
+      idempotencyKey: 'groundwork-identity-no-proof-12345678'
+    })).toThrow('GROUNDWORK_STAGE_PROOF_REQUIRED');
+
+    const unrelated = registerArtifact({
+      tenantId: fx.tenantId,
+      runId: null,
+      kind: 'groundwork-evidence',
+      title: 'Wrong mission evidence',
+      storagePath: 'proof/wrong-groundwork.json',
+      approvalStatus: 'approved',
+      sourceRefs: ['mission:msn_other'],
+      createdBy: 'critic'
+    });
+    expect(() => transitionGroundworkStage({
+      ...scope,
+      stageId: 'identity',
+      to: 'complete',
+      proofRefs: [`artifact:${unrelated.id}`],
+      idempotencyKey: 'groundwork-identity-wrong-proof-12345678'
+    })).toThrow('GROUNDWORK_STAGE_PROOF_MISSION_MISMATCH');
+
+    const identityProof = registerArtifact({
+      tenantId: fx.tenantId,
+      runId: null,
+      kind: 'groundwork-evidence',
+      title: 'Identity evidence',
+      storagePath: 'proof/groundwork-identity.json',
+      approvalStatus: 'approved',
+      sourceRefs: [`mission:${fx.routed.mission.mission_id}`],
+      createdBy: 'critic'
+    });
+    const completed = transitionGroundworkStage({
+      ...scope,
+      stageId: 'identity',
+      to: 'complete',
+      proofRefs: [`artifact:${identityProof.id}`],
+      actor: 'groundwork-worker',
+      idempotencyKey: 'groundwork-identity-complete-12345678'
+    });
+    expect(completed.projection.workflow[0]).toMatchObject({ id: 'identity', status: 'complete' });
+    expect(completed.projection.currentStage).toMatchObject({ id: 'trust', status: 'pending' });
+    expect(fx.events.filter((event) => event.type === CLIENT_GROUNDWORK_STAGE_EVENT)).toHaveLength(2);
+  });
+
+  it('surfaces blocked Groundwork stages as Needs you and resumes without inventing an approval requirement', async () => {
+    const fx = await missionFixture({ text: 'Run Groundwork on our nonprofit readiness.' });
+    const scope = {
+      tenantId: fx.tenantId,
+      userId: fx.userId,
+      conversationId: fx.conversation.conversationId,
+      missionId: fx.routed.mission.mission_id,
+      read: fx.read,
+      append: fx.append
+    };
+
+    const blocked = transitionGroundworkStage({
+      ...scope,
+      stageId: 'identity',
+      to: 'blocked',
+      nextAction: 'Provide the organization legal name or public registration record.',
+      idempotencyKey: 'groundwork-identity-blocked-12345678'
+    });
+    expect(blocked.projection).toMatchObject({
+      status: 'needs_you',
+      approvalRequired: false,
+      nextAction: 'Provide the organization legal name or public registration record.'
+    });
+    expect(blocked.projection.currentStage).toMatchObject({ id: 'identity', status: 'blocked' });
+
+    const resumed = transitionGroundworkStage({
+      ...scope,
+      stageId: 'identity',
+      to: 'working',
+      idempotencyKey: 'groundwork-identity-resume-12345678'
+    });
+    expect(resumed.projection.status).toBe('working');
+    expect(resumed.projection.currentStage).toMatchObject({ id: 'identity', status: 'working' });
+  });
+
+  it('moves a fully evidenced six-stage Groundwork mission to Ready and leaves no current stage', async () => {
+    const fx = await missionFixture({ text: 'Run Groundwork and audit our nonprofit readiness.' });
+    const scope = {
+      tenantId: fx.tenantId,
+      userId: fx.userId,
+      conversationId: fx.conversation.conversationId,
+      missionId: fx.routed.mission.mission_id,
+      read: fx.read,
+      append: fx.append
+    };
+    const stageIds = ['identity', 'trust', 'discovery', 'readiness', 'repair', 'proof'];
+
+    for (const [index, stageId] of stageIds.entries()) {
+      transitionGroundworkStage({
+        ...scope,
+        stageId,
+        to: 'working',
+        actor: 'groundwork-worker',
+        idempotencyKey: `groundwork-${stageId}-start-${index}-12345678`
+      });
+      const artifact = registerArtifact({
+        tenantId: fx.tenantId,
+        runId: null,
+        kind: 'groundwork-evidence',
+        title: `${stageId} evidence`,
+        storagePath: `proof/groundwork-${stageId}.json`,
+        approvalStatus: 'approved',
+        sourceRefs: [`mission:${fx.routed.mission.mission_id}`],
+        createdBy: 'critic'
+      });
+      transitionGroundworkStage({
+        ...scope,
+        stageId,
+        to: 'complete',
+        actor: 'groundwork-worker',
+        proofRefs: [`artifact:${artifact.id}`],
+        idempotencyKey: `groundwork-${stageId}-complete-${index}-12345678`
+      });
+    }
+
+    const finalState = getClientMissionWorkState(scope);
+    expect(finalState.status).toBe('ready');
+    expect(finalState.label).toBe('Ready');
+    expect(finalState.workflow.every((stage) => stage.status === 'complete')).toBe(true);
+    expect(finalState.currentStage).toBeNull();
+    expect(finalState.proofRefs.length).toBe(6);
   });
 
   it('requires tenant-owned approved mission-linked artifacts for Ready and independently verified delivery evidence for Delivered', async () => {
