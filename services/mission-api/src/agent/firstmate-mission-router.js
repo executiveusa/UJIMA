@@ -3,11 +3,28 @@ import { emitEvent, readEvents } from '@asc3nd/core/events';
 
 export const CLIENT_MISSION_EVENT = 'client_mission';
 
+export const GROUNDWORK_STAGES = Object.freeze([
+  { id: 'identity', label: 'Identity', outcome: 'Confirm the organization identity and reconcile public records before recommendations.' },
+  { id: 'trust', label: 'Trust', outcome: 'Inspect public trust proof, leadership, contact, donation, accessibility, and credibility signals.' },
+  { id: 'discovery', label: 'Discovery', outcome: 'Inspect search, Google, listings, local presence, and consistency using observable evidence.' },
+  { id: 'readiness', label: 'Readiness', outcome: 'Identify funding, privacy, ownership, operations, and evidence gaps without inventing eligibility or compliance.' },
+  { id: 'repair', label: 'Repair', outcome: 'Prepare bounded repairs; consequential or external changes remain approval-gated.' },
+  { id: 'proof', label: 'Proof', outcome: 'Verify completed work, preserve evidence, and state what remains open.' }
+]);
+
 const ALWAYS_DENIED = [
   'external_email','external_message','public_publishing','grant_submission','portal_acceptance','money_movement','legal_attestation','production_deploy','dns_change','production_database_migration','production_mutation','destructive_deletion','cross_tenant_access','unrestricted_execution'
 ];
 
 const ROUTES = [
+  {
+    domain: 'groundwork',
+    pattern: /\b(groundwork|nonprofit readiness|non-profit readiness|organization readiness|organisation readiness|launch readiness|startup readiness|start(?:ing)? a nonprofit|start(?:ing)? a non-profit|launch(?:ing)? (?:our |a )?nonprofit|launch(?:ing)? (?:our |a )?non-profit|is (?:our|my|the) (?:nonprofit|non-profit|organization|organisation) ready|audit (?:our|my|the|a) (?:nonprofit|non-profit|organization|organisation))\b/i,
+    capabilities: ['context_read','nonprofit_identity_check','trust_audit','discovery_audit','readiness_audit','repair_plan_prepare','proof_plan_prepare'],
+    gate: 'Groundwork must separate verified facts, observed evidence, unknowns, recommendations, and approval-gated repairs. Legal, fundraising, safeguarding, privacy, and external changes remain human-gated.',
+    label: 'Groundwork',
+    workflow: GROUNDWORK_STAGES
+  },
   { domain: 'grants', pattern: /\b(grant|grants|funding|funder|funders|foundation|foundations|rfp|proposal)\b/i, capabilities: ['context_read','grant_discovery','grant_eligibility','grant_fit','grant_draft_prepare'], gate: 'Grant recommendations require source provenance and eligibility checks before they can be marked ready.', label: 'funding' },
   { domain: 'content', pattern: /\b(content|post|posts|reel|reels|caption|captions|social|campaign|calendar|story|stories)\b/i, capabilities: ['context_read','content_plan','content_draft_prepare'], gate: 'Public-facing facts and claims must remain tied to approved organizational context before publishing.', label: 'content' },
   { domain: 'crm', pattern: /\b(follow[- ]?up|contact|contacts|family|families|mentor|mentors|volunteer|volunteers|sponsor|sponsors|partner|partners|donor|donors|relationship|relationships)\b/i, capabilities: ['context_read','crm_followup_analysis','crm_draft_prepare'], gate: 'Consent and relationship context must be checked before any future outreach can be approved.', label: 'follow-up' },
@@ -90,6 +107,7 @@ export function routeFirstMateMission({ tenantId, userId, conversationId, source
   const handoff = {
     version: '1.0.0', mission_id: missionId, tenant_id: tenantId, user_id: userId, conversation_id: conversationId,
     originating_message_id: sourceMessage.messageId, objective, domain: route.domain, risk_tier: riskTier,
+    workflow: route.workflow ? route.workflow.map((stage, index) => ({ ...stage, order: index + 1, status: 'pending' })) : null,
     allowed_capabilities: [...route.capabilities], denied_capabilities: [...ALWAYS_DENIED],
     acceptance_gates: ['Use only approved tenant-scoped ICM context and source evidence.', route.gate, 'No external or consequential action may execute in Slice 04.'],
     evidence_requirements: [`event:${sourceMessage.eventId}`, `icm/tenants/${tenantId}`, 'client_mission routing event receipt'],
