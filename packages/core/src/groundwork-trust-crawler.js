@@ -1,5 +1,7 @@
 import dns from 'node:dns/promises';
 import net from 'node:net';
+import http from 'node:http';
+import https from 'node:https';
 
 const PRIORITY_PATH = /about|mission|program|impact|give|donate|support|contact|privacy|terms|financ|990|board|team|governance|safeguard|policy|volunteer|partner|transparen/i;
 const SOCIAL_HOSTS = ['facebook.com','instagram.com','linkedin.com','x.com','twitter.com','youtube.com','tiktok.com','threads.net','bsky.app','github.com'];
@@ -59,7 +61,7 @@ export function isPrivateAddress(address = '') {
   return version === 0;
 }
 
-export async function assertPublicHttpUrl(raw, { lookupFn = dns.lookup } = {}) {
+async function resolvePublicHttpTarget(raw, { lookupFn = dns.lookup } = {}) {
   let url;
   try { url = new URL(raw); } catch { throw new Error('GROUNDWORK_TRUST_URL_INVALID'); }
   if (!['http:','https:'].includes(url.protocol)) throw new Error('GROUNDWORK_TRUST_PROTOCOL_BLOCKED');
@@ -70,13 +72,77 @@ export async function assertPublicHttpUrl(raw, { lookupFn = dns.lookup } = {}) {
   if (!host || host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal')) throw new Error('GROUNDWORK_TRUST_PRIVATE_HOST_BLOCKED');
   if (net.isIP(host)) {
     if (isPrivateAddress(host)) throw new Error('GROUNDWORK_TRUST_PRIVATE_HOST_BLOCKED');
-    return url;
+    return { url, records: [{ address: host, family: net.isIP(host) }] };
   }
 
   const records = await lookupFn(host, { all: true, verbatim: true });
   if (!Array.isArray(records) || records.length === 0) throw new Error('GROUNDWORK_TRUST_DNS_EMPTY');
   if (records.some((record) => isPrivateAddress(record.address))) throw new Error('GROUNDWORK_TRUST_PRIVATE_DNS_BLOCKED');
-  return url;
+  return { url, records };
+}
+
+export async function assertPublicHttpUrl(raw, options = {}) {
+  return (await resolvePublicHttpTarget(raw, options)).url;
+}
+
+function nodeHeaders(headers = {}) {
+  return {
+    get(name) {
+      const value = headers[String(name).toLowerCase()];
+      return Array.isArray(value) ? value.join(', ') : value === undefined ? null : String(value);
+    }
+  };
+}
+
+async function requestPinnedPublicText(raw, { lookupFn = dns.lookup, timeoutMs = 15000, maxBytes = 2_000_000 } = {}) {
+  const { url, records } = await resolvePublicHttpTarget(raw, { lookupFn });
+  const chosen = records[0];
+  const transport = url.protocol === 'https:' ? https : http;
+
+  return await new Promise((resolve, reject) => {
+    const req = transport.request({
+      protocol: url.protocol,
+      hostname: url.hostname,
+      port: url.port || undefined,
+      path: url.pathname + url.search,
+      method: 'GET',
+      headers: { 'user-agent': 'UJIMA-Groundwork/1.0 public-site-trust-check' },
+      servername: net.isIP(url.hostname) ? undefined : url.hostname,
+      lookup(_hostname, _options, callback) {
+        callback(null, chosen.address, chosen.family);
+      }
+    }, (res) => {
+      const headers = nodeHeaders(res.headers);
+      const length = Number(headers.get('content-length') || 0);
+      if (length > maxBytes) {
+        res.destroy();
+        reject(new Error('GROUNDWORK_TRUST_BODY_TOO_LARGE'));
+        return;
+      }
+
+      const chunks = [];
+      let bytes = 0;
+      res.on('data', (chunk) => {
+        bytes += chunk.length;
+        if (bytes > maxBytes) {
+          res.destroy(new Error('GROUNDWORK_TRUST_BODY_TOO_LARGE'));
+          return;
+        }
+        chunks.push(Buffer.from(chunk));
+      });
+      res.on('error', reject);
+      res.on('end', () => resolve({
+        url: url.toString(),
+        status: res.statusCode || 0,
+        headers,
+        body: Buffer.concat(chunks).toString('utf8')
+      }));
+    });
+
+    req.setTimeout(timeoutMs, () => req.destroy(new Error('GROUNDWORK_TRUST_TIMEOUT')));
+    req.on('error', reject);
+    req.end();
+  });
 }
 
 async function readBoundedBody(response, maxBytes) {
@@ -107,7 +173,7 @@ async function readBoundedBody(response, maxBytes) {
 }
 
 export async function fetchPublicText(raw, {
-  fetchFn = globalThis.fetch,
+  fetchFn = null,
   lookupFn = dns.lookup,
   timeoutMs = 15000,
   maxBytes = 2_000_000,
@@ -119,12 +185,14 @@ export async function fetchPublicText(raw, {
   for (let redirect = 0; redirect <= maxRedirects; redirect += 1) {
     const url = await assertPublicHttpUrl(current, { lookupFn });
     if (allowedOrigin && url.origin !== allowedOrigin) throw new Error('GROUNDWORK_TRUST_CROSS_ORIGIN_BLOCKED');
-    const response = await fetchFn(url.toString(), {
-      method: 'GET',
-      redirect: 'manual',
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: { 'user-agent': 'UJIMA-Groundwork/1.0 public-site-trust-check' }
-    });
+    const response = fetchFn
+      ? await fetchFn(url.toString(), {
+          method: 'GET',
+          redirect: 'manual',
+          signal: AbortSignal.timeout(timeoutMs),
+          headers: { 'user-agent': 'UJIMA-Groundwork/1.0 public-site-trust-check' }
+        })
+      : await requestPinnedPublicText(url.toString(), { lookupFn, timeoutMs, maxBytes });
 
     if ([301,302,303,307,308].includes(response.status)) {
       const location = response.headers?.get?.('location');
@@ -134,7 +202,7 @@ export async function fetchPublicText(raw, {
       continue;
     }
 
-    const body = await readBoundedBody(response, maxBytes);
+    const body = fetchFn ? await readBoundedBody(response, maxBytes) : response.body;
     return {
       url: url.toString(),
       status: response.status,
@@ -282,7 +350,7 @@ function sitemapLocations(xml = '') {
 
 export async function crawlGroundworkTrustSite(startUrl, {
   maxPages = 12,
-  fetchFn = globalThis.fetch,
+  fetchFn = null,
   lookupFn = dns.lookup,
   timeoutMs = 15000,
   maxBytes = 2_000_000
