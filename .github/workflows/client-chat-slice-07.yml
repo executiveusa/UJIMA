@@ -27,6 +27,7 @@ jobs:
         with:
           node-version: 24
       - run: npm ci
+      # Fail closed on high/critical production advisories, but print only safe package/advisory metadata for remediation.
       - name: Production dependency audit
         shell: bash
         run: |
