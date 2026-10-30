@@ -1,12 +1,16 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import express from 'express';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { emitEvent, readEvents } from '../../../packages/core/src/events.js';
+import { createOperatorKey } from '../../../packages/core/src/auth.js';
+import { createRepositories, clearRepositoryCache } from '../../../packages/db/src/index.js';
 import { getArtifacts } from '../../../packages/core/src/artifacts.js';
 import { CLIENT_MISSION_EVENT } from '../src/agent/firstmate-mission-router.js';
 import { CLIENT_GROUNDWORK_STAGE_EVENT } from '../src/agent/client-work-state.js';
 import { createArtifact } from '../src/agent/artifacts.js';
+import agentRouter from '../src/agent/index.js';
 import {
   resolveGroundworkMissionScope,
   getGroundworkMission,
@@ -22,6 +26,7 @@ const CONVERSATION = 'conv-real';
 const MISSION = 'msn_groundwork_test';
 
 let dataDir;
+let httpServer = null;
 
 function workflow() {
   return [
@@ -90,15 +95,60 @@ function req({ operatorId = 'op-producer', params = {}, body = {}, headers = {},
 beforeEach(() => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ujima-groundwork-agent-'));
   process.env.DATA_DIR = dataDir;
+  process.env.MISSION_STORAGE = 'memory';
+  clearRepositoryCache();
+  createRepositories({ forceNew: true });
   seedMission();
 });
 
-afterEach(() => {
+afterEach(async () => {
+  if (httpServer) {
+    await new Promise((resolve) => httpServer.close(resolve));
+    httpServer = null;
+  }
   delete process.env.DATA_DIR;
+  delete process.env.MISSION_STORAGE;
+  clearRepositoryCache();
   fs.rmSync(dataDir, { recursive: true, force: true });
 });
 
+async function startAgentServer() {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/agent', agentRouter);
+  return new Promise((resolve, reject) => {
+    const server = app.listen(0, '127.0.0.1', () => {
+      httpServer = server;
+      const address = server.address();
+      resolve(`http://127.0.0.1:${address.port}`);
+    });
+    server.on('error', reject);
+  });
+}
+
 describe('Groundwork Agent Service bridge', () => {
+  it('enforces operator authentication at the HTTP boundary and accepts the tenant-bound key', async () => {
+    const baseUrl = await startAgentServer();
+
+    const denied = await fetch(`${baseUrl}/api/agent/groundwork/missions/${MISSION}`);
+    expect(denied.status).toBe(401);
+
+    const { rawKey } = createOperatorKey({
+      tenantId: TENANT,
+      label: 'groundwork-worker',
+      scopes: ['operator'],
+      createdBy: 'test'
+    });
+    const allowed = await fetch(`${baseUrl}/api/agent/groundwork/missions/${MISSION}`, {
+      headers: { authorization: `Bearer ${rawKey}` }
+    });
+    expect(allowed.status).toBe(200);
+    const payload = await allowed.json();
+    expect(payload.ok).toBe(true);
+    expect(payload.mission.mission_id).toBe(MISSION);
+    expect(payload.work.currentStage.id).toBe('identity');
+  });
+
   it('derives client scope from the durable mission instead of worker-controlled fields', () => {
     const scope = resolveGroundworkMissionScope({ tenantId: TENANT, missionId: MISSION });
     expect(scope).toMatchObject({
