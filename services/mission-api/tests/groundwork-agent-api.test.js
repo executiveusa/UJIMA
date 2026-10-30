@@ -302,7 +302,8 @@ describe('Groundwork Agent Service bridge', () => {
     const tooEarly = makeRes();
     await collectGroundworkReadiness(req({
       operatorId: 'op-producer',
-      params: { missionId: MISSION }
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-readiness-too-early-12345678' }
     }), tooEarly);
     expect(tooEarly.statusCode).toBe(400);
     expect(tooEarly.body.error.message).toBe('GROUNDWORK_READINESS_STAGE_NOT_WORKING');
@@ -319,7 +320,8 @@ describe('Groundwork Agent Service bridge', () => {
     const collected = makeRes();
     await collectGroundworkReadiness(req({
       operatorId: 'op-producer',
-      params: { missionId: MISSION }
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-readiness-collect-12345678' }
     }), collected);
     expect(collected.statusCode).toBe(201);
     expect(collected.body.artifact).toMatchObject({
@@ -369,6 +371,17 @@ describe('Groundwork Agent Service bridge', () => {
     expect(completed.statusCode).toBe(200);
     expect(completed.body.projection.workflow.find((stage) => stage.id === 'readiness').status).toBe('complete');
     expect(completed.body.projection.currentStage).toMatchObject({ id: 'repair', status: 'pending' });
+
+    const replay = makeRes();
+    await collectGroundworkReadiness(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-readiness-collect-12345678' }
+    }), replay);
+    expect(replay.statusCode).toBe(200);
+    expect(replay.body.reused).toBe(true);
+    expect(replay.body.artifact.id).toBe(collected.body.artifact.id);
+    expect(getArtifacts({ tenantId: TENANT }).filter((artifact) => artifact.kind === 'groundwork-readiness-evidence')).toHaveLength(1);
   });
 
   it('surfaces a worker block as Needs you with a concrete next action', () => {
