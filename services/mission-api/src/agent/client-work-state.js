@@ -78,7 +78,7 @@ function workflowProjection({ mission, tenantId, userId, conversationId, read = 
   });
 }
 function currentWorkflowStage(workflow = []) {
-  return workflow.find((stage) => stage.status !== 'complete') || workflow.at(-1) || null;
+  return workflow.find((stage) => stage.status !== 'complete') || null;
 }
 function projection({ mission, state, eventId = null, routingEvent = null, workflow = [] }) {
   const internalState = state?.status || initialMissionStatus(mission, routingEvent);
@@ -269,7 +269,7 @@ export function transitionGroundworkStage({
       approvalRef, idempotencyKey: `${key}:mission-working`, recovery: currentMissionState?.phase === 'failed',
       read, append, getApprovalRecord, listArtifacts
     });
-  } else if (to === 'blocked' && currentMissionState?.phase === 'working') {
+  } else if (to === 'blocked' && ['routed', 'working'].includes(currentMissionState?.phase)) {
     transitionClientMissionState({
       tenantId, userId, conversationId, missionId, to: 'needs_you', actor,
       approvalRef, nextAction: requestedNextAction, idempotencyKey: `${key}:mission-blocked`,
