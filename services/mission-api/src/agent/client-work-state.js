@@ -6,6 +6,7 @@ import { CLIENT_MISSION_EVENT } from './firstmate-mission-router.js';
 
 export const CLIENT_MISSION_STATE_EVENT = 'client_mission_state';
 export const CLIENT_GROUNDWORK_STAGE_EVENT = 'client_groundwork_stage';
+export const CLIENT_GROUNDWORK_EVIDENCE_VERIFIED_EVENT = 'client_groundwork_evidence_verified';
 export const CLIENT_ROUTING_FAILURE_EVENT = 'client_routing_failure';
 
 const CLIENT_LABELS = Object.freeze({ working: 'Working', needs_you: 'Needs you', ready: 'Ready', failed: 'Failed', delivered: 'Delivered' });
@@ -28,6 +29,7 @@ function requestRef(value) { return value ? crypto.createHash('sha256').update(S
 function missionEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_MISSION_EVENT }) || []; }
 function stateEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_MISSION_STATE_EVENT }) || []; }
 function stageEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_GROUNDWORK_STAGE_EVENT }) || []; }
+function evidenceVerificationEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_GROUNDWORK_EVIDENCE_VERIFIED_EVENT }) || []; }
 function failureEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_ROUTING_FAILURE_EVENT }) || []; }
 function missionRequiresApproval(mission) { return mission?.approval?.required === true || mission?.status === 'needs_you'; }
 function initialMissionStatus(mission, routingEvent) {
@@ -211,7 +213,21 @@ export function recordClientRoutingFailure({ tenantId, userId, conversationId, s
 }
 
 
-function verifyGroundworkStageProof({ tenantId, missionId, refs, listArtifacts = getArtifacts }) {
+function groundworkArtifactVerification({ tenantId, userId, conversationId, missionId, artifact, read = readEvents }) {
+  return evidenceVerificationEvents({ tenantId, read }).find((event) => {
+    const verification = event.payload?.verification;
+    return verification
+      && verification.tenant_id === tenantId
+      && verification.user_id === userId
+      && verification.conversation_id === conversationId
+      && verification.mission_id === missionId
+      && verification.artifact_id === artifact.id
+      && verification.verifier
+      && verification.verifier !== artifact.createdBy;
+  }) || null;
+}
+
+function verifyGroundworkStageProof({ tenantId, userId, conversationId, missionId, refs, read = readEvents, listArtifacts = getArtifacts }) {
   if (!refs.length) throw new Error('GROUNDWORK_STAGE_PROOF_REQUIRED');
   const artifacts = listArtifacts({ tenantId }) || [];
   let verifiedArtifact = false;
@@ -221,9 +237,68 @@ function verifyGroundworkStageProof({ tenantId, missionId, refs, listArtifacts =
     const artifact = artifacts.find((row) => row.id === id);
     if (!artifact || artifact.tenantId !== tenantId || artifact.approvalStatus !== 'approved') throw new Error('GROUNDWORK_STAGE_PROOF_UNVERIFIED');
     if (!artifactLinkedToMission(artifact, missionId)) throw new Error('GROUNDWORK_STAGE_PROOF_MISSION_MISMATCH');
+    if (!artifact.createdBy) throw new Error('GROUNDWORK_STAGE_PROOF_PRODUCER_UNKNOWN');
+    if (!groundworkArtifactVerification({ tenantId, userId, conversationId, missionId, artifact, read })) {
+      throw new Error('GROUNDWORK_STAGE_PROOF_NOT_INDEPENDENTLY_VERIFIED');
+    }
     verifiedArtifact = true;
   }
   if (!verifiedArtifact) throw new Error('GROUNDWORK_STAGE_PROOF_REQUIRED');
+}
+
+export function verifyGroundworkEvidence({
+  tenantId, userId, conversationId, missionId, artifactId,
+  verifier, idempotencyKey, read = readEvents, append = emitEvent, listArtifacts = getArtifacts
+}) {
+  if (!tenantId || !userId || !conversationId || !missionId || !artifactId || !verifier) throw new Error('GROUNDWORK_VERIFICATION_SCOPE_REQUIRED');
+  const key = String(idempotencyKey || '').trim();
+  if (!key) throw new Error('IDEMPOTENCY_KEY_REQUIRED');
+  const found = findMission({ tenantId, userId, conversationId, missionId, read });
+  if (!found || found.mission.domain !== 'groundwork') throw new Error('GROUNDWORK_MISSION_NOT_FOUND');
+
+  const artifact = (listArtifacts({ tenantId }) || []).find((row) => row.id === artifactId);
+  if (!artifact || artifact.tenantId !== tenantId || artifact.approvalStatus !== 'approved') throw new Error('GROUNDWORK_STAGE_PROOF_UNVERIFIED');
+  if (!artifactLinkedToMission(artifact, missionId)) throw new Error('GROUNDWORK_STAGE_PROOF_MISSION_MISMATCH');
+  if (!artifact.createdBy) throw new Error('GROUNDWORK_STAGE_PROOF_PRODUCER_UNKNOWN');
+  if (artifact.createdBy === verifier) throw new Error('GROUNDWORK_SELF_VERIFICATION_PROHIBITED');
+
+  const requestRefValue = requestRef(key);
+  const existing = evidenceVerificationEvents({ tenantId, read }).find((event) => {
+    const verification = event.payload?.verification;
+    return verification
+      && verification.tenant_id === tenantId
+      && verification.user_id === userId
+      && verification.conversation_id === conversationId
+      && verification.mission_id === missionId
+      && verification.request_ref === requestRefValue;
+  });
+  if (existing) {
+    const verification = existing.payload.verification;
+    if (verification.artifact_id !== artifactId || verification.verifier !== verifier) throw new Error('IDEMPOTENCY_CONFLICT');
+    return { verification, eventId: existing.id, reused: true };
+  }
+
+  const verification = {
+    version: '1.0.0',
+    mission_id: missionId,
+    tenant_id: tenantId,
+    user_id: userId,
+    conversation_id: conversationId,
+    artifact_id: artifactId,
+    artifact_created_by: artifact.createdBy,
+    verifier,
+    request_ref: requestRefValue,
+    verified_at: new Date().toISOString()
+  };
+  const event = append({
+    tenantId,
+    type: CLIENT_GROUNDWORK_EVIDENCE_VERIFIED_EVENT,
+    version: '1',
+    actor: verifier,
+    subject: artifactId,
+    payload: { verification }
+  });
+  return { verification, eventId: event.id, reused: false };
 }
 
 export function transitionGroundworkStage({
@@ -262,7 +337,7 @@ export function transitionGroundworkStage({
   if (!allowed[from]?.has(to)) throw new Error(`INVALID_GROUNDWORK_STAGE_TRANSITION:${from}->${to}`);
 
   const refs = normalizeRefs(proofRefs);
-  if (to === 'complete') verifyGroundworkStageProof({ tenantId, missionId, refs, listArtifacts });
+  if (to === 'complete') verifyGroundworkStageProof({ tenantId, userId, conversationId, missionId, refs, read, listArtifacts });
   const requestedNextAction = String(nextAction || '').trim();
   if (to === 'blocked' && !requestedNextAction) throw new Error('NEXT_ACTION_REQUIRED');
 

@@ -9,12 +9,14 @@ import { requestApproval, updateApprovalStatus, APPROVAL_STATES } from '@asc3nd/
 import { createClientChatStore } from '../../../services/mission-api/src/agent/client-chat-store.js';
 import clientChatRouter from '../../../services/mission-api/src/agent/client-chat-router.js';
 import {
+  CLIENT_GROUNDWORK_EVIDENCE_VERIFIED_EVENT,
   CLIENT_GROUNDWORK_STAGE_EVENT,
   CLIENT_MISSION_STATE_EVENT,
   getClientMissionWorkState,
   latestConversationWorkState,
   transitionClientMissionState,
-  transitionGroundworkStage
+  transitionGroundworkStage,
+  verifyGroundworkEvidence
 } from '../../../services/mission-api/src/agent/client-work-state.js';
 import { routeFirstMateMission } from '../../../services/mission-api/src/agent/firstmate-mission-router.js';
 
@@ -146,6 +148,37 @@ describe('durable client work-state engine', () => {
       sourceRefs: [`mission:${fx.routed.mission.mission_id}`],
       createdBy: 'critic'
     });
+    expect(() => transitionGroundworkStage({
+      ...scope,
+      stageId: 'identity',
+      to: 'complete',
+      proofRefs: [`artifact:${identityProof.id}`],
+      actor: 'groundwork-worker',
+      idempotencyKey: 'groundwork-identity-unverified-12345678'
+    })).toThrow('GROUNDWORK_STAGE_PROOF_NOT_INDEPENDENTLY_VERIFIED');
+
+    expect(() => verifyGroundworkEvidence({
+      ...scope,
+      artifactId: identityProof.id,
+      verifier: 'critic',
+      idempotencyKey: 'groundwork-identity-self-verify-12345678'
+    })).toThrow('GROUNDWORK_SELF_VERIFICATION_PROHIBITED');
+
+    const verification = verifyGroundworkEvidence({
+      ...scope,
+      artifactId: identityProof.id,
+      verifier: 'groundwork-verifier',
+      idempotencyKey: 'groundwork-identity-verify-12345678'
+    });
+    const verificationRetry = verifyGroundworkEvidence({
+      ...scope,
+      artifactId: identityProof.id,
+      verifier: 'groundwork-verifier',
+      idempotencyKey: 'groundwork-identity-verify-12345678'
+    });
+    expect(verificationRetry.reused).toBe(true);
+    expect(verificationRetry.eventId).toBe(verification.eventId);
+
     const completed = transitionGroundworkStage({
       ...scope,
       stageId: 'identity',
@@ -164,7 +197,9 @@ describe('durable client work-state engine', () => {
       conversationId: fx.conversation.conversationId
     });
     expect(exported.work_state_refs).toContain(`event:${completed.eventId}`);
+    expect(exported.work_state_refs).toContain(`event:${verification.eventId}`);
     expect(exported.proof_refs).toContain(`artifact:${identityProof.id}`);
+    expect(fx.events.filter((event) => event.type === CLIENT_GROUNDWORK_EVIDENCE_VERIFIED_EVENT)).toHaveLength(1);
   });
 
   it('treats a newer Groundwork stage event as the latest conversation work after another mission was routed', async () => {
@@ -216,6 +251,12 @@ describe('durable client work-state engine', () => {
       approvalStatus: 'approved',
       sourceRefs: [`mission:${fx.routed.mission.mission_id}`],
       createdBy: 'critic'
+    });
+    verifyGroundworkEvidence({
+      ...scope,
+      artifactId: artifact.id,
+      verifier: 'groundwork-verifier',
+      idempotencyKey: 'groundwork-latest-verify-12345678'
     });
     transitionGroundworkStage({
       ...scope,
@@ -299,6 +340,12 @@ describe('durable client work-state engine', () => {
         approvalStatus: 'approved',
         sourceRefs: [`mission:${fx.routed.mission.mission_id}`],
         createdBy: 'critic'
+      });
+      verifyGroundworkEvidence({
+        ...scope,
+        artifactId: artifact.id,
+        verifier: 'groundwork-verifier',
+        idempotencyKey: `groundwork-${stageId}-verify-${index}-12345678`
       });
       transitionGroundworkStage({
         ...scope,

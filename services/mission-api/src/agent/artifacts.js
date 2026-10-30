@@ -19,7 +19,7 @@ export function createArtifact(req, res) {
     const tenantId = loadAgentTenantId(req);
     const { runId, missionId, kind, title, storagePath, approvalClass, mimeType } = req.body || {};
     const sourceRefs = validateMissionRef({ tenantId, missionId });
-    const artifact = registerAgentArtifact({ tenantId, runId, kind, title, storagePath, approvalClass, mimeType, sourceRefs });
+    const artifact = registerAgentArtifact({ tenantId, runId, kind, title, storagePath, approvalClass, mimeType, sourceRefs, createdBy: req.operator.id });
     return agentSuccess(res, { artifact }, 201);
   } catch (e) {
     return agentError(res, 'AGENT_ERROR', e.message, 500);
