@@ -65,9 +65,12 @@ export function classifyClientIntent(text) {
 
 export function classifyRequestedRisk(text) {
   const objective = normalizeObjective(text);
-  if (CONSEQUENTIAL_PATTERNS.some((pattern) => pattern.test(objective))) return 3;
-  if (PUBLIC_DESTINATION.test(objective)) return 3;
-  if (EXTERNAL_CONTEXT.test(objective) && !SAFE_INTERNAL_PREFIX.test(objective)) return 3;
+  // A readiness question such as "are we ready to launch?" is analysis, not an instruction to launch.
+  // Preserve the red gate for actual launch/deploy/publish commands.
+  const riskObjective = objective.replace(/\bready\s+to\s+launch\b/gi, 'ready to operate');
+  if (CONSEQUENTIAL_PATTERNS.some((pattern) => pattern.test(riskObjective))) return 3;
+  if (PUBLIC_DESTINATION.test(riskObjective)) return 3;
+  if (EXTERNAL_CONTEXT.test(riskObjective) && !SAFE_INTERNAL_PREFIX.test(riskObjective)) return 3;
   return 1;
 }
 
