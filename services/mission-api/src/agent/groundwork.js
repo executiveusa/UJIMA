@@ -157,9 +157,6 @@ export async function collectGroundworkReadiness(req, res) {
   try {
     const tenantId = loadAgentTenantId(req);
     const scope = resolveGroundworkMissionScope({ tenantId, missionId: req.params.missionId });
-    const work = getClientMissionWorkState(scope);
-    if (work.currentStage?.id !== 'readiness') throw new Error('GROUNDWORK_STAGE_OUT_OF_ORDER');
-    if (work.currentStage?.status !== 'working') throw new Error('GROUNDWORK_READINESS_STAGE_NOT_WORKING');
 
     const key = idempotencyKey(req);
     if (!key) throw new Error('IDEMPOTENCY_KEY_REQUIRED');
@@ -188,6 +185,10 @@ export async function collectGroundworkReadiness(req, res) {
         reused: true
       });
     }
+
+    const work = getClientMissionWorkState(scope);
+    if (work.currentStage?.id !== 'readiness') throw new Error('GROUNDWORK_STAGE_OUT_OF_ORDER');
+    if (work.currentStage?.status !== 'working') throw new Error('GROUNDWORK_READINESS_STAGE_NOT_WORKING');
 
     const repos = createRepositories();
     const profile = await repos.tenant.readProfile(tenantId);
