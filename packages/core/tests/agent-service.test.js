@@ -204,6 +204,18 @@ describe('registerAgentArtifact', () => {
     const artifact = registerAgentArtifact({ tenantId: 'test-org', kind: 'report', title: 'Report', storagePath: 'output/report.md', approvalClass: 'green' });
     expect(artifact.approvalStatus).toBe('approved');
   });
+
+  it('records the authenticated producer identity when provided', () => {
+    const artifact = registerAgentArtifact({
+      tenantId: 'test-org',
+      kind: 'groundwork-evidence',
+      title: 'Identity evidence',
+      storagePath: 'output/identity.json',
+      approvalClass: 'green',
+      createdBy: 'worker-identity'
+    });
+    expect(artifact.createdBy).toBe('worker-identity');
+  });
 });
 
 describe('registerAgentAsset', () => {
