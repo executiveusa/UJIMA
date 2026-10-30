@@ -171,7 +171,11 @@ export function listConversationWorkStates({ tenantId, userId, conversationId, r
     .filter(({ mission }) => mission && mission.tenant_id === tenantId && mission.user_id === userId && mission.conversation_id === conversationId)
     .map(({ mission, event }) => {
       const stateEvent = latestStateEvent({ tenantId, userId, conversationId, missionId: mission.mission_id, read });
-      const latestEvent = stateEvent || event;
+      const stageEvent = missionStageEvents({ tenantId, userId, conversationId, missionId: mission.mission_id, read }).at(-1) || null;
+      const latestEvent = [event, stateEvent, stageEvent]
+        .filter(Boolean)
+        .sort((a, b) => (journalOrder.get(a.id) ?? -1) - (journalOrder.get(b.id) ?? -1))
+        .at(-1);
       return {
         projection: projection({ mission, state: stateEvent?.payload?.state || null, eventId: latestEvent.id, routingEvent: event, workflow: workflowProjection({ mission, tenantId, userId, conversationId, read }) }),
         createdAt: latestEvent.createdAt,
