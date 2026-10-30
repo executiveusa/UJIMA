@@ -1,3 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRepositories } from '@asc3nd/db';
+import { buildGroundworkReadinessEvidence } from '@asc3nd/core/groundwork-readiness';
+import { registerAgentArtifact } from '@asc3nd/core/agent-service';
 import { readEvents } from '@asc3nd/core/events';
 import { getArtifacts } from '@asc3nd/core/artifacts';
 import { loadAgentTenantId } from './tenant-context.js';
@@ -136,6 +141,68 @@ export function completeGroundworkStage(req, res) {
       idempotencyKey: idempotencyKey(req)
     });
     return agentSuccess(res, result);
+  } catch (error) {
+    return respondError(res, error);
+  }
+}
+
+
+function safePathSegment(value, fallback = 'item') {
+  const clean = String(value || '').replace(/[^a-zA-Z0-9_-]/g, '-').replace(/^-+|-+$/g, '').slice(0, 100);
+  return clean || fallback;
+}
+
+export async function collectGroundworkReadiness(req, res) {
+  try {
+    const tenantId = loadAgentTenantId(req);
+    const scope = resolveGroundworkMissionScope({ tenantId, missionId: req.params.missionId });
+    const work = getClientMissionWorkState(scope);
+    if (work.currentStage?.id !== 'readiness') throw new Error('GROUNDWORK_STAGE_OUT_OF_ORDER');
+    if (work.currentStage?.status !== 'working') throw new Error('GROUNDWORK_READINESS_STAGE_NOT_WORKING');
+
+    const repos = createRepositories();
+    const profile = await repos.tenant.readProfile(tenantId);
+    const evidence = buildGroundworkReadinessEvidence({
+      tenantId,
+      missionId: scope.missionId,
+      profile: profile || {}
+    });
+
+    const relativePath = path.posix.join(
+      'groundwork',
+      safePathSegment(scope.missionId, 'mission'),
+      'readiness',
+      'profile-readiness.json'
+    );
+    const absolutePath = path.join(
+      process.env.DATA_DIR || path.resolve(process.cwd(), 'mission-data'),
+      tenantId,
+      ...relativePath.split('/')
+    );
+    fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+    fs.writeFileSync(absolutePath, JSON.stringify(evidence, null, 2), 'utf8');
+
+    const artifact = registerAgentArtifact({
+      tenantId,
+      runId: null,
+      kind: 'groundwork-readiness-evidence',
+      title: 'Groundwork readiness profile evidence',
+      storagePath: relativePath,
+      approvalClass: 'green',
+      mimeType: 'application/json',
+      sourceRefs: [`mission:${scope.missionId}`],
+      createdBy: req.operator.id
+    });
+
+    return agentSuccess(res, {
+      artifact,
+      evidence: {
+        stage: evidence.stage,
+        source: evidence.source,
+        summary: evidence.summary,
+        limitations: evidence.limitations
+      }
+    }, 201);
   } catch (error) {
     return respondError(res, error);
   }
