@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createClientChatStore } from '../../../services/mission-api/src/agent/client-chat-store.js';
 import {
   CLIENT_MISSION_EVENT,
+  GROUNDWORK_STAGES,
   classifyClientIntent,
   classifyRequestedRisk,
   missionAcknowledgement,
@@ -44,6 +45,12 @@ async function createSourceMessage({ tenantId = 'asc3nd', userId = 'u1', text = 
 }
 
 describe('First Mate intent routing', () => {
+  it('routes Groundwork before narrower website, search, or grant language when readiness is explicit', () => {
+    expect(classifyClientIntent('Run Groundwork and check if our nonprofit is ready to launch.').domain).toBe('groundwork');
+    expect(classifyClientIntent('Audit our nonprofit readiness, website, Google presence, and funding basics.').domain).toBe('groundwork');
+    expect(classifyClientIntent('We are starting a nonprofit and need to know what is missing.').domain).toBe('groundwork');
+  });
+
   it('routes the minimum required grants, content, and CRM lanes deterministically', () => {
     expect(classifyClientIntent('Find three grants worth pursuing this month.').domain).toBe('grants');
     expect(classifyClientIntent('Prepare next week’s content plan and captions.').domain).toBe('content');
@@ -68,6 +75,8 @@ describe('First Mate intent routing', () => {
     });
 
     expect(classifyRequestedRisk(source.message.text)).toBe(3);
+    expect(classifyRequestedRisk('Are we ready to launch?')).toBe(1);
+    expect(classifyRequestedRisk('Launch our website now.')).toBe(3);
     expect(classifyRequestedRisk('Submit it now.')).toBe(3);
     expect(classifyRequestedRisk('Send it to them.')).toBe(3);
     expect(classifyRequestedRisk('Publish it today.')).toBe(3);
@@ -85,6 +94,61 @@ describe('First Mate intent routing', () => {
     expect(routed.mission.denied_capabilities).toContain('grant_submission');
     expect(routed.mission.denied_capabilities).toContain('public_publishing');
     expect(routed.mission.denied_capabilities).toContain('external_message');
+    expect(missionAcknowledgement(routed)).toMatch(/^Needs you —/);
+  });
+
+  it('creates a six-stage evidence-first Groundwork mission without external authority', async () => {
+    const source = await createSourceMessage({ text: 'Run Groundwork and check if our nonprofit is ready to launch.' });
+    const routed = routeFirstMateMission({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      conversationId: source.conversation.conversationId,
+      sourceMessage: source.message,
+      read: source.read,
+      append: source.append
+    });
+
+    expect(routed.mission.domain).toBe('groundwork');
+    expect(routed.mission.risk_tier).toBe(1);
+    expect(routed.mission.status).toBe('routed');
+    expect(routed.mission.approval.required).toBe(false);
+    expect(routed.mission.allowed_capabilities).toEqual(expect.arrayContaining([
+      'nonprofit_identity_check',
+      'trust_audit',
+      'discovery_audit',
+      'readiness_audit',
+      'repair_plan_prepare',
+      'proof_plan_prepare'
+    ]));
+    expect(routed.mission.denied_capabilities).toEqual(expect.arrayContaining([
+      'public_publishing',
+      'grant_submission',
+      'production_mutation'
+    ]));
+    expect(routed.mission.workflow).toHaveLength(6);
+    expect(routed.mission.workflow.map((stage) => stage.id)).toEqual(GROUNDWORK_STAGES.map((stage) => stage.id));
+    expect(routed.mission.workflow.map((stage) => stage.order)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(routed.mission.workflow.every((stage) => stage.status === 'pending')).toBe(true);
+    expect(routed.mission.acceptance_gates.join(' ')).toMatch(/verified facts|observed evidence|human-gated/i);
+    expect(missionAcknowledgement(routed)).toContain('Groundwork');
+  });
+
+  it('keeps a consequential Groundwork request behind the existing approval gate', async () => {
+    const source = await createSourceMessage({ text: 'Run Groundwork, then deploy the website changes to production.' });
+    const routed = routeFirstMateMission({
+      tenantId: source.tenantId,
+      userId: source.userId,
+      conversationId: source.conversation.conversationId,
+      sourceMessage: source.message,
+      read: source.read,
+      append: source.append
+    });
+
+    expect(routed.mission.domain).toBe('groundwork');
+    expect(routed.mission.risk_tier).toBe(3);
+    expect(routed.mission.status).toBe('needs_you');
+    expect(routed.mission.approval).toMatchObject({ required: true, class: 'red' });
+    expect(routed.mission.denied_capabilities).toContain('production_deploy');
     expect(missionAcknowledgement(routed)).toMatch(/^Needs you —/);
   });
 
