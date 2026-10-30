@@ -17,8 +17,9 @@ export function MissionEvidencePanel({ work, evidence, busy = false, onDecision,
   if (!work?.id || work.phase === 'routing_failed') return null;
   const artifacts = evidence?.artifacts || [];
   const approval = evidence?.approval || null;
+  const workflow = work?.workflow || [];
   const needsDecision = work.status === 'needs_you' && work.approvalRequired === true;
-  if (!artifacts.length && !approval && !needsDecision) return null;
+  if (!artifacts.length && !approval && !needsDecision && !workflow.length) return null;
   const decidable = needsDecision && (!approval || ['draft', 'review'].includes(approval.status));
   const displayedApproval = approval || (needsDecision ? { approvalClass: 'governed', status: 'draft', comments: 'Review this action before anything consequential happens.' } : null);
 
@@ -31,6 +32,30 @@ export function MissionEvidencePanel({ work, evidence, busy = false, onDecision,
         </div>
         {displayedApproval && <span className={styles.status}>{approvalLabel(displayedApproval.status)}</span>}
       </div>
+
+      {workflow.length > 0 && (
+        <div className={styles.workflow} aria-label="Groundwork progress">
+          <div className={styles.workflowHeader}>
+            <div>
+              <small>Groundwork</small>
+              <strong>{work.currentStage ? `Current: ${work.currentStage.label}` : 'All stages complete'}</strong>
+            </div>
+            <span>{workflow.filter((stage) => stage.status === 'complete').length}/{workflow.length} complete</span>
+          </div>
+          <ol className={styles.stageList}>
+            {workflow.map((stage) => (
+              <li key={stage.id} className={styles.stage} data-status={stage.status}>
+                <span className={styles.stageNumber}>{String(stage.order).padStart(2, '0')}</span>
+                <div>
+                  <strong>{stage.label}</strong>
+                  <small>{stage.status === 'blocked' && stage.nextAction ? stage.nextAction : stage.outcome}</small>
+                </div>
+                <span className={styles.stageStatus}>{stage.status === 'complete' ? 'Done' : stage.status === 'working' ? 'Working' : stage.status === 'blocked' ? 'Needs you' : 'Pending'}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       {artifacts.length > 0 && (
         <div className={styles.artifacts}>
