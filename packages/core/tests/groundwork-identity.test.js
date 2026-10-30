@@ -55,6 +55,17 @@ describe('Groundwork identity evidence', () => {
     expect(evidence.limitations.join(' ')).toMatch(/does not by itself prove current good standing/i);
   });
 
+  it('marks an exact EIN record with an incompatible claimed name as human-review only', () => {
+    const evidence = parseProPublicaIdentityResponse(sample, {
+      claimedName: 'Completely Different Organization',
+      retrievedAt: '2026-10-30T00:00:00.000Z'
+    });
+
+    expect(evidence.reconciliation.nameMatch).toBe('mismatch');
+    expect(evidence.completionEligible).toBe(false);
+    expect(evidence.completionReason).toMatch(/requires human review/i);
+  });
+
   it('uses only the fixed ProPublica organization endpoint and returns null on 404', async () => {
     let calledUrl = '';
     const missing = await lookupGroundworkIdentityByEin({
