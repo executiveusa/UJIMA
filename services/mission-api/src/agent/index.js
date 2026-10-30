@@ -8,6 +8,7 @@ import { createArtifact } from './artifacts.js';
 import { createAsset, getAsset } from './assets.js';
 import { requestApproval } from './approvals.js';
 import clientChatRouter from './client-chat-router.js';
+import { getGroundworkMission, startGroundworkStage, blockGroundworkStage, verifyGroundworkArtifact, completeGroundworkStage } from './groundwork.js';
 
 const router = Router();
 const auth = agentAuth();
@@ -31,5 +32,11 @@ router.post('/assets', auth, createAsset);
 router.get('/assets/:id', auth, getAsset);
 
 router.post('/approvals/request', auth, requestApproval);
+
+router.get('/groundwork/missions/:missionId', auth, getGroundworkMission);
+router.post('/groundwork/missions/:missionId/stages/:stageId/start', auth, startGroundworkStage);
+router.post('/groundwork/missions/:missionId/stages/:stageId/block', auth, blockGroundworkStage);
+router.post('/groundwork/missions/:missionId/evidence/:artifactId/verify', auth, verifyGroundworkArtifact);
+router.post('/groundwork/missions/:missionId/stages/:stageId/complete', auth, completeGroundworkStage);
 
 export default router;
