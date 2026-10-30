@@ -220,7 +220,7 @@ export async function collectGroundworkReadiness(req, res) {
       kind: 'groundwork-readiness-evidence',
       title: 'Groundwork readiness profile evidence',
       storagePath: relativePath,
-      approvalClass: 'green',
+      approvalClass: evidence.completionEligible ? 'green' : 'orange',
       mimeType: 'application/json',
       sourceRefs: [`mission:${scope.missionId}`],
       createdBy: req.operator.id
@@ -289,6 +289,7 @@ export async function collectGroundworkIdentity(req, res) {
         ...artifact.storagePath.split('/')
       );
       const evidence = JSON.parse(fs.readFileSync(absolute, 'utf8'));
+      const blocked = receipt.outcome === 'record_name_discrepancy';
       return agentSuccess(res, {
         artifact,
         evidence: {
@@ -298,6 +299,10 @@ export async function collectGroundworkIdentity(req, res) {
           reconciliation: evidence.reconciliation,
           limitations: evidence.limitations
         },
+        blocked,
+        reason: blocked ? receipt.outcome : null,
+        nextAction: blocked ? receipt.next_action : null,
+        work: blocked ? getClientMissionWorkState(scope) : undefined,
         reused: true
       });
     }
@@ -396,12 +401,40 @@ export async function collectGroundworkIdentity(req, res) {
           mission_id: scope.missionId,
           artifact_id: artifact.id,
           request_ref: requestRef,
-          outcome: 'record_found_by_ein',
+          outcome: evidence.completionEligible ? 'record_found_by_ein' : 'record_name_discrepancy',
+          next_action: evidence.completionEligible ? null : 'Review the legal name and EIN. Groundwork found the EIN record, but the claimed organization name does not match closely enough to auto-confirm Identity.',
           source_url: evidence.source.sourceUrl,
           collected_at: evidence.retrievedAt
         }
       }
     });
+
+    if (!evidence.completionEligible) {
+      const nextAction = 'Review the legal name and EIN. Groundwork found the EIN record, but the claimed organization name does not match closely enough to auto-confirm Identity.';
+      const blocked = transitionGroundworkStage({
+        ...scope,
+        stageId: 'identity',
+        to: 'blocked',
+        actor: req.operator.id,
+        nextAction,
+        idempotencyKey: key + ':blocked:name-discrepancy'
+      });
+      return agentSuccess(res, {
+        artifact,
+        evidence: {
+          stage: evidence.stage,
+          source: evidence.source,
+          record: evidence.record,
+          reconciliation: evidence.reconciliation,
+          limitations: evidence.limitations
+        },
+        blocked: true,
+        reason: 'record_name_discrepancy',
+        nextAction,
+        work: blocked.projection,
+        reused: false
+      });
+    }
 
     return agentSuccess(res, {
       artifact,
@@ -412,6 +445,7 @@ export async function collectGroundworkIdentity(req, res) {
         reconciliation: evidence.reconciliation,
         limitations: evidence.limitations
       },
+      blocked: false,
       reused: false
     }, 201);
   } catch (error) {
