@@ -75,6 +75,8 @@ describe('First Mate intent routing', () => {
     });
 
     expect(classifyRequestedRisk(source.message.text)).toBe(3);
+    expect(classifyRequestedRisk('Are we ready to launch?')).toBe(1);
+    expect(classifyRequestedRisk('Launch our website now.')).toBe(3);
     expect(classifyRequestedRisk('Submit it now.')).toBe(3);
     expect(classifyRequestedRisk('Send it to them.')).toBe(3);
     expect(classifyRequestedRisk('Publish it today.')).toBe(3);
