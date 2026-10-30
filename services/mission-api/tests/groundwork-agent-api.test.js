@@ -345,6 +345,69 @@ describe('Groundwork Agent Service bridge', () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
+  it('human-gates an exact EIN record when the claimed organization name conflicts with the public record', async () => {
+    const repos = createRepositories();
+    repos.tenant.writeProfile(TENANT, {
+      tenantId: TENANT,
+      orgName: 'Different Organization Name',
+      legalName: 'Different Organization Name LLC',
+      ein: '14-2007220'
+    });
+
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      status: 200,
+      ok: true,
+      json: async () => ({
+        organization: {
+          ein: 142007220,
+          name: 'Pro Publica Inc',
+          city: 'New York',
+          state: 'NY',
+          ntee_code: 'A20',
+          subseccd: 3
+        },
+        filings_with_data: []
+      })
+    })));
+
+    const start = makeRes();
+    startGroundworkStage(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION, stageId: 'identity' },
+      headers: { 'x-idempotency-key': 'gw-identity-start-mismatch-12345678' }
+    }), start);
+
+    const collected = makeRes();
+    await collectGroundworkIdentity(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-identity-mismatch-12345678' }
+    }), collected);
+
+    expect(collected.statusCode).toBe(200);
+    expect(collected.body).toMatchObject({
+      blocked: true,
+      reason: 'record_name_discrepancy',
+      reused: false
+    });
+    expect(collected.body.work.status).toBe('needs_you');
+    expect(collected.body.artifact).toMatchObject({
+      kind: 'groundwork-identity-evidence',
+      approvalStatus: 'pending',
+      createdBy: 'op-producer'
+    });
+    expect(collected.body.evidence.reconciliation.nameMatch).toBe('mismatch');
+
+    const verify = makeRes();
+    verifyGroundworkArtifact(req({
+      operatorId: 'op-verifier',
+      params: { missionId: MISSION, artifactId: collected.body.artifact.id },
+      headers: { 'x-idempotency-key': 'gw-identity-verify-mismatch-12345678' }
+    }), verify);
+    expect(verify.statusCode).toBe(400);
+    expect(verify.body.error.message).toBe('GROUNDWORK_STAGE_PROOF_UNVERIFIED');
+  });
+
   it('creates exact-EIN record evidence, requires a separate verifier, completes Identity, and replays without another lookup', async () => {
     const repos = createRepositories();
     repos.tenant.writeProfile(TENANT, {
