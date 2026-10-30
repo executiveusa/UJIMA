@@ -220,7 +220,7 @@ export async function collectGroundworkReadiness(req, res) {
       kind: 'groundwork-readiness-evidence',
       title: 'Groundwork readiness profile evidence',
       storagePath: relativePath,
-      approvalClass: evidence.completionEligible ? 'green' : 'orange',
+      approvalClass: 'green',
       mimeType: 'application/json',
       sourceRefs: [`mission:${scope.missionId}`],
       createdBy: req.operator.id
@@ -385,7 +385,7 @@ export async function collectGroundworkIdentity(req, res) {
       kind: 'groundwork-identity-evidence',
       title: 'Groundwork exact-EIN public record evidence',
       storagePath: relativePath,
-      approvalClass: 'green',
+      approvalClass: evidence.completionEligible ? 'green' : 'orange',
       mimeType: 'application/json',
       sourceRefs: [`mission:${scope.missionId}`, evidence.source.sourceUrl],
       createdBy: req.operator.id
