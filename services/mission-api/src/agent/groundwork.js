@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { createRepositories } from '@asc3nd/db';
 import { buildGroundworkReadinessEvidence } from '@asc3nd/core/groundwork-readiness';
+import { lookupGroundworkIdentityByEin, normalizeEin } from '@asc3nd/core/groundwork-identity';
 import { registerAgentArtifact } from '@asc3nd/core/agent-service';
 import { readEvents, emitEvent } from '@asc3nd/core/events';
 import { getArtifacts } from '@asc3nd/core/artifacts';
@@ -40,6 +41,7 @@ export function resolveGroundworkMissionScope({ tenantId, missionId, read = read
 function statusForError(error) {
   const message = String(error?.message || '');
   if (message.includes('NOT_FOUND')) return 404;
+  if (message.startsWith('PROPUBLICA_HTTP_')) return 502;
   if (
     message.includes('OUT_OF_ORDER') ||
     message.includes('INVALID_GROUNDWORK_STAGE_TRANSITION') ||
@@ -246,6 +248,168 @@ export async function collectGroundworkReadiness(req, res) {
         stage: evidence.stage,
         source: evidence.source,
         summary: evidence.summary,
+        limitations: evidence.limitations
+      },
+      reused: false
+    }, 201);
+  } catch (error) {
+    return respondError(res, error);
+  }
+}
+
+
+export async function collectGroundworkIdentity(req, res) {
+  try {
+    const tenantId = loadAgentTenantId(req);
+    const scope = resolveGroundworkMissionScope({ tenantId, missionId: req.params.missionId });
+
+    const key = idempotencyKey(req);
+    if (!key) throw new Error('IDEMPOTENCY_KEY_REQUIRED');
+    const requestRef = crypto.createHash('sha256').update(key).digest('hex');
+    const prior = (readEvents({ tenantId, type: 'GROUNDWORK.IDENTITY.COLLECTED' }) || []).find((event) => {
+      const receipt = event.payload?.receipt;
+      return receipt?.mission_id === scope.missionId && receipt?.request_ref === requestRef;
+    });
+    if (prior) {
+      const receipt = prior.payload.receipt;
+      if (!receipt.artifact_id) {
+        return agentSuccess(res, {
+          blocked: true,
+          reason: receipt.outcome,
+          nextAction: receipt.next_action,
+          work: getClientMissionWorkState(scope),
+          reused: true
+        });
+      }
+      const artifact = (getArtifacts({ tenantId }) || []).find((item) => item.id === receipt.artifact_id);
+      if (!artifact) throw new Error('GROUNDWORK_IDENTITY_RECEIPT_ARTIFACT_MISSING');
+      const absolute = path.join(
+        process.env.DATA_DIR || path.resolve(process.cwd(), 'mission-data'),
+        tenantId,
+        ...artifact.storagePath.split('/')
+      );
+      const evidence = JSON.parse(fs.readFileSync(absolute, 'utf8'));
+      return agentSuccess(res, {
+        artifact,
+        evidence: {
+          stage: evidence.stage,
+          source: evidence.source,
+          record: evidence.record,
+          reconciliation: evidence.reconciliation,
+          limitations: evidence.limitations
+        },
+        reused: true
+      });
+    }
+
+    const work = getClientMissionWorkState(scope);
+    if (work.currentStage?.id !== 'identity') throw new Error('GROUNDWORK_STAGE_OUT_OF_ORDER');
+    if (work.currentStage?.status !== 'working') throw new Error('GROUNDWORK_IDENTITY_STAGE_NOT_WORKING');
+
+    const repos = createRepositories();
+    const profile = await repos.tenant.readProfile(tenantId) || {};
+    const ein = normalizeEin(profile.ein || '');
+    const claimedName = String(profile.legalName || profile.orgName || '').trim();
+
+    const blockAndReceipt = ({ outcome, nextAction }) => {
+      const blocked = transitionGroundworkStage({
+        ...scope,
+        stageId: 'identity',
+        to: 'blocked',
+        actor: req.operator.id,
+        nextAction,
+        idempotencyKey: key + ':blocked:' + outcome
+      });
+      emitEvent({
+        tenantId,
+        type: 'GROUNDWORK.IDENTITY.COLLECTED',
+        actor: req.operator.id,
+        subject: scope.missionId,
+        payload: {
+          receipt: {
+            mission_id: scope.missionId,
+            artifact_id: null,
+            request_ref: requestRef,
+            outcome,
+            next_action: nextAction,
+            collected_at: new Date().toISOString()
+          }
+        }
+      });
+      return agentSuccess(res, {
+        blocked: true,
+        reason: outcome,
+        nextAction,
+        work: blocked.projection,
+        reused: false
+      });
+    };
+
+    if (ein.length !== 9) {
+      return blockAndReceipt({
+        outcome: 'missing_or_invalid_ein',
+        nextAction: 'Add the organization or fiscal sponsor 9-digit EIN to the organization profile, then resume Identity.'
+      });
+    }
+
+    const evidence = await lookupGroundworkIdentityByEin({ ein, claimedName });
+    if (!evidence) {
+      return blockAndReceipt({
+        outcome: 'ein_not_found',
+        nextAction: 'Confirm the EIN or provide the fiscal sponsor EIN. Groundwork will not choose an organization by name automatically.'
+      });
+    }
+
+    const relativePath = path.posix.join(
+      'groundwork',
+      safePathSegment(scope.missionId, 'mission'),
+      'identity',
+      'propublica-ein-record.json'
+    );
+    const absolutePath = path.join(
+      process.env.DATA_DIR || path.resolve(process.cwd(), 'mission-data'),
+      tenantId,
+      ...relativePath.split('/')
+    );
+    fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+    fs.writeFileSync(absolutePath, JSON.stringify(evidence, null, 2), 'utf8');
+
+    const artifact = registerAgentArtifact({
+      tenantId,
+      runId: null,
+      kind: 'groundwork-identity-evidence',
+      title: 'Groundwork exact-EIN public record evidence',
+      storagePath: relativePath,
+      approvalClass: 'green',
+      mimeType: 'application/json',
+      sourceRefs: [`mission:${scope.missionId}`, evidence.source.sourceUrl],
+      createdBy: req.operator.id
+    });
+
+    emitEvent({
+      tenantId,
+      type: 'GROUNDWORK.IDENTITY.COLLECTED',
+      actor: req.operator.id,
+      subject: artifact.id,
+      payload: {
+        receipt: {
+          mission_id: scope.missionId,
+          artifact_id: artifact.id,
+          request_ref: requestRef,
+          outcome: 'record_found_by_ein',
+          source_url: evidence.source.sourceUrl,
+          collected_at: evidence.retrievedAt
+        }
+      }
+    });
+
+    return agentSuccess(res, {
+      artifact,
+      evidence: {
+        stage: evidence.stage,
+        source: evidence.source,
+        record: evidence.record,
+        reconciliation: evidence.reconciliation,
         limitations: evidence.limitations
       },
       reused: false
