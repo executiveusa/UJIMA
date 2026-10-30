@@ -14,6 +14,12 @@ function cleanString(value) {
   return value === null || value === undefined ? '' : String(value).trim();
 }
 
+function nullableNumber(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
 export function compareGroundworkOrganizationNames(claimed = '', record = '') {
   const normalize = (value) => cleanString(value)
     .toLowerCase()
@@ -40,12 +46,16 @@ export function parseProPublicaIdentityResponse(json, { claimedName = '', retrie
   const ein = formatEin(String(org.ein).padStart(9, '0'));
   const recordName = cleanString(org.name);
   const filings = Array.isArray(json?.filings_with_data) ? json.filings_with_data : [];
+  const nameMatch = compareGroundworkOrganizationNames(claimedName, recordName);
+  const completionEligible = nameMatch === 'match' || nameMatch === 'partial';
 
   return {
     schemaVersion: '1.0.0',
     stage: 'identity',
-    completionEligible: true,
-    completionReason: 'Exact EIN lookup returned a public IRS-derived organization record.',
+    completionEligible,
+    completionReason: completionEligible
+      ? 'Exact EIN lookup returned a public IRS-derived organization record and the claimed organization name is compatible with the record.'
+      : 'Exact EIN lookup returned a record, but the claimed organization name is missing or conflicts with the record and requires human review.',
     retrievedAt,
     source: {
       type: 'propublica_nonprofit_explorer_api_v2',
@@ -64,16 +74,16 @@ export function parseProPublicaIdentityResponse(json, { claimedName = '', retrie
       city: cleanString(org.city),
       state: cleanString(org.state),
       ntee: cleanString(org.ntee_code),
-      subsection: Number.isFinite(Number(org.subseccd)) ? Number(org.subseccd) : null,
+      subsection: nullableNumber(org.subseccd),
       recentFilings: filings.slice(0, 6).map((filing) => ({
-        year: Number.isFinite(Number(filing?.tax_prd_yr)) ? Number(filing.tax_prd_yr) : null,
-        revenue: Number.isFinite(Number(filing?.totrevenue)) ? Number(filing.totrevenue) : null,
-        expenses: Number.isFinite(Number(filing?.totfuncexpns)) ? Number(filing.totfuncexpns) : null,
+        year: nullableNumber(filing?.tax_prd_yr),
+        revenue: nullableNumber(filing?.totrevenue),
+        expenses: nullableNumber(filing?.totfuncexpns),
         pdf: cleanString(filing?.pdf_url) || null
       }))
     },
     reconciliation: {
-      nameMatch: compareGroundworkOrganizationNames(claimedName, recordName)
+      nameMatch
     },
     limitations: [
       'This is a public record-derived fact from ProPublica Nonprofit Explorer using IRS datasets; it is not legal or tax advice.',
