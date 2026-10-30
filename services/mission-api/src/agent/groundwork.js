@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { createRepositories } from '@asc3nd/db';
 import { buildGroundworkReadinessEvidence } from '@asc3nd/core/groundwork-readiness';
 import { registerAgentArtifact } from '@asc3nd/core/agent-service';
-import { readEvents } from '@asc3nd/core/events';
+import { readEvents, emitEvent } from '@asc3nd/core/events';
 import { getArtifacts } from '@asc3nd/core/artifacts';
 import { loadAgentTenantId } from './tenant-context.js';
 import { agentSuccess, agentError } from './response.js';
@@ -160,6 +161,34 @@ export async function collectGroundworkReadiness(req, res) {
     if (work.currentStage?.id !== 'readiness') throw new Error('GROUNDWORK_STAGE_OUT_OF_ORDER');
     if (work.currentStage?.status !== 'working') throw new Error('GROUNDWORK_READINESS_STAGE_NOT_WORKING');
 
+    const key = idempotencyKey(req);
+    if (!key) throw new Error('IDEMPOTENCY_KEY_REQUIRED');
+    const requestRef = crypto.createHash('sha256').update(key).digest('hex');
+    const prior = (readEvents({ tenantId, type: 'GROUNDWORK.READINESS.COLLECTED' }) || []).find((event) => {
+      const receipt = event.payload?.receipt;
+      return receipt?.mission_id === scope.missionId && receipt?.request_ref === requestRef;
+    });
+    if (prior) {
+      const artifact = (getArtifacts({ tenantId }) || []).find((item) => item.id === prior.payload.receipt.artifact_id);
+      if (!artifact) throw new Error('GROUNDWORK_READINESS_RECEIPT_ARTIFACT_MISSING');
+      const absolute = path.join(
+        process.env.DATA_DIR || path.resolve(process.cwd(), 'mission-data'),
+        tenantId,
+        ...artifact.storagePath.split('/')
+      );
+      const evidence = JSON.parse(fs.readFileSync(absolute, 'utf8'));
+      return agentSuccess(res, {
+        artifact,
+        evidence: {
+          stage: evidence.stage,
+          source: evidence.source,
+          summary: evidence.summary,
+          limitations: evidence.limitations
+        },
+        reused: true
+      });
+    }
+
     const repos = createRepositories();
     const profile = await repos.tenant.readProfile(tenantId);
     const evidence = buildGroundworkReadinessEvidence({
@@ -194,6 +223,22 @@ export async function collectGroundworkReadiness(req, res) {
       createdBy: req.operator.id
     });
 
+    emitEvent({
+      tenantId,
+      type: 'GROUNDWORK.READINESS.COLLECTED',
+      actor: req.operator.id,
+      subject: artifact.id,
+      payload: {
+        receipt: {
+          mission_id: scope.missionId,
+          artifact_id: artifact.id,
+          request_ref: requestRef,
+          source_type: evidence.source.type,
+          collected_at: evidence.collectedAt
+        }
+      }
+    });
+
     return agentSuccess(res, {
       artifact,
       evidence: {
@@ -201,7 +246,8 @@ export async function collectGroundworkReadiness(req, res) {
         source: evidence.source,
         summary: evidence.summary,
         limitations: evidence.limitations
-      }
+      },
+      reused: false
     }, 201);
   } catch (error) {
     return respondError(res, error);
