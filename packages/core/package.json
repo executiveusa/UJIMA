@@ -38,6 +38,7 @@
     "./action-dispatcher": "./src/action-dispatcher.js",
     "./integration-adapters": "./src/integration-adapters.js",
     "./storage-factory": "./src/storage-factory.js",
-    "./video-edit-intent": "./src/video-edit-intent.js"
+    "./video-edit-intent": "./src/video-edit-intent.js",
+    "./groundwork-readiness": "./src/groundwork-readiness.js"
   }
 }
