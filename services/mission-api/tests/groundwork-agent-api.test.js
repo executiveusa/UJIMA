@@ -17,7 +17,8 @@ import {
   startGroundworkStage,
   blockGroundworkStage,
   verifyGroundworkArtifact,
-  completeGroundworkStage
+  completeGroundworkStage,
+  collectGroundworkReadiness
 } from '../src/agent/groundwork.js';
 
 const TENANT = 'groundwork-agent-test';
@@ -256,6 +257,131 @@ describe('Groundwork Agent Service bridge', () => {
     expect(completeRes.statusCode).toBe(200);
     expect(completeRes.body.projection.workflow[0]).toMatchObject({ id: 'identity', status: 'complete' });
     expect(completeRes.body.projection.currentStage).toMatchObject({ id: 'trust', status: 'pending' });
+  });
+
+  it('collects canonical profile readiness as a real unverified artifact and requires independent verification before completion', async () => {
+    const repos = createRepositories();
+    repos.tenant.writeProfile(TENANT, {
+      tenantId: TENANT,
+      orgName: 'Groundwork Youth Collective',
+      legalStatus: '501(c)(3) claimed by organization',
+      region: 'Washington State',
+      mission: 'Support youth through mentorship and sports.',
+      programs: 'Mentorship, sports, leadership development.',
+      audience: 'Youth, families, donors, volunteers.',
+      priorities: 'Funding, volunteers, partnerships.',
+      founderName: 'Example Founder',
+      secretToken: 'must-never-enter-evidence'
+    });
+
+    for (const [index, stageId] of ['identity', 'trust', 'discovery'].entries()) {
+      emitEvent({
+        tenantId: TENANT,
+        type: CLIENT_GROUNDWORK_STAGE_EVENT,
+        actor: 'test-fixture',
+        subject: MISSION,
+        payload: {
+          stage: {
+            version: '1.0.0',
+            mission_id: MISSION,
+            tenant_id: TENANT,
+            user_id: USER,
+            conversation_id: CONVERSATION,
+            stage_id: stageId,
+            from: index === 0 ? 'pending' : 'working',
+            status: 'complete',
+            proof_refs: [],
+            next_action: null,
+            request_ref: 'fixture-' + stageId,
+            changed_at: new Date().toISOString()
+          }
+        }
+      });
+    }
+
+    const tooEarly = makeRes();
+    await collectGroundworkReadiness(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-readiness-too-early-12345678' }
+    }), tooEarly);
+    expect(tooEarly.statusCode).toBe(400);
+    expect(tooEarly.body.error.message).toBe('GROUNDWORK_READINESS_STAGE_NOT_WORKING');
+
+    const start = makeRes();
+    startGroundworkStage(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION, stageId: 'readiness' },
+      headers: { 'x-idempotency-key': 'gw-readiness-start-12345678' }
+    }), start);
+    expect(start.statusCode).toBe(200);
+    expect(start.body.projection.currentStage).toMatchObject({ id: 'readiness', status: 'working' });
+
+    const collected = makeRes();
+    await collectGroundworkReadiness(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-readiness-collect-12345678' }
+    }), collected);
+    expect(collected.statusCode).toBe(201);
+    expect(collected.body.artifact).toMatchObject({
+      kind: 'groundwork-readiness-evidence',
+      createdBy: 'op-producer',
+      approvalStatus: 'approved'
+    });
+    expect(collected.body.evidence.source).toEqual({
+      type: 'tenant_profile_repository',
+      evidenceClass: 'profile_assertion',
+      independentlyVerified: false
+    });
+    expect(collected.body.evidence.limitations.join(' ')).toMatch(/does not independently verify/i);
+
+    const artifactPath = path.join(dataDir, TENANT, collected.body.artifact.storagePath);
+    expect(fs.existsSync(artifactPath)).toBe(true);
+    const artifactBody = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+    expect(artifactBody.profileSnapshot.orgName).toBe('Groundwork Youth Collective');
+    expect(artifactBody.profileSnapshot.legalStatus).toBe('501(c)(3) claimed by organization');
+    expect(JSON.stringify(artifactBody)).not.toContain('must-never-enter-evidence');
+    expect(artifactBody.source.independentlyVerified).toBe(false);
+
+    const selfVerify = makeRes();
+    verifyGroundworkArtifact(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION, artifactId: collected.body.artifact.id },
+      headers: { 'x-idempotency-key': 'gw-readiness-self-verify-12345678' }
+    }), selfVerify);
+    expect(selfVerify.statusCode).toBe(409);
+    expect(selfVerify.body.error.message).toBe('GROUNDWORK_SELF_VERIFICATION_PROHIBITED');
+
+    const verified = makeRes();
+    verifyGroundworkArtifact(req({
+      operatorId: 'op-verifier',
+      params: { missionId: MISSION, artifactId: collected.body.artifact.id },
+      headers: { 'x-idempotency-key': 'gw-readiness-independent-verify-12345678' }
+    }), verified);
+    expect(verified.statusCode).toBe(200);
+
+    const completed = makeRes();
+    completeGroundworkStage(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION, stageId: 'readiness' },
+      headers: { 'x-idempotency-key': 'gw-readiness-complete-12345678' },
+      body: { artifactIds: [collected.body.artifact.id] }
+    }), completed);
+    expect(completed.statusCode).toBe(200);
+    expect(completed.body.projection.workflow.find((stage) => stage.id === 'readiness').status).toBe('complete');
+    expect(completed.body.projection.currentStage).toMatchObject({ id: 'repair', status: 'pending' });
+
+    const replay = makeRes();
+    await collectGroundworkReadiness(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-readiness-collect-12345678' }
+    }), replay);
+    expect(replay.statusCode).toBe(200);
+    expect(replay.body.reused).toBe(true);
+    expect(replay.body.artifact.id).toBe(collected.body.artifact.id);
+    expect(getArtifacts({ tenantId: TENANT }).filter((artifact) => artifact.kind === 'groundwork-readiness-evidence')).toHaveLength(1);
   });
 
   it('surfaces a worker block as Needs you with a concrete next action', () => {
