@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import express from 'express';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { emitEvent, readEvents } from '../../../packages/core/src/events.js';
 import { createOperatorKey } from '../../../packages/core/src/auth.js';
 import { createRepositories, clearRepositoryCache } from '../../../packages/db/src/index.js';
@@ -18,7 +18,8 @@ import {
   blockGroundworkStage,
   verifyGroundworkArtifact,
   completeGroundworkStage,
-  collectGroundworkReadiness
+  collectGroundworkReadiness,
+  collectGroundworkIdentity
 } from '../src/agent/groundwork.js';
 
 const TENANT = 'groundwork-agent-test';
@@ -110,6 +111,7 @@ afterEach(async () => {
   delete process.env.DATA_DIR;
   delete process.env.MISSION_STORAGE;
   clearRepositoryCache();
+  vi.unstubAllGlobals();
   fs.rmSync(dataDir, { recursive: true, force: true });
 });
 
@@ -257,6 +259,191 @@ describe('Groundwork Agent Service bridge', () => {
     expect(completeRes.statusCode).toBe(200);
     expect(completeRes.body.projection.workflow[0]).toMatchObject({ id: 'identity', status: 'complete' });
     expect(completeRes.body.projection.currentStage).toMatchObject({ id: 'trust', status: 'pending' });
+  });
+
+  it('blocks Identity when the canonical tenant profile has no valid EIN and replays the blocked decision idempotently', async () => {
+    const repos = createRepositories();
+    repos.tenant.writeProfile(TENANT, {
+      tenantId: TENANT,
+      orgName: 'Groundwork Youth Collective',
+      legalStatus: 'nonprofit'
+    });
+
+    const start = makeRes();
+    startGroundworkStage(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION, stageId: 'identity' },
+      headers: { 'x-idempotency-key': 'gw-identity-start-missing-ein-12345678' }
+    }), start);
+    expect(start.statusCode).toBe(200);
+
+    const collected = makeRes();
+    await collectGroundworkIdentity(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-identity-missing-ein-12345678' }
+    }), collected);
+    expect(collected.statusCode).toBe(200);
+    expect(collected.body).toMatchObject({
+      blocked: true,
+      reason: 'missing_or_invalid_ein',
+      reused: false
+    });
+    expect(collected.body.work).toMatchObject({ status: 'needs_you' });
+    expect(collected.body.nextAction).toMatch(/9-digit EIN/i);
+
+    repos.tenant.writeProfile(TENANT, {
+      tenantId: TENANT,
+      orgName: 'Groundwork Youth Collective',
+      ein: '14-2007220'
+    });
+    const replay = makeRes();
+    await collectGroundworkIdentity(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-identity-missing-ein-12345678' }
+    }), replay);
+    expect(replay.statusCode).toBe(200);
+    expect(replay.body.reused).toBe(true);
+    expect(replay.body.reason).toBe('missing_or_invalid_ein');
+  });
+
+  it('blocks Identity when an exact EIN is not found and never falls back to fuzzy name matching', async () => {
+    const repos = createRepositories();
+    repos.tenant.writeProfile(TENANT, {
+      tenantId: TENANT,
+      orgName: 'Groundwork Youth Collective',
+      legalName: 'Groundwork Youth Collective Inc',
+      ein: '14-2007220'
+    });
+
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      status: 404,
+      ok: false,
+      json: async () => ({})
+    })));
+
+    const start = makeRes();
+    startGroundworkStage(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION, stageId: 'identity' },
+      headers: { 'x-idempotency-key': 'gw-identity-start-not-found-12345678' }
+    }), start);
+
+    const collected = makeRes();
+    await collectGroundworkIdentity(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-identity-not-found-12345678' }
+    }), collected);
+
+    expect(collected.statusCode).toBe(200);
+    expect(collected.body.reason).toBe('ein_not_found');
+    expect(collected.body.work.status).toBe('needs_you');
+    expect(collected.body.nextAction).toMatch(/will not choose an organization by name automatically/i);
+    expect(getArtifacts({ tenantId: TENANT }).filter((artifact) => artifact.kind === 'groundwork-identity-evidence')).toHaveLength(0);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('creates exact-EIN record evidence, requires a separate verifier, completes Identity, and replays without another lookup', async () => {
+    const repos = createRepositories();
+    repos.tenant.writeProfile(TENANT, {
+      tenantId: TENANT,
+      orgName: 'Pro Publica',
+      legalName: 'Pro Publica Inc',
+      ein: '14-2007220'
+    });
+
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      status: 200,
+      ok: true,
+      json: async () => ({
+        organization: {
+          ein: 142007220,
+          name: 'Pro Publica Inc',
+          city: 'New York',
+          state: 'NY',
+          ntee_code: 'A20',
+          subseccd: 3
+        },
+        filings_with_data: [
+          { tax_prd_yr: 2025, totrevenue: 1000000, totfuncexpns: 900000, pdf_url: 'https://example.test/990.pdf' }
+        ]
+      })
+    })));
+
+    const start = makeRes();
+    startGroundworkStage(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION, stageId: 'identity' },
+      headers: { 'x-idempotency-key': 'gw-identity-start-record-12345678' }
+    }), start);
+    expect(start.statusCode).toBe(200);
+
+    const collected = makeRes();
+    await collectGroundworkIdentity(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-identity-record-12345678' }
+    }), collected);
+    expect(collected.statusCode).toBe(201);
+    expect(collected.body.reused).toBe(false);
+    expect(collected.body.artifact).toMatchObject({
+      kind: 'groundwork-identity-evidence',
+      createdBy: 'op-producer',
+      approvalStatus: 'approved'
+    });
+    expect(collected.body.evidence.record).toMatchObject({
+      ein: '14-2007220',
+      name: 'Pro Publica Inc',
+      state: 'NY',
+      subsection: 3
+    });
+    expect(collected.body.evidence.source.evidenceClass).toBe('record_derived_fact');
+    expect(collected.body.evidence.source.independentlyVerified).toBe(false);
+
+    const artifactPath = path.join(dataDir, TENANT, collected.body.artifact.storagePath);
+    const artifactBody = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+    expect(artifactBody.completionEligible).toBe(true);
+    expect(artifactBody.reconciliation.nameMatch).toBe('match');
+
+    const selfVerify = makeRes();
+    verifyGroundworkArtifact(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION, artifactId: collected.body.artifact.id },
+      headers: { 'x-idempotency-key': 'gw-identity-self-verify-record-12345678' }
+    }), selfVerify);
+    expect(selfVerify.statusCode).toBe(409);
+
+    const verified = makeRes();
+    verifyGroundworkArtifact(req({
+      operatorId: 'op-verifier',
+      params: { missionId: MISSION, artifactId: collected.body.artifact.id },
+      headers: { 'x-idempotency-key': 'gw-identity-verify-record-12345678' }
+    }), verified);
+    expect(verified.statusCode).toBe(200);
+
+    const completed = makeRes();
+    completeGroundworkStage(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION, stageId: 'identity' },
+      headers: { 'x-idempotency-key': 'gw-identity-complete-record-12345678' },
+      body: { artifactIds: [collected.body.artifact.id] }
+    }), completed);
+    expect(completed.statusCode).toBe(200);
+    expect(completed.body.projection.currentStage).toMatchObject({ id: 'trust', status: 'pending' });
+
+    const replay = makeRes();
+    await collectGroundworkIdentity(req({
+      operatorId: 'op-producer',
+      params: { missionId: MISSION },
+      headers: { 'x-idempotency-key': 'gw-identity-record-12345678' }
+    }), replay);
+    expect(replay.statusCode).toBe(200);
+    expect(replay.body.reused).toBe(true);
+    expect(replay.body.artifact.id).toBe(collected.body.artifact.id);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(getArtifacts({ tenantId: TENANT }).filter((artifact) => artifact.kind === 'groundwork-identity-evidence')).toHaveLength(1);
   });
 
   it('collects canonical profile readiness as a real unverified artifact and requires independent verification before completion', async () => {
