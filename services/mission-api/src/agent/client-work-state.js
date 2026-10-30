@@ -5,6 +5,7 @@ import { APPROVAL_STATES, getApproval } from '@asc3nd/core/approval-lifecycle';
 import { CLIENT_MISSION_EVENT } from './firstmate-mission-router.js';
 
 export const CLIENT_MISSION_STATE_EVENT = 'client_mission_state';
+export const CLIENT_GROUNDWORK_STAGE_EVENT = 'client_groundwork_stage';
 export const CLIENT_ROUTING_FAILURE_EVENT = 'client_routing_failure';
 
 const CLIENT_LABELS = Object.freeze({ working: 'Working', needs_you: 'Needs you', ready: 'Ready', failed: 'Failed', delivered: 'Delivered' });
@@ -26,6 +27,7 @@ function normalizeRefs(refs = []) { return [...new Set(refs.filter(Boolean).map(
 function requestRef(value) { return value ? crypto.createHash('sha256').update(String(value)).digest('hex') : null; }
 function missionEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_MISSION_EVENT }) || []; }
 function stateEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_MISSION_STATE_EVENT }) || []; }
+function stageEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_GROUNDWORK_STAGE_EVENT }) || []; }
 function failureEvents({ tenantId, read = readEvents }) { return read({ tenantId, type: CLIENT_ROUTING_FAILURE_EVENT }) || []; }
 function missionRequiresApproval(mission) { return mission?.approval?.required === true || mission?.status === 'needs_you'; }
 function initialMissionStatus(mission, routingEvent) {
@@ -48,8 +50,39 @@ function latestStateEvent({ tenantId, userId, conversationId, missionId, read = 
     return state && state.mission_id === missionId && state.tenant_id === tenantId && state.user_id === userId && state.conversation_id === conversationId;
   }).at(-1) || null;
 }
-function projection({ mission, state, eventId = null, routingEvent = null }) {
+
+function missionStageEvents({ tenantId, userId, conversationId, missionId, read = readEvents }) {
+  return stageEvents({ tenantId, read }).filter((event) => {
+    const stage = event.payload?.stage;
+    return stage && stage.mission_id === missionId && stage.tenant_id === tenantId && stage.user_id === userId && stage.conversation_id === conversationId;
+  });
+}
+function workflowProjection({ mission, tenantId, userId, conversationId, read = readEvents }) {
+  if (mission?.domain !== 'groundwork' || !Array.isArray(mission?.workflow)) return [];
+  const latestByStage = new Map();
+  for (const event of missionStageEvents({ tenantId, userId, conversationId, missionId: mission.mission_id, read })) {
+    latestByStage.set(event.payload.stage.stage_id, { ...event.payload.stage, event_ref: `event:${event.id}` });
+  }
+  return mission.workflow.map((stage) => {
+    const current = latestByStage.get(stage.id);
+    return {
+      id: stage.id,
+      label: stage.label,
+      outcome: stage.outcome,
+      order: stage.order,
+      status: current?.status || stage.status || 'pending',
+      proofRefs: normalizeRefs(current?.proof_refs || []),
+      nextAction: current?.next_action || null,
+      eventRef: current?.event_ref || null
+    };
+  });
+}
+function currentWorkflowStage(workflow = []) {
+  return workflow.find((stage) => stage.status !== 'complete') || null;
+}
+function projection({ mission, state, eventId = null, routingEvent = null, workflow = [] }) {
   const internalState = state?.status || initialMissionStatus(mission, routingEvent);
+  const currentStage = currentWorkflowStage(workflow);
   return {
     id: mission.mission_id,
     status: internalState === 'routed' ? null : internalState,
@@ -59,6 +92,8 @@ function projection({ mission, state, eventId = null, routingEvent = null }) {
     approvalRequired: missionRequiresApproval(mission),
     nextAction: state?.next_action || (internalState === 'needs_you' ? 'Review the request before anything consequential happens.' : null),
     proofRefs: normalizeRefs(state?.proof_refs || []), approvalRef: state?.approval_ref || null,
+    workflow,
+    currentStage,
     eventRef: eventId ? `event:${eventId}` : null
   };
 }
@@ -124,7 +159,8 @@ export function getClientMissionWorkState({ tenantId, userId, conversationId, mi
   const found = findMission({ tenantId, userId, conversationId, missionId, read });
   if (!found) return null;
   const stateEvent = latestStateEvent({ tenantId, userId, conversationId, missionId, read });
-  return projection({ mission: found.mission, state: stateEvent?.payload?.state || null, eventId: stateEvent?.id || found.eventId, routingEvent: found.routingEvent });
+  const workflow = workflowProjection({ mission: found.mission, tenantId, userId, conversationId, read });
+  return projection({ mission: found.mission, state: stateEvent?.payload?.state || null, eventId: stateEvent?.id || found.eventId, routingEvent: found.routingEvent, workflow });
 }
 
 export function listConversationWorkStates({ tenantId, userId, conversationId, read = readEvents }) {
@@ -135,9 +171,13 @@ export function listConversationWorkStates({ tenantId, userId, conversationId, r
     .filter(({ mission }) => mission && mission.tenant_id === tenantId && mission.user_id === userId && mission.conversation_id === conversationId)
     .map(({ mission, event }) => {
       const stateEvent = latestStateEvent({ tenantId, userId, conversationId, missionId: mission.mission_id, read });
-      const latestEvent = stateEvent || event;
+      const stageEvent = missionStageEvents({ tenantId, userId, conversationId, missionId: mission.mission_id, read }).at(-1) || null;
+      const latestEvent = [event, stateEvent, stageEvent]
+        .filter(Boolean)
+        .sort((a, b) => (journalOrder.get(a.id) ?? -1) - (journalOrder.get(b.id) ?? -1))
+        .at(-1);
       return {
-        projection: projection({ mission, state: stateEvent?.payload?.state || null, eventId: latestEvent.id, routingEvent: event }),
+        projection: projection({ mission, state: stateEvent?.payload?.state || null, eventId: latestEvent.id, routingEvent: event, workflow: workflowProjection({ mission, tenantId, userId, conversationId, read }) }),
         createdAt: latestEvent.createdAt,
         journalOrder: journalOrder.get(latestEvent.id) ?? -1
       };
@@ -170,6 +210,102 @@ export function recordClientRoutingFailure({ tenantId, userId, conversationId, s
   return { projection: routingFailureProjection(event), eventId: event.id, reused: false };
 }
 
+
+function verifyGroundworkStageProof({ tenantId, missionId, refs, listArtifacts = getArtifacts }) {
+  if (!refs.length) throw new Error('GROUNDWORK_STAGE_PROOF_REQUIRED');
+  const artifacts = listArtifacts({ tenantId }) || [];
+  let verifiedArtifact = false;
+  for (const ref of refs) {
+    if (!ref.startsWith('artifact:')) throw new Error('GROUNDWORK_STAGE_PROOF_MUST_BE_ARTIFACT');
+    const id = ref.slice('artifact:'.length);
+    const artifact = artifacts.find((row) => row.id === id);
+    if (!artifact || artifact.tenantId !== tenantId || artifact.approvalStatus !== 'approved') throw new Error('GROUNDWORK_STAGE_PROOF_UNVERIFIED');
+    if (!artifactLinkedToMission(artifact, missionId)) throw new Error('GROUNDWORK_STAGE_PROOF_MISSION_MISMATCH');
+    verifiedArtifact = true;
+  }
+  if (!verifiedArtifact) throw new Error('GROUNDWORK_STAGE_PROOF_REQUIRED');
+}
+
+export function transitionGroundworkStage({
+  tenantId, userId, conversationId, missionId, stageId, to,
+  actor = userId, proofRefs = [], approvalRef = null, nextAction = null,
+  idempotencyKey, read = readEvents, append = emitEvent,
+  getApprovalRecord = getApproval, listArtifacts = getArtifacts
+}) {
+  if (!tenantId || !userId || !conversationId || !missionId || !stageId) throw new Error('GROUNDWORK_STAGE_SCOPE_REQUIRED');
+  if (!['working', 'complete', 'blocked'].includes(to)) throw new Error('INVALID_GROUNDWORK_STAGE_STATE');
+  const key = String(idempotencyKey || '').trim();
+  if (!key) throw new Error('IDEMPOTENCY_KEY_REQUIRED');
+  const found = findMission({ tenantId, userId, conversationId, missionId, read });
+  if (!found || found.mission.domain !== 'groundwork' || !Array.isArray(found.mission.workflow)) throw new Error('GROUNDWORK_MISSION_NOT_FOUND');
+
+  const workflow = workflowProjection({ mission: found.mission, tenantId, userId, conversationId, read });
+  const target = workflow.find((stage) => stage.id === stageId);
+  if (!target) throw new Error('GROUNDWORK_STAGE_NOT_FOUND');
+  const current = currentWorkflowStage(workflow);
+  if (current?.id !== stageId && target.status !== 'complete') throw new Error('GROUNDWORK_STAGE_OUT_OF_ORDER');
+
+  const requestRefValue = requestRef(key);
+  const duplicate = missionStageEvents({ tenantId, userId, conversationId, missionId, read }).find((event) => event.payload?.stage?.request_ref === requestRefValue);
+  if (duplicate) {
+    if (duplicate.payload.stage.stage_id !== stageId || duplicate.payload.stage.status !== to) throw new Error('IDEMPOTENCY_CONFLICT');
+    return { projection: getClientMissionWorkState({ tenantId, userId, conversationId, missionId, read }), eventId: duplicate.id, reused: true };
+  }
+
+  const from = target.status || 'pending';
+  const allowed = {
+    pending: new Set(['working', 'blocked']),
+    working: new Set(['complete', 'blocked']),
+    blocked: new Set(['working']),
+    complete: new Set([])
+  };
+  if (!allowed[from]?.has(to)) throw new Error(`INVALID_GROUNDWORK_STAGE_TRANSITION:${from}->${to}`);
+
+  const refs = normalizeRefs(proofRefs);
+  if (to === 'complete') verifyGroundworkStageProof({ tenantId, missionId, refs, listArtifacts });
+  const requestedNextAction = String(nextAction || '').trim();
+  if (to === 'blocked' && !requestedNextAction) throw new Error('NEXT_ACTION_REQUIRED');
+
+  const currentMissionState = getClientMissionWorkState({ tenantId, userId, conversationId, missionId, read });
+  if (to === 'working' && currentMissionState?.phase !== 'working') {
+    transitionClientMissionState({
+      tenantId, userId, conversationId, missionId, to: 'working', actor,
+      approvalRef, idempotencyKey: `${key}:mission-working`, recovery: currentMissionState?.phase === 'failed',
+      read, append, getApprovalRecord, listArtifacts
+    });
+  } else if (to === 'blocked' && ['routed', 'working'].includes(currentMissionState?.phase)) {
+    transitionClientMissionState({
+      tenantId, userId, conversationId, missionId, to: 'needs_you', actor,
+      approvalRef, nextAction: requestedNextAction, idempotencyKey: `${key}:mission-blocked`,
+      read, append, getApprovalRecord, listArtifacts
+    });
+  }
+
+  const stage = {
+    version: '1.0.0', mission_id: missionId, tenant_id: tenantId, user_id: userId, conversation_id: conversationId,
+    stage_id: stageId, from, status: to, proof_refs: refs, next_action: requestedNextAction || null,
+    request_ref: requestRefValue, changed_at: new Date().toISOString()
+  };
+  const event = append({ tenantId, type: CLIENT_GROUNDWORK_STAGE_EVENT, version: '1', actor, subject: missionId, payload: { stage } });
+
+  const after = workflowProjection({ mission: found.mission, tenantId, userId, conversationId, read });
+  const allComplete = after.length > 0 && after.every((item) => item.status === 'complete');
+  if (allComplete) {
+    const finalProofRefs = normalizeRefs(after.flatMap((item) => item.proofRefs));
+    const latestMissionState = getClientMissionWorkState({ tenantId, userId, conversationId, missionId, read });
+    if (latestMissionState?.phase === 'working') {
+      transitionClientMissionState({
+        tenantId, userId, conversationId, missionId, to: 'ready', actor,
+        proofRefs: finalProofRefs, approvalRef,
+        idempotencyKey: `${key}:mission-ready`,
+        read, append, getApprovalRecord, listArtifacts
+      });
+    }
+  }
+
+  return { projection: getClientMissionWorkState({ tenantId, userId, conversationId, missionId, read }), eventId: event.id, reused: false };
+}
+
 export function transitionClientMissionState({ tenantId, userId, conversationId, missionId, to, actor = userId, proofRefs = [], approvalRef = null, nextAction = null, idempotencyKey, recovery = false, read = readEvents, append = emitEvent, getApprovalRecord = getApproval, listArtifacts = getArtifacts }) {
   if (!tenantId || !userId || !conversationId || !missionId) throw new Error('WORK_STATE_SCOPE_REQUIRED');
   if (!ALLOWED[to] && to !== 'routed') throw new Error('INVALID_WORK_STATE');
@@ -186,7 +322,7 @@ export function transitionClientMissionState({ tenantId, userId, conversationId,
   });
   if (duplicate) {
     if (duplicate.payload.state.status !== to) throw new Error('IDEMPOTENCY_CONFLICT');
-    return { projection: projection({ mission: found.mission, state: duplicate.payload.state, eventId: duplicate.id, routingEvent: found.routingEvent }), eventId: duplicate.id, reused: true };
+    return { projection: projection({ mission: found.mission, state: duplicate.payload.state, eventId: duplicate.id, routingEvent: found.routingEvent, workflow: workflowProjection({ mission: found.mission, tenantId, userId, conversationId, read }) }), eventId: duplicate.id, reused: true };
   }
   const isRecovery = recovery && current === 'failed' && to === 'working';
   if (!isRecovery && !ALLOWED[current]?.has(to)) throw new Error(`INVALID_WORK_TRANSITION:${current}->${to}`);
@@ -207,5 +343,5 @@ export function transitionClientMissionState({ tenantId, userId, conversationId,
     next_action: resolvedNextAction, request_ref: keyRef, recovery: Boolean(isRecovery), changed_at: new Date().toISOString()
   };
   const event = append({ tenantId, type: CLIENT_MISSION_STATE_EVENT, version: '1', actor, subject: missionId, payload: { state } });
-  return { projection: projection({ mission: found.mission, state, eventId: event.id, routingEvent: found.routingEvent }), eventId: event.id, reused: false };
+  return { projection: projection({ mission: found.mission, state, eventId: event.id, routingEvent: found.routingEvent, workflow: workflowProjection({ mission: found.mission, tenantId, userId, conversationId, read }) }), eventId: event.id, reused: false };
 }

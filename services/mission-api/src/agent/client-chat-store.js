@@ -4,6 +4,7 @@ import { emitEvent, readEvents } from '@asc3nd/core/events';
 const EVENT_TYPE = 'client_chat';
 const MISSION_EVENT_TYPE = 'client_mission';
 const MISSION_STATE_EVENT_TYPE = 'client_mission_state';
+const GROUNDWORK_STAGE_EVENT_TYPE = 'client_groundwork_stage';
 const ROUTING_FAILURE_EVENT_TYPE = 'client_routing_failure';
 const id = (prefix) => `${prefix}_${crypto.randomBytes(10).toString('hex')}`;
 
@@ -53,12 +54,16 @@ export function createClientChatStore({ read = readEvents, append = emitEvent } 
       const state = event.payload?.state;
       return state && state.tenant_id === tenantId && state.user_id === userId && state.conversation_id === conversationId;
     });
+    const stages = (read({ tenantId, type: GROUNDWORK_STAGE_EVENT_TYPE }) || []).filter((event) => {
+      const stage = event.payload?.stage;
+      return stage && stage.tenant_id === tenantId && stage.user_id === userId && stage.conversation_id === conversationId;
+    });
     const failures = (read({ tenantId, type: ROUTING_FAILURE_EVENT_TYPE }) || []).filter((event) => {
       const failure = event.payload?.failure;
       return failure && failure.tenant_id === tenantId && failure.user_id === userId && failure.conversation_id === conversationId;
     });
-    const workStateRefs = [...states, ...failures].map((event) => `event:${event.id}`);
-    const proofRefs = states.flatMap((event) => event.payload?.state?.proof_refs || []);
+    const workStateRefs = [...states, ...stages, ...failures].map((event) => `event:${event.id}`);
+    const proofRefs = [...states.flatMap((event) => event.payload?.state?.proof_refs || []), ...stages.flatMap((event) => event.payload?.stage?.proof_refs || [])];
     const approvalRefs = states.map((event) => event.payload?.state?.approval_ref).filter(Boolean);
     const artifactRefs = proofRefs.filter((ref) => String(ref).startsWith('artifact:'));
     return {
