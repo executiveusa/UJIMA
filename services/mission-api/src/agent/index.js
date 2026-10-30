@@ -8,7 +8,7 @@ import { createArtifact } from './artifacts.js';
 import { createAsset, getAsset } from './assets.js';
 import { requestApproval } from './approvals.js';
 import clientChatRouter from './client-chat-router.js';
-import { getGroundworkMission, startGroundworkStage, blockGroundworkStage, verifyGroundworkArtifact, completeGroundworkStage, collectGroundworkReadiness } from './groundwork.js';
+import { getGroundworkMission, startGroundworkStage, blockGroundworkStage, verifyGroundworkArtifact, completeGroundworkStage, collectGroundworkReadiness, collectGroundworkIdentity } from './groundwork.js';
 
 const router = Router();
 const auth = agentAuth();
@@ -39,5 +39,6 @@ router.post('/groundwork/missions/:missionId/stages/:stageId/block', auth, block
 router.post('/groundwork/missions/:missionId/evidence/:artifactId/verify', auth, verifyGroundworkArtifact);
 router.post('/groundwork/missions/:missionId/stages/:stageId/complete', auth, completeGroundworkStage);
 router.post('/groundwork/missions/:missionId/readiness/collect', auth, collectGroundworkReadiness);
+router.post('/groundwork/missions/:missionId/identity/collect', auth, collectGroundworkIdentity);
 
 export default router;
